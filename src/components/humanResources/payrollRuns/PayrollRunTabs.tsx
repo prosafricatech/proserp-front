@@ -1,6 +1,7 @@
 // components/humanResources/payrollRuns/PayrollRunTabs.tsx
 'use client';
 
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import {
   CloseOutlined,
@@ -8,6 +9,7 @@ import {
   VisibilityOutlined,
 } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Chip,
   CircularProgress,
@@ -26,14 +28,15 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import PayrollApprovalItemAction from './PayrollApprovalItemAction';
+import PayrollApprovalsActionTail from './PayrollApprovalsActionTail';
+import { PayrollRunType } from './PayrollRunType';
 import { useRouter } from 'next/navigation';
 import EmployeeSelector from '../employees/EmployeeSelector';
 import { Employee } from '../employees/EmployeesType';
 import {
   calculateGrossSalary,
   calculateNetSalary,
-  calculateTotalAllowances,
-  calculateTotalDeductions,
   formatMoney,
   getEmployeeName,
 } from './payrollUtils';
@@ -391,8 +394,6 @@ export const EmployeesTab = ({
                 const contributions = row.employer_contributions || [];
                 const basicSalary = row.basic_salary || 0;
                 const paye = row.paye || 0;
-                const totalAllowances = calculateTotalAllowances(allowances);
-                const totalDeductions = calculateTotalDeductions(deductions);
                 const totalContributions =
                   calculateTotalEmployerContributions(contributions);
                 const grossSalary =
@@ -965,97 +966,110 @@ export const PayslipsTab = ({
 };
 
 interface ApprovalsTabProps {
-  hasChain: boolean;
-  approvalChain: any;
-  approvals: any[];
+  payrollRun: PayrollRunType;
 }
 
-export const ApprovalsTab = ({
-  hasChain,
-  approvalChain,
-  approvals,
-}: ApprovalsTabProps) => {
-  if (!hasChain || !approvalChain?.levels) {
-    return (
-      <Typography variant='body2' color='text.secondary' py={2}>
-        This run uses direct approval (no approval chain).
-      </Typography>
-    );
-  }
+export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
+  const approvals = payrollRun?.approvals || [];
 
   return (
-    <Box>
-      <Typography variant='subtitle2' gutterBottom>
-        Approval Chain
-      </Typography>
-      {approvalChain.levels.map((level: any, index: number) => {
-        const approval = approvals?.find(
-          (a: any) => a.chain_level_id === level.id
-        );
-        const isApproved = approval?.status === 'approved';
-        const isPending = !approval || approval.status === 'pending';
-        const isRejected = approval?.status === 'rejected';
+    <Grid container spacing={2}>
+      {approvals.length === 0 && (
+        <Grid size={{ xs: 12 }} textAlign={'end'}>
+          <PayrollApprovalsActionTail payrollRun={payrollRun} />
+        </Grid>
+      )}
+      <Grid size={{ xs: 12 }}>
+        <Grid container spacing={2}>
+          {approvals.length > 0 ? (
+            approvals.map((approval, index) => {
+              const approvalStatus = (approval.status || '').toLowerCase();
+              const chipColor =
+                approvalStatus === 'rejected'
+                  ? 'error'
+                  : approvalStatus === 'on hold'
+                    ? 'warning'
+                    : approvalStatus === 'approved'
+                      ? 'success'
+                      : 'info';
+              const chainLevel = payrollRun?.approval_chain?.levels?.find(
+                (level) =>
+                  Number(level.id) ===
+                  Number(approval.chain_level_id || approval.approval_chain_level_id)
+              );
 
-        return (
-          <Paper
-            key={level.id}
-            sx={{
-              p: 1.5,
-              mb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              bgcolor: isApproved
-                ? 'success.light'
-                : isRejected
-                  ? 'error.light'
-                  : isPending
-                    ? 'warning.light'
-                    : 'transparent',
-              borderRadius: 1,
-            }}
-          >
-            <Box>
-              <Typography variant='body2' fontWeight={500}>
-                Level {index + 1}: {level.name || level.level_name}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                {level.role?.name || 'Approver'}
-              </Typography>
-              {approval?.remarks && (
-                <Typography
-                  variant='caption'
-                  display='block'
-                  color='text.secondary'
+              return (
+                <Grid
+                  key={approval.id || index}
+                  size={{ xs: 12 }}
+                  sx={{
+                    cursor: 'pointer',
+                    borderTop: index === 0 ? 0 : 1,
+                    borderColor: 'divider',
+                    '&:hover': { bgcolor: 'action.hover' },
+                    padding: 1,
+                  }}
+                  container
+                  spacing={2}
+                  width={'100%'}
+                  alignItems={'center'}
                 >
-                  Remark: {approval.remarks}
-                </Typography>
-              )}
-            </Box>
-            <Chip
-              label={
-                isApproved
-                  ? 'Approved'
-                  : isRejected
-                    ? 'Rejected'
-                    : isPending
-                      ? 'Pending'
-                      : ''
-              }
-              color={
-                isApproved
-                  ? 'success'
-                  : isRejected
-                    ? 'error'
-                    : isPending
-                      ? 'warning'
-                      : 'default'
-              }
-              size='small'
-            />
-          </Paper>
-        );
-      })}
-    </Box>
+                  <Grid size={{ xs: 12, md: 3, lg: 3 }}>
+                    <Tooltip title={'Action Date'}>
+                      <Typography variant='h6'>
+                        {approval.approval_date
+                          ? readableDate(approval.approval_date)
+                          : '-'}
+                      </Typography>
+                    </Tooltip>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 3, lg: 3 }}>
+                    <Tooltip title={'Done By'}>
+                      <Typography variant='h6'>
+                        {(approval as any).creator?.name || '-'}
+                      </Typography>
+                    </Tooltip>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                    <Tooltip title='Level'>
+                      <Typography variant='body2' color='text.secondary'>
+                        {chainLevel?.name || chainLevel?.level_name || ''}
+                      </Typography>
+                    </Tooltip>
+                    <Chip
+                      size='small'
+                      label={approval.status || 'Pending'}
+                      color={chipColor as any}
+                      sx={{ textTransform: 'capitalize' }}
+                    />
+                    {approval.remarks && (
+                      <Typography variant='caption' sx={{ ml: 1 }}>
+                        {approval.remarks}
+                      </Typography>
+                    )}
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 2, lg: 2 }} textAlign={'right'}>
+                    <PayrollApprovalItemAction
+                      payrollRun={payrollRun}
+                      approval={approval}
+                      approvals={approvals}
+                    />
+                  </Grid>
+                </Grid>
+              );
+            })
+          ) : (
+            <Grid size={{ xs: 12 }}>
+              <Alert variant='outlined' severity='info'>
+                No Approvals Found
+              </Alert>
+            </Grid>
+          )}
+        </Grid>
+      </Grid>
+    </Grid>
   );
 };

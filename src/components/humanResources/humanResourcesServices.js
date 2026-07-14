@@ -5,10 +5,9 @@ const humanResourcesServices = {};
 // ============================================
 // EMPLOYEES
 // ============================================
-humanResourcesServices.getEmployeesList = async (params = {}) => {
-    const { page = 1, limit = 10, ...queryParams } = params;
+humanResourcesServices.getEmployeesList = async (params) => {
     const { data } = await axios.get("/api/humanResources/employees", {
-        params: { page, limit, ...queryParams }
+        params
     });
     return data;
 };
@@ -572,6 +571,16 @@ humanResourcesServices.addLeaveRequestApproval = async (approval) => {
     return data;
 }
 
+humanResourcesServices.deleteLeaveRequestApproval = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/leaveRequestApprovals/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.updateLeaveRequestApproval = async (id, payload) => {
+    const { data } = await axios.put(`/api/humanResources/leaveRequestApprovals/${id}`, payload);
+    return data;
+}
+
 humanResourcesServices.showLeaveRequest = async (id) => {
     const { data } = await axios.get(`/api/humanResources/leaveRequests/${id}`);
     return data;
@@ -757,6 +766,16 @@ humanResourcesServices.addPayrollRunApproval = async (approval) => {
     return data;
 }
 
+humanResourcesServices.deletePayrollRunApproval = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollRunApprovals/${id}/delete`);
+    return data;
+}
+
+humanResourcesServices.updatePayrollRunApproval = async (id, payload) => {
+    const { data } = await axios.put(`/api/humanResources/payrollRunApprovals/${id}`, payload);
+    return data;
+}
+
 // Post Transactions - creates Journal Voucher
 humanResourcesServices.postPayrollRunTransactions = async ({ id, ...payload }) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/post-transactions`, payload);
@@ -766,6 +785,12 @@ humanResourcesServices.postPayrollRunTransactions = async ({ id, ...payload }) =
 // Pay Employees - creates Payment Voucher
 humanResourcesServices.payPayrollRun = async ({ id, ...payload }) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/pay`, payload);
+    return data;
+}
+
+// complete payroll run - if orgnization has not subscribed to accounts and finance module
+humanResourcesServices.completePayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/complete`);
     return data;
 }
 

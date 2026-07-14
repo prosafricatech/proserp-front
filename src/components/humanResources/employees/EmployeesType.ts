@@ -10,6 +10,7 @@ export interface Employee {
   phone_number: string;
   address: string;
   date_of_birth: string;
+  designation_id?: number;
   basic_salary?: number | null;
   contract_start_date?: string | null;
   national_id: string;

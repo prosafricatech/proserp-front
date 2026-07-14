@@ -14,10 +14,11 @@ import {
   Tab,
   Tabs,
   Typography,
+  useTheme,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import { PayrollRunActions } from './PayrollRunActions';
 import { PayslipViewDialog, SimulationDialog } from './PayrollRunDialogs';
@@ -47,6 +48,7 @@ const PayrollRunsListItem = ({
 }: {
   payrollRun: PayrollRunType;
 }) => {
+  const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const [expanded, setExpanded] = useState(false);
@@ -124,6 +126,33 @@ const PayrollRunsListItem = ({
   });
 
   const runDetails = runDetailsData?.data || runDetailsData || payrollRun;
+  const hasApprovalsTab =
+    hasChain ||
+    ['submitted', 'approved', 'posted', 'paid'].includes(status) ||
+    (runDetails?.approvals?.length ?? 0) > 0;
+  const approvalsTabIndex = hasPayslips ? 3 : 2;
+
+  const previousHasPayslips = useRef(hasPayslips);
+
+  useEffect(() => {
+    // Keep user on Approvals tab when the run transitions from submitted -> approved
+    // and Payslips tab is inserted before Approvals.
+    if (
+      previousHasPayslips.current === false &&
+      hasPayslips === true &&
+      hasApprovalsTab &&
+      tabValue === 2
+    ) {
+      setTabValue(3);
+    }
+
+    if (previousHasPayslips.current === true && hasPayslips === false && tabValue === 3) {
+      setTabValue(2);
+    }
+
+    previousHasPayslips.current = hasPayslips;
+  }, [hasPayslips, hasApprovalsTab, tabValue]);
+
   const processedPayslips = useMemo(
     () => processPayslips(runDetails?.payslips || []),
     [runDetails]
@@ -153,6 +182,16 @@ const PayrollRunsListItem = ({
     onSuccess: () => {
       invalidatePayrollRunQueries();
       enqueueSnackbar('Payroll run approved', { variant: 'success' });
+    },
+    onError: (error) =>
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
+  });
+
+  const { mutate: completePayrollRun, isPending: isCompleting } = useMutation({
+    mutationFn: () => humanResourcesServices.completePayrollRun(payrollRun.id),
+    onSuccess: () => {
+      invalidatePayrollRunQueries();
+      enqueueSnackbar('Payroll run completed', { variant: 'success' });
     },
     onError: (error) =>
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
@@ -223,6 +262,9 @@ const PayrollRunsListItem = ({
       case 'pay':
         payPayrollRun(data || {});
         break;
+      case 'complete':
+        completePayrollRun();
+        break;
       case 'delete':
         deletePayrollRun();
         break;
@@ -252,6 +294,9 @@ const PayrollRunsListItem = ({
     setSelectedPayslip(payslip);
     setOpenPayslipDialog(true);
   };
+
+  // get contras colors
+  const chipColor = statusColor(payrollRun.status || '');
 
   const isLoading = isLoadingPreview || isLoadingDetails || isRefetching;
 
@@ -313,10 +358,24 @@ const PayrollRunsListItem = ({
                 gap={1}
               >
                 <Chip
-                  label={payrollRun.status || 'draft'}
+                  label={
+                    payrollRun.status_label || payrollRun.status || 'draft'
+                  }
                   color={statusColor(payrollRun.status || '')}
                   size='small'
-                  sx={{ textTransform: 'capitalize' }}
+                  sx={{
+                    textTransform: 'capitalize',
+                    color:
+                      chipColor === 'default'
+                        ? theme.palette.secondary.contrastText
+                        : chipColor === 'info'
+                          ? theme.palette.info.contrastText
+                          : chipColor === 'warning'
+                            ? theme.palette.warning.contrastText
+                            : chipColor === 'success'
+                              ? theme.palette.success.contrastText
+                              : theme.palette.error.contrastText,
+                  }}
                 />
               </Box>
             </Grid>
@@ -345,6 +404,7 @@ const PayrollRunsListItem = ({
                 isPosting={isPosting}
                 isPaying={isPaying}
                 runLabel={runLabel}
+                isCompleting={isCompleting}
               />
 
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
@@ -352,7 +412,7 @@ const PayrollRunsListItem = ({
                   <Tab label='Summary' />
                   <Tab label='Employees' />
                   {hasPayslips && <Tab label='Payslips' />}
-                  <Tab label='Approvals' />
+                  {hasApprovalsTab && <Tab label='Approvals' />}
                 </Tabs>
               </Box>
 
@@ -394,13 +454,11 @@ const PayrollRunsListItem = ({
                 </TabPanel>
               )}
 
-              <TabPanel value={tabValue} index={hasPayslips ? 3 : 2}>
-                <ApprovalsTab
-                  hasChain={hasChain}
-                  approvalChain={runDetails?.approval_chain}
-                  approvals={runDetails?.approvals}
-                />
-              </TabPanel>
+              {hasApprovalsTab && (
+                <TabPanel value={tabValue} index={approvalsTabIndex}>
+                  <ApprovalsTab payrollRun={runDetails} />
+                </TabPanel>
+              )}
             </>
           )}
         </AccordionDetails>

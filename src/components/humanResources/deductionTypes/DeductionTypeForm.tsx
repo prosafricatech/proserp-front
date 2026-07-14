@@ -96,6 +96,9 @@ const DeductionTypeForm = ({
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { organizationHasSubscribed, checkOrganizationPermission } =
     useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
   const [confirmDialog, setConfirmDialog] = useState<{
@@ -237,10 +240,12 @@ const DeductionTypeForm = ({
       .typeError('Default value must be a number')
       .required('Default value is required')
       .min(0, 'Default value must be 0 or greater'),
-    payable_ledger_id: yup
-      .number()
-      .required('This field is required')
-      .positive('This field is required'),
+    payable_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
     is_pre_tax: yup.boolean().required(),
     description: yup
       .string()
@@ -268,7 +273,7 @@ const DeductionTypeForm = ({
       category: deductionType?.category || 'statutory',
       computation_method: deductionType?.computation_method || 'fixed',
       default_value: deductionType?.default_value ?? 0,
-      payable_ledger_id: deductionType?.payable_ledger_id ?? 0,
+      payable_ledger_id: deductionType?.payable_ledger_id ?? undefined,
       is_pre_tax: deductionType?.is_pre_tax || false,
       description: deductionType?.description || '',
       apply_scope: 'none',
@@ -483,7 +488,7 @@ const DeductionTypeForm = ({
               </Div>
             </Grid>
 
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
+            {orgHasSubscribedAccountsAndFinance && (
               <Grid size={{ xs: 12, md: 6 }}>
                 <Div sx={{ my: 1 }}>
                   <LedgerSelect
@@ -504,7 +509,7 @@ const DeductionTypeForm = ({
                         });
                       } else {
                         setRecentlyAddedPayableLedger(null);
-                        setValue('payable_ledger_id', 0, {
+                        setValue('payable_ledger_id', undefined, {
                           shouldValidate: true,
                           shouldDirty: true,
                         });

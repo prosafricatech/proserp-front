@@ -67,7 +67,7 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "PAYMENT" | "IMPREST";
+  process_type: "PURCHASE" | "MATERIAL" | "PAYMENT" | "IMPREST";
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
@@ -87,7 +87,23 @@ export interface PurchaseApprovalRequisition extends BaseApprovalRequisition {
   purchase_orders_count: number;
 }
 
-export type ApprovalRequisition = PaymentApprovalRequisition | PurchaseApprovalRequisition;
+export interface MaterialApprovalRequisition extends BaseApprovalRequisition {
+  process_type: "MATERIAL";
+  is_fully_ordered: boolean;
+  is_fully_paid: boolean;
+  is_fully_issued: boolean;
+  is_fully_fulfilled: boolean;
+  has_issues: boolean;
+  purchase_orders_count: number;
+  payments_count: number;
+  issues_count: number;
+  imprest_amount?: number;
+}
+
+export type ApprovalRequisition =
+  | PaymentApprovalRequisition
+  | PurchaseApprovalRequisition
+  | MaterialApprovalRequisition;
 export type ApprovalRequisitionList = ApprovalRequisition[];
 
 export type RequisitionProcessType = BaseApprovalRequisition['process_type'];

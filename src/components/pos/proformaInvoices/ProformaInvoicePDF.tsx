@@ -119,7 +119,7 @@ function ProformaInvoicePDF({
           <View style={{ flex: 2 }}>{/* Place holder */}</View>
         </View>
 
-        <View style={{ ...pdfStyles.table, minHeight: 200 }}>
+        <View style={{ ...pdfStyles.table }}>
           <View style={pdfStyles.tableRow}>
             <Text
               style={{
@@ -243,11 +243,13 @@ function ProformaInvoicePDF({
                     }}
                   >
                     <Text>{proformaItem.product.name}</Text>
-                    <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
-                      {' ('}
-                      {proformaItem.product.description}
-                      {')'}
-                    </Text>
+                    {proformaItem.product.description && (
+                      <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
+                        {' ('}
+                        {proformaItem.product.description}
+                        {')'}
+                      </Text>
+                    )}
                   </View>
                   {proformaItem.description && (
                     <Text style={{ fontSize: 10, color: '#888', marginTop: 2 }}>

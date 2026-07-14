@@ -23,7 +23,7 @@ import {
   TextField,
   Tooltip,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
+import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
@@ -80,6 +80,7 @@ interface Requisition {
   id?: number;
   additional_costs: Array<any>;
   requisition_date?: string;
+  date_required?: string;
   approval_chain?: {
     process_type?: string;
   };
@@ -124,6 +125,14 @@ function RequisitionsForm({
         ? dayjs(requisition.requisition_date)
         : dayjs()
   );
+
+  const [date_required] = useState(
+    isDuplicate
+      ? dayjs()
+      : requisition && !isDuplicate
+        ? dayjs(requisition.date_required)
+        : null
+  );
   const { setIsEditAction } = useContext(requisitionContext);
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
@@ -167,7 +176,9 @@ function RequisitionsForm({
   const [requisition_product_items, setRequisition_product_items] = useState<
     RequisitionItem[]
   >(
-    requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
+    ['PURCHASE', 'MATERIAL'].includes(
+      String(requisition?.approval_chain?.process_type || '').toUpperCase()
+    )
       ? requisition?.items?.map((item) => ({
           ...item,
           product_id: item.product?.id,
@@ -214,15 +225,17 @@ function RequisitionsForm({
     defaultValues: {
       id: requisition?.id,
       requisition_date: requisition_date.toISOString(),
+      date_required: date_required,
       process_type: requisition?.approval_chain?.process_type,
       currency_id: requisition ? requisition?.currency?.id : 1,
       cost_center_id: requisition?.cost_center?.id,
       exchange_rate: requisition ? requisition?.exchange_rate : 1,
       remarks: requisition?.remarks,
-      product_items:
-        requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
-          ? requisition?.items
-          : null,
+      product_items: ['PURCHASE', 'MATERIAL'].includes(
+        String(requisition?.approval_chain?.process_type || '').toUpperCase()
+      )
+        ? requisition?.items
+        : null,
       additional_costs:
         requisition?.approval_chain?.process_type?.toUpperCase() === 'PURCHASE'
           ? requisition?.additional_costs || []
@@ -316,9 +329,17 @@ function RequisitionsForm({
     [imprestLedgerOptions]
   );
   const isPurchaseType = selectedProcessType === 'PURCHASE';
+  const isMaterialType = selectedProcessType === 'MATERIAL';
+  const isProductType = isPurchaseType || isMaterialType;
   const isPurchaseLastTab = activeTab === 1;
   const processTypeOptions = React.useMemo(
-    () => PROCESS_TYPES.filter((type) => !String(type).includes('LEAVE') && type !== 'IMPREST RETIREMENT'),
+    () =>
+      PROCESS_TYPES.filter(
+        (type) =>
+          !String(type).includes('LEAVE') &&
+          type !== 'IMPREST RETIREMENT' &&
+          type !== 'PAYROLL'
+      ),
     []
   );
 
@@ -414,23 +435,25 @@ function RequisitionsForm({
     let total = 0;
     let vatableAmount = 0;
 
-    (selectedProcessType === 'PURCHASE'
+    (isProductType
       ? requisition_product_items
       : requisition_ledger_items
     ).forEach((item) => {
       total += sanitizedNumber(item.rate) * sanitizedNumber(item.quantity);
     });
 
-    if (selectedProcessType === 'PURCHASE') {
+    if (isProductType) {
       setValue('product_items', requisition_product_items);
-      requisition_product_items.forEach((item) => {
-        vatableAmount +=
-          Number(item.quantity) *
-          Number(item.rate) *
-          (item.vat_percentage || 0) *
-          0.01;
-      });
-      setVatableAmount(vatableAmount);
+      if (isPurchaseType) {
+        requisition_product_items.forEach((item) => {
+          vatableAmount +=
+            Number(item.quantity) *
+            Number(item.rate) *
+            (item.vat_percentage || 0) *
+            0.01;
+        });
+      }
+      setVatableAmount(isPurchaseType ? vatableAmount : 0);
       setTotalAmount(total || 0);
     } else if (
       selectedProcessType === 'PAYMENT' ||
@@ -448,6 +471,8 @@ function RequisitionsForm({
     requisition_ledger_items,
     requisition_product_items,
     setValue,
+    isProductType,
+    isPurchaseType,
   ]);
 
   const [nextTab, setNextTab] = useState<number | null>(null);
@@ -475,10 +500,7 @@ function RequisitionsForm({
       handleSubmit((data) => {
         const updatedData = {
           ...data,
-          product_items:
-            selectedProcessType === 'PURCHASE'
-              ? requisition_product_items
-              : null,
+          product_items: isProductType ? requisition_product_items : null,
           ledger_items:
             selectedProcessType === 'PAYMENT' ||
             selectedProcessType === 'IMPREST'
@@ -502,8 +524,7 @@ function RequisitionsForm({
     handleSubmit((data) => {
       const updatedData = {
         ...data,
-        product_items:
-          selectedProcessType === 'PURCHASE' ? requisition_product_items : null,
+        product_items: isProductType ? requisition_product_items : null,
         ledger_items:
           selectedProcessType === 'PAYMENT' || selectedProcessType === 'IMPREST'
             ? requisition_ledger_items
@@ -755,9 +776,57 @@ function RequisitionsForm({
                     </Div>
                   </Grid>
                 )}
+
+                <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                  <Div sx={{ mt: 0.3 }}>
+                    <DatePicker
+                      label='Date Required'
+                      defaultValue={date_required}
+                      minDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.REQUISITIONS_BACKDATE
+                        )
+                          ? dayjs(
+                              authOrganization?.organization
+                                .recording_start_date
+                            )
+                          : dayjs().startOf('day')
+                      }
+                      maxDate={
+                        checkOrganizationPermission(
+                          PERMISSIONS.REQUISITIONS_POSTDATE
+                        )
+                          ? dayjs().add(10, 'year').endOf('year')
+                          : dayjs().endOf('day')
+                      }
+                      slotProps={{
+                        textField: {
+                          size: 'small',
+                          fullWidth: true,
+                          error: !!errors?.date_required,
+                          helperText: errors?.date_required?.message,
+                          inputProps: {
+                            readOnly: true,
+                          },
+                        },
+                      }}
+                      onChange={(newValue: any) => {
+                        setValue(
+                          'date_required',
+                          newValue ? newValue.toISOString() : null,
+                          {
+                            shouldValidate: true,
+                            shouldDirty: true,
+                          }
+                        );
+                      }}
+                    />
+                  </Div>
+                </Grid>
               </Grid>
             </form>
           </Grid>
+
           <Grid size={{ xs: 12, md: 4, lg: 3 }}>
             <RequisitionSummary
               isPurchase={selectedProcessType === 'PURCHASE'}
@@ -765,6 +834,7 @@ function RequisitionsForm({
               totalAmount={totalAmount}
             />
           </Grid>
+
           <Grid size={{ xs: 12 }}>
             {selectedProcessType === 'PAYMENT' ||
             selectedProcessType === 'IMPREST' ? (
@@ -777,19 +847,21 @@ function RequisitionsForm({
                 setRequisition_ledger_items={setRequisition_ledger_items}
                 requisition_ledger_items={requisition_ledger_items}
               />
-            ) : selectedProcessType === 'PURCHASE' ? (
+            ) : isProductType ? (
               <>
-                <Tabs
-                  value={activeTab}
-                  onChange={(e, newValue) => handleTabChange(e, newValue)}
-                  variant='scrollable'
-                  scrollButtons='auto'
-                  allowScrollButtonsMobile
-                  sx={{ mt: 1 }}
-                >
-                  <Tab label='Products' />
-                  <Tab label='Additional Costs' />
-                </Tabs>
+                {isPurchaseType && (
+                  <Tabs
+                    value={activeTab}
+                    onChange={(e, newValue) => handleTabChange(e, newValue)}
+                    variant='scrollable'
+                    scrollButtons='auto'
+                    allowScrollButtonsMobile
+                    sx={{ mt: 1 }}
+                  >
+                    <Tab label='Products' />
+                    <Tab label='Additional Costs' />
+                  </Tabs>
+                )}
                 {activeTab === 0 && (
                   <RequisitionProductItemForm
                     currencyDetails={currencyDetails}
@@ -798,14 +870,15 @@ function RequisitionsForm({
                     requisition_product_items={requisition_product_items}
                   />
                 )}
-                {activeTab === 1 && (
+                {isPurchaseType && activeTab === 1 && (
                   <PurchaseRequisitionAdditionalCostsTab
                     setIsDirty={setIsDirty}
                     additionalCosts={additionalCosts}
                     setAdditionalCosts={setAdditionalCosts}
                   />
                 )}
-                {activeTab === 1 &&
+                {isPurchaseType &&
+                  activeTab === 1 &&
                   additionalCosts.map((additionalCost, index) => {
                     return (
                       <PurchaseRequisitionAdditionalCostsTabRow
@@ -851,6 +924,21 @@ function RequisitionsForm({
               setRequisition_product_items={setRequisition_product_items}
               requisition_product_items={requisition_product_items}
               product_item={product_item}
+              showVendors={true}
+            />
+          ))}
+
+        {selectedProcessType === 'MATERIAL' &&
+          requisition_product_items.map((product_item, index) => (
+            <RequisitionProductItemRow
+              key={index}
+              index={index}
+              currencyDetails={currencyDetails}
+              costCenterId={selectedCostCenterId}
+              setRequisition_product_items={setRequisition_product_items}
+              requisition_product_items={requisition_product_items}
+              product_item={product_item}
+              showVendors={false}
             />
           ))}
 

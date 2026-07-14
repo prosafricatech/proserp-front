@@ -94,6 +94,9 @@ const EmployerContributionTypeForm = ({
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { organizationHasSubscribed, checkOrganizationPermission } =
     useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
 
   const [recentlyAddedPayableLedger, setRecentlyAddedPayableLedger] =
     useState<Ledger | null>(null);
@@ -246,6 +249,18 @@ const EmployerContributionTypeForm = ({
       .string()
       .oneOf(['fixed', 'percentage_of_basic', 'percentage_of_gross'])
       .required('Computation method is required'),
+    payable_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
+    expense_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('This field is required')
+      : yup.number().nullable(),
     description: yup
       .string()
       .max(500, 'Description cannot exceed 500 characters'),
@@ -272,8 +287,8 @@ const EmployerContributionTypeForm = ({
       category: contributionType?.category || 'statutory',
       computation_method: contributionType?.computation_method || 'fixed',
       default_value: contributionType?.default_value ?? 0,
-      payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
-      expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
+      payable_ledger_id: contributionType?.payable_ledger_id ?? undefined,
+      expense_ledger_id: contributionType?.expense_ledger_id ?? undefined,
       description: contributionType?.description || '',
       apply_scope: 'none',
     },
@@ -289,8 +304,8 @@ const EmployerContributionTypeForm = ({
       category: contributionType?.category || 'statutory',
       computation_method: contributionType?.computation_method || 'fixed',
       default_value: contributionType?.default_value ?? 0,
-      expense_ledger_id: contributionType?.expense_ledger_id ?? 0,
-      payable_ledger_id: contributionType?.payable_ledger_id ?? 0,
+      expense_ledger_id: contributionType?.expense_ledger_id ?? undefined,
+      payable_ledger_id: contributionType?.payable_ledger_id ?? undefined,
       description: contributionType?.description || '',
       apply_scope: 'none',
     });
@@ -471,7 +486,7 @@ const EmployerContributionTypeForm = ({
               </Div>
             </Grid>
 
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
+            {orgHasSubscribedAccountsAndFinance && (
               <>
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Div sx={{ my: 1 }}>
@@ -497,7 +512,7 @@ const EmployerContributionTypeForm = ({
                           });
                         } else {
                           setRecentlyAddedExpenseLedger(null);
-                          setValue('expense_ledger_id', 0, {
+                          setValue('expense_ledger_id', undefined, {
                             shouldValidate: true,
                             shouldDirty: true,
                           });
@@ -544,7 +559,7 @@ const EmployerContributionTypeForm = ({
                           });
                         } else {
                           setRecentlyAddedPayableLedger(null);
-                          setValue('payable_ledger_id', 0, {
+                          setValue('payable_ledger_id', undefined, {
                             shouldValidate: true,
                             shouldDirty: true,
                           });

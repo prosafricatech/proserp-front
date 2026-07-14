@@ -90,15 +90,12 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
 }) => {
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const queryClient = useQueryClient();
-  const [serverError, setServerError] = useState<Record<string, string> | null>(
+  const [serverError, setServerError] = useState<Record<string, string | string[]> | null>(
     null
   );
   const { enqueueSnackbar } = useSnackbar();
-  const resolvedApprovedDetails =
-    approvedDetails || prevApprovedDetails || null;
-  const isImprestPayment =
-    approvedRequisition?.process_type === 'IMPREST' ||
-    resolvedApprovedDetails?.process_type === 'IMPREST';
+  const resolvedApprovedDetails= approvedDetails || prevApprovedDetails || null;
+  const isImprestPayment= approvedRequisition?.process_type === 'IMPREST' || resolvedApprovedDetails?.process_type === 'IMPREST';
 
   const imprestLedger =
     approvedRequisition?.requisition?.imprest_ledger ||
@@ -106,30 +103,97 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     resolvedApprovedDetails?.requisition?.imprest_ledger ||
     null;
 
-  const resolvedImprestCreditLedgerName =
-    payment?.creditLedgerName || imprestLedger?.name || '';
+  const resolvedImprestCreditLedgerName= imprestLedger?.name || '';
 
   const [items, setItems] = useState<PaymentItem[]>(() => {
     if (payment) {
-      return payment.items.map((payItem) => {
-        const prevItem = prevApprovedDetails?.items.find(
-          (prevItem: any) => prevItem.ledger.id === payItem.debit_ledger_id
+      const previousItems: any[] = Array.isArray(prevApprovedDetails?.items)
+        ? prevApprovedDetails.items
+        : Array.isArray(resolvedApprovedDetails?.items)
+          ? resolvedApprovedDetails.items
+          : [];
+
+      return payment.items.map((payItem: any, index: number) => {
+        if (!isImprestPayment) {
+          const prevItem = previousItems.find(
+            (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
+          );
+
+          return {
+            ...payItem,
+            ledger: prevItem?.ledger || {
+              id: Number(payItem?.debit_ledger_id || 0),
+              name: String(payItem?.debitLedgerName || ''),
+            },
+            debit_ledger_id: Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
+            amount: Number(payItem?.amount || 0),
+            description: payItem?.description || payItem?.remarks || '',
+            unpaid_amount: prevItem
+              ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
+              : 0,
+            requisition_approval_ledger_item_id:
+              Number(payItem?.requisition_approval_ledger_item_id || prevItem?.id || 0) ||
+              undefined,
+          };
+        }
+
+        const prevItemById = payItem?.requisition_approval_ledger_item_id
+          ? previousItems.find(
+              (item: any) =>
+                Number(item?.id) ===
+                Number(payItem?.requisition_approval_ledger_item_id)
+            )
+          : null;
+
+        const prevItemByLedger = previousItems.find(
+          (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
         );
+
+        const prevItem = prevItemById || prevItemByLedger || previousItems[index] || null;
+
+        const forcedImprestLedger = imprestLedger
+          ? {
+              id: Number(imprestLedger.id),
+              name: String(imprestLedger.name || ''),
+            }
+          : null;
+
+        const fallbackLedger =
+          prevItem?.ledger ||
+          forcedImprestLedger || {
+            id: Number(payItem?.debit_ledger_id || 0),
+            name: String(payItem?.debitLedgerName || ''),
+          };
+
+        const paidAmount = Number(payItem?.amount || 0);
+        const previousUnpaid = Number(prevItem?.unpaid_amount || 0);
+        const computedUnpaid = Number.isFinite(previousUnpaid)
+          ? paidAmount + previousUnpaid
+          : Number(payItem?.unpaid_amount || paidAmount || 0);
 
         return {
           ...payItem,
-          ledger: prevItem.ledger,
-          debit_ledger_id: payItem.debit_ledger_id,
-          amount: payItem.amount,
-          description: payItem.description,
-          unpaid_amount: prevItem ? payItem.amount + prevItem.unpaid_amount : 0,
-          requisition_approval_ledger_item_id: prevItem.id,
+          ledger: forcedImprestLedger || fallbackLedger,
+          debit_ledger_id:
+            forcedImprestLedger?.id || Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
+          amount: paidAmount,
+          description:
+            payItem?.description ||
+            payItem?.remarks ||
+            prevItem?.remarks ||
+            prevItem?.description ||
+            '',
+          unpaid_amount: Number.isFinite(computedUnpaid) ? computedUnpaid : 0,
+          requisition_approval_ledger_item_id:
+            Number(
+              payItem?.requisition_approval_ledger_item_id || prevItem?.id || 0
+            ) || undefined,
         };
       });
     } else if (approvedDetails) {
       return approvedDetails.items
         .filter((item: any) => item.unpaid_amount > 0)
-        .map((item: any) => ({
+        .map((item: any) => ({  
           ...item,
           debit_ledger_id: item.ledger.id,
           amount: item.unpaid_amount,
@@ -249,6 +313,19 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     }
 
     setItems(updatedItems);
+
+    if (serverError?.[`items.${index}.${key}`]) {
+      setServerError((currentErrors) => {
+        if (!currentErrors) {
+          return currentErrors;
+        }
+
+        const nextErrors = { ...currentErrors };
+        delete nextErrors[`items.${index}.${key}`];
+
+        return Object.keys(nextErrors).length > 0 ? nextErrors : null;
+      });
+    }
   };
 
   const totalAmount = items.reduce(
@@ -276,19 +353,13 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       items: items
         .filter((item) => item.unpaid_amount > 0)
         .map((item) => ({
-          debit_ledger_id: item.debit_ledger_id,
+          debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
           requisition_approval_ledger_item_id:
             item.requisition_approval_ledger_item_id,
           amount: Number.isFinite(Number(item.amount))
             ? Number(item.amount)
             : 0,
-          description: (() => {
-            const base = (item.remarks || item.description || '-').trim();
-            const debitLabel = item?.ledger?.name?.trim();
-            if (!isImprestPayment) return base;
-            if (!debitLabel) return base;
-            return base ? `${base} (${debitLabel})` : `(${debitLabel})`;
-          })(),
+          description: item.remarks || item.description
         })),
     };
     await savePayment(updatedData);
@@ -449,10 +520,11 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           )}
 
           <ApprovedPaymentItemForm
-            approvedDetails={resolvedApprovedDetails}
+            approvedDetails={!payment && !!resolvedApprovedDetails}
             items={items}
             handleItemChange={handleItemChange}
             isImprestPayment={isImprestPayment}
+            serverError={serverError}
             payFromLedgerName={
               isImprestPayment ? resolvedImprestCreditLedgerName : undefined
             }

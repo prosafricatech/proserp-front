@@ -2,15 +2,12 @@
 'use client';
 
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
-import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { MenuItemProps } from '@jumbo/types';
 import {
   CheckCircleOutline,
   DeleteOutlined,
   DownloadOutlined,
-  MoreHorizOutlined,
   PaidOutlined,
   PreviewOutlined,
 } from '@mui/icons-material';
@@ -21,6 +18,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   LinearProgress,
   Stack,
   TextField,
@@ -295,60 +293,8 @@ const PayrollRunItemAction = ({
   const isPosted = status === 'posted';
   const isPaid = status === 'paid';
 
-  const menuItems: MenuItemProps[] = [];
-
-  // Preview action - always show
-  menuItems.push({
-    icon: <PreviewOutlined color='primary' />,
-    title: 'Preview Salary Sheet',
-    action: 'preview',
-  });
-
-  if (isFromPayrollPeriodsList) {
-    if (isDraft) {
-      menuItems.push({
-        icon: <DeleteOutlined color='error' />,
-        title: 'Delete',
-        action: 'delete',
-      });
-    }
-  } else {
-    if (isDraft) {
-      menuItems.push({
-        icon: <DeleteOutlined color='error' />,
-        title: 'Delete',
-        action: 'delete',
-      });
-    }
-
-    if (isSubmitted) {
-      menuItems.push({
-        icon: <CheckCircleOutline color='success' />,
-        title: hasApprovalChain ? 'Approve Level' : 'Approve',
-        action: hasApprovalChain ? 'chainApprove' : 'approve',
-      });
-    }
-
-    if (isPosted && !isPaid) {
-      menuItems.push({
-        icon: <PaidOutlined color='success' />,
-        title: 'Pay Employees',
-        action: 'pay',
-      });
-    }
-
-    // Add Export option for paid/approved/posted statuses
-    if (isPaid || isPosted || isApproved) {
-      menuItems.push({
-        icon: <DownloadOutlined color='primary' />,
-        title: 'Export Payslip',
-        action: 'export',
-      });
-    }
-  }
-
-  const handleItemAction = (menuItem: MenuItemProps) => {
-    switch (menuItem.action) {
+  const handleItemAction = (action: string) => {
+    switch (action) {
       case 'preview':
         handleOpenSalarySheet();
         break;
@@ -421,15 +367,48 @@ const PayrollRunItemAction = ({
     <>
       {(isSubmitting || isApproving) && <LinearProgress />}
 
-      <JumboDdMenu
-        icon={
-          <Tooltip title='Actions'>
-            <MoreHorizOutlined fontSize='small' />
-          </Tooltip>
-        }
-        menuItems={menuItems}
-        onClickCallback={handleItemAction}
-      />
+      <Tooltip title='Preview Salary Sheet'>
+        <IconButton size='small' onClick={() => handleItemAction('preview')}>
+          <PreviewOutlined color='primary' />
+        </IconButton>
+      </Tooltip>
+
+      {isDraft && (
+        <Tooltip title='Delete'>
+          <IconButton size='small' onClick={() => handleItemAction('delete')}>
+            <DeleteOutlined color='error' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {!isFromPayrollPeriodsList && isSubmitted && (
+        <Tooltip title={hasApprovalChain ? 'Approve Level' : 'Approve'}>
+          <IconButton
+            size='small'
+            onClick={() =>
+              handleItemAction(hasApprovalChain ? 'chainApprove' : 'approve')
+            }
+          >
+            <CheckCircleOutline color='success' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {!isFromPayrollPeriodsList && isPosted && !isPaid && (
+        <Tooltip title='Pay Employees'>
+          <IconButton size='small' onClick={() => handleItemAction('pay')}>
+            <PaidOutlined color='success' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {!isFromPayrollPeriodsList && (isPaid || isPosted || isApproved) && (
+        <Tooltip title='Export Payslip'>
+          <IconButton size='small' onClick={() => handleItemAction('export')}>
+            <DownloadOutlined color='primary' />
+          </IconButton>
+        </Tooltip>
+      )}
 
       {/* Chain Approval Dialog */}
       <Dialog

@@ -94,31 +94,7 @@ const validationSchema = yup.object({
     .number()
     .required('Quantity is required')
     .positive('Quantity must be positive')
-    .typeError('Valid quantity is required')
-    .test('max-uncertified', function (value) {
-      if (!value) return true;
-
-      const deliverableId = this.parent.project_deliverable_id;
-      const uncertified = this.parent.response_uncertified_quantity ?? 0;
-
-      const alreadyClaimed = this.options.context?.deliverableItems
-        .filter((item: ClaimedDeliverableItem, idx: number) => {
-          const isSameDeliverable =
-            (item.project_deliverable_id || item.project_deliverable?.id) === deliverableId;
-          const isNotCurrentItem = idx !== this.options.context?.index;
-          return isSameDeliverable && isNotCurrentItem;
-        })
-        .reduce((sum: number, item: ClaimedDeliverableItem) => sum + (Number(item.certified_quantity) || 0), 0);
-
-      const remaining = uncertified - alreadyClaimed;
-
-      if (value > remaining) {
-        return this.createError({
-          message: `Max allowable: ${remaining} (Uncertified: ${uncertified}, Already claimed: ${alreadyClaimed})`,
-        });
-      }
-      return true;
-    }),
+    .typeError('Valid quantity is required'),
 });
 
 const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = ({
@@ -142,8 +118,6 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
   const [unitToDisplay, setUnitToDisplay] = useState<string | undefined>(
     deliverableItem?.unit_symbol || deliverableItem?.measurement_unit?.symbol
   );
-
-  console.log(deliverableItem)
 
   const {
     handleSubmit,

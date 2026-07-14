@@ -2,9 +2,10 @@ export const PROCESS_TYPES = [
   'PURCHASE',
   'PAYMENT',
   'IMPREST',
+  'MATERIAL',
   'IMPREST RETIREMENT',
   'LEAVE REQUEST',
-  // 'PAYROLL'
+  'PAYROLL',
 ];
 
 export const getProcessTypes = (hasHumanResourcesModule: boolean) => {

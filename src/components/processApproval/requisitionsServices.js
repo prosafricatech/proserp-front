@@ -68,6 +68,16 @@ requisitionsServices.getApprovedPayments = async (id) => {
     return data;
 }
 
+requisitionsServices.getApprovedIssues = async (id) => {
+    const { data } = await axios.get(`/api/processApproval/${id}/issues`);
+    return data;
+}
+
+requisitionsServices.issueApprovedItems = async (id, payload) => {
+    const { data } = await axios.post(`/api/processApproval/${id}/issues`, payload);
+    return data;
+}
+
 requisitionsServices.updateRequisition = async (requisition) => {
     const { data } = await axios.put(`/api/processApproval/${requisition.id}/updateRequisition`, requisition)
     return data;

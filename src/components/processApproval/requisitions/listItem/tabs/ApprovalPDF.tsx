@@ -33,7 +33,10 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
   const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
-  const isPurchase = approval.requisition.process_type?.toLowerCase() === 'purchase';
+  const isPurchase = ['purchase', 'material'].includes(
+    approval.requisition.process_type?.toLowerCase() || ''
+  );
+  const isMaterial = approval.requisition.process_type?.toLowerCase() === 'material';
   const isImprest = approval.requisition.process_type?.toLowerCase() === 'imprest';
   const additionalCosts = isPurchase
     ? ((approval.additional_costs || (approval.requisition as any)?.additional_costs || []) as any[])
@@ -76,8 +79,10 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{...pdfStyles.majorInfo, color: mainColor }}>
-              {isPurchase
-                ? 'Purchase Requisition Approval'
+              {isMaterial
+                ? 'Material Requisition Approval'
+                : isPurchase
+                  ? 'Purchase Requisition Approval'
                 : isImprest
                   ? 'Imprest Requisition Approval'
                   : 'Payment Requisition Approval'}
@@ -90,6 +95,14 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           <View style={{ flex: 1, padding: 0.5 }}>
             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Approval Date</Text>
             <Text style={{...pdfStyles.minInfo }}>{readableDate(approval.approval_date)}</Text>
+          </View>
+          <View style={{ flex: 1, padding: 0.5 }}>
+            <Text style={{...pdfStyles.minInfo, color: mainColor }}>Date Required</Text>
+            <Text style={{...pdfStyles.minInfo }}>
+              {approval.requisition?.date_required
+                ? readableDate(approval.requisition.date_required)
+                : '-'}
+            </Text>
           </View>
         </View>
         

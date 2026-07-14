@@ -185,7 +185,7 @@ const PurchaseRequisitionAdditionalCostsTab = ({
               }}
               defaultValue={additionalCost && additionalCost.amount}
               error={errors && !!errors?.amount}
-              helperText={errors && errors?.amount?.message}
+              helperText={errors && errors?.amount?.message as any}
               onChange={(e) => {
                 setValue(
                   `amount`,

@@ -3,6 +3,7 @@ import {
   sanitizedNumber,
 } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
 import {
   Approval,
   Requisition,
@@ -15,6 +16,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
+  Autocomplete,
   Button,
   DialogActions,
   DialogContent,
@@ -26,7 +28,7 @@ import {
   Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
@@ -47,19 +49,39 @@ interface FormValues {
   id?: number;
   requisition_id: number;
   approval_date: string;
+  date_required?: string;
   process_type: string;
   remarks?: string;
   product_items?: any[];
   ledger_items?: any[];
   additional_costs?: any[];
+  imprest_ledger_id?: number | null;
   chain_level_id?: number;
   submit_type?: string;
 }
 
+type ImprestLedgerOption = {
+  id: number;
+  type?: string;
+  ledger_id?: number;
+  name?: string;
+  ledger?: {
+    id?: number;
+    name?: string;
+  };
+};
+
+const extractList = (payload: any) => {
+  if (Array.isArray(payload)) return payload;
+  if (Array.isArray(payload?.data)) return payload.data;
+  if (Array.isArray(payload?.data?.data)) return payload.data.data;
+  return [];
+};
+
 interface ItemChangeParams {
   index: number;
   key: string;
-  value: number | null;
+  value: any;
 }
 
 function ApprovalForm({
@@ -69,6 +91,9 @@ function ApprovalForm({
   isEdit = false,
 }: ApprovalFormProps) {
   const [approvalDate] = useState<Dayjs>(dayjs());
+  const [dateRequired] = useState<Dayjs | null>(
+    requisition?.date_required ? dayjs(requisition.date_required) : null
+  );
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { checkOrganizationPermission } = useJumboAuth();
@@ -88,6 +113,10 @@ function ApprovalForm({
       quantity: item.quantity || 0,
       rate: item.rate || 0,
       remarks: item.remarks || '',
+      fulfillment_type: (item as any).fulfillment_type || 'PURCHASE',
+      store_id: (item as any).store_id || null,
+      store: (item as any).store || null,
+      stock_balances: (item as any).stock_balances || [],
     }));
   };
 
@@ -145,6 +174,8 @@ function ApprovalForm({
 
   const isPurchaseType =
     requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isMaterialType =
+    requisition?.approval_chain?.process_type?.toLowerCase() === 'material';
   const isImprestType =
     requisition?.approval_chain?.process_type?.toLowerCase() === 'imprest';
   const isFinal = isEdit
@@ -152,13 +183,15 @@ function ApprovalForm({
     : requisition?.next_approval_level?.is_final;
   const approvalDisplayValue = React.useMemo(() => {
     const lineItemsTotal = (
-      isPurchaseType ? requisitionProductItem : requisitionLedgerItem
+      isPurchaseType || isMaterialType
+        ? requisitionProductItem
+        : requisitionLedgerItem
     ).reduce(
       (sum, item) => sum + Number(item.quantity || 0) * Number(item.rate || 0),
       0
     );
 
-    if (!isPurchaseType) {
+    if (!isPurchaseType && !isMaterialType) {
       return lineItemsTotal;
     }
 
@@ -179,49 +212,113 @@ function ApprovalForm({
     return lineItemsTotal + vatTotal + additionalTotal;
   }, [
     isPurchaseType,
+    isMaterialType,
     requisitionProductItem,
     requisitionLedgerItem,
     requisitionAdditionalCosts,
   ]);
+
+  const hasImprestFulfillment = React.useMemo(
+    () =>
+      isMaterialType &&
+      requisitionProductItem.some(
+        (item: any) => item.fulfillment_type === 'IMPREST'
+      ),
+    [isMaterialType, requisitionProductItem]
+  );
+
+  const { data: myLedgersResponse } = useQuery({
+    queryKey: ['my-ledgers'],
+    queryFn: userLedgerServices.getMyLedgers,
+    enabled: isMaterialType,
+  });
+
+  const imprestLedgerOptions = React.useMemo(
+    () => extractList(myLedgersResponse) as ImprestLedgerOption[],
+    [myLedgersResponse]
+  );
+
+  const filteredImprestLedgerOptions = React.useMemo(
+    () =>
+      imprestLedgerOptions.filter((item) => {
+        const typeValue = String(item.type || '').toLowerCase();
+        return typeValue === 'imprest' || !typeValue;
+      }),
+    [imprestLedgerOptions]
+  );
   const isLeaveType =
     requisition?.approval_chain?.process_type?.toLowerCase() ===
     'leave_request';
-  const approvalRequisitionItems: RequisitionItem[] =
-    approval?.requisition && 'items' in approval.requisition
-      ? approval.requisition.items || []
-      : [];
-  const leaveSummaryItems =
-    requisition.leave_items ||
-    approval?.requisition?.leave_items ||
-    requisitionItems ||
-    approvalRequisitionItems ||
-    [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup
       .string()
       .required('Approval Date is required')
       .typeError('Approval Date is required'),
-    product_items: isPurchaseType
-      ? yup.array().of(
-          yup.object().shape({
-            rate: isFinal
-              ? yup
-                  .number()
-                  .required('Rate is required for final approval')
-                  .positive('Rate is required for final approval')
-                  .typeError('Rate is required for final approval')
-              : yup.number().nullable(),
-            quantity: isFinal
-              ? yup
-                  .number()
-                  .required('Quantity is required for final approval')
-                  .positive('Quantity is required for final approval')
-                  .typeError('Quantity is required for final approval')
-              : yup.number().nullable(),
-          })
-        )
-      : yup.array().nullable(),
+    date_required: yup.string().nullable(),
+    product_items:
+      isPurchaseType || isMaterialType
+        ? yup.array().of(
+            yup.object().shape({
+              fulfillment_type: isMaterialType
+                ? yup
+                    .string()
+                    .required('Fulfillment type is required')
+                    .oneOf(['STOCK', 'PURCHASE', 'IMPREST'])
+                : yup.string().nullable(),
+              store_id: isMaterialType
+                ? yup
+                    .number()
+                    .nullable()
+                    .when('fulfillment_type', {
+                      is: 'STOCK',
+                      then: (schema) =>
+                        schema
+                          .required('Store is required for STOCK fulfillment')
+                          .typeError('Store is required for STOCK fulfillment'),
+                      otherwise: (schema) => schema.nullable(),
+                    })
+                : yup.number().nullable(),
+              rate: isMaterialType
+                ? yup
+                    .number()
+                    .nullable()
+                    .when('fulfillment_type', {
+                      is: (value: string) =>
+                        value === 'PURCHASE' || value === 'IMPREST',
+                      then: (schema) =>
+                        schema
+                          .required('Rate is required')
+                          .positive('Rate is required')
+                          .typeError('Rate is required'),
+                      otherwise: (schema) => schema.nullable(),
+                    })
+                : isFinal
+                  ? yup
+                      .number()
+                      .required('Rate is required for final approval')
+                      .positive('Rate is required for final approval')
+                      .typeError('Rate is required for final approval')
+                  : yup.number().nullable(),
+              quantity:
+                isFinal || isMaterialType
+                  ? yup
+                      .number()
+                      .required('Quantity is required')
+                      .positive('Quantity is required')
+                      .typeError('Quantity is required')
+                  : yup.number().nullable(),
+            })
+          )
+        : yup.array().nullable(),
+    imprest_ledger_id: yup
+      .number()
+      .nullable()
+      .test(
+        'material-imprest-ledger',
+        'Imprest Ledger is required when any line is Imprest',
+        (value) => !(isMaterialType && hasImprestFulfillment) || !!value
+      ),
     additional_costs: isPurchaseType
       ? yup.array().of(
           yup.object().shape({
@@ -234,7 +331,7 @@ function ApprovalForm({
         )
       : yup.array().nullable(),
     ledger_items:
-      !isPurchaseType && !isLeaveType
+      !isPurchaseType && !isMaterialType && !isLeaveType
         ? yup.array().of(
             yup.object().shape({
               rate: yup
@@ -255,6 +352,7 @@ function ApprovalForm({
   const {
     handleSubmit,
     setValue,
+    watch,
     register,
     formState: { errors },
   } = useForm<FormValues>({
@@ -263,12 +361,20 @@ function ApprovalForm({
       id: approval?.id,
       requisition_id: requisition.id,
       approval_date: approvalDate.toISOString(),
+      date_required: dateRequired?.toISOString() || '',
       process_type: requisition?.approval_chain?.process_type,
       remarks: approval?.remarks || requisition?.remarks || '',
-      product_items: isPurchaseType ? approval?.items || requisitionItems : [],
+      product_items:
+        isPurchaseType || isMaterialType
+          ? approval?.items || requisitionItems
+          : [],
+      imprest_ledger_id:
+        isMaterialType || isImprestType
+          ? (approval as any)?.imprest_ledger?.id || null
+          : null,
       additional_costs: isPurchaseType ? getInitialAdditionalCosts() : [],
       ledger_items:
-        !isPurchaseType && !isLeaveType
+        !isPurchaseType && !isMaterialType && !isLeaveType
           ? approval?.items || requisitionItems
           : [],
       chain_level_id:
@@ -308,7 +414,9 @@ function ApprovalForm({
     let updatedItems;
 
     if (
-      requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase'
+      ['purchase', 'material'].includes(
+        requisition?.approval_chain?.process_type?.toLowerCase() || ''
+      )
     ) {
       updatedItems = [...requisitionProductItem];
       if (updatedItems[index]) {
@@ -344,14 +452,16 @@ function ApprovalForm({
   };
 
   useEffect(() => {
-    if (isPurchaseType) {
+    if (isPurchaseType || isMaterialType) {
       const product_items = requisitionProductItem?.map((item) => ({
         requisition_product_item_id: item.id,
         vat_percentage: item.vat_percentage,
         quantity: item.quantity,
         rate: item.rate,
         remarks: item.remarks,
-        vendors: item.vendors,
+        vendors: isMaterialType ? undefined : item.vendors,
+        fulfillment_type: (item as any).fulfillment_type,
+        store_id: (item as any).store_id,
       }));
 
       setValue('product_items', product_items, {
@@ -359,21 +469,23 @@ function ApprovalForm({
         shouldDirty: true,
       });
 
-      const additional_costs = requisitionAdditionalCosts?.map((cost) => ({
-        requisition_additional_cost_id: cost.id,
-        ledger_id: cost.ledger_id || cost.ledger?.id,
-        credit_ledger_name: cost.credit_ledger_name || cost.name,
-        currency_id: cost.currency_id || cost.currency?.id,
-        exchange_rate: Number(cost.exchange_rate || 1),
-        reference: cost.reference,
-        amount: Number(cost.amount || 0),
-      }));
+      if (isPurchaseType) {
+        const additional_costs = requisitionAdditionalCosts?.map((cost) => ({
+          requisition_additional_cost_id: cost.id,
+          ledger_id: cost.ledger_id || cost.ledger?.id,
+          credit_ledger_name: cost.credit_ledger_name || cost.name,
+          currency_id: cost.currency_id || cost.currency?.id,
+          exchange_rate: Number(cost.exchange_rate || 1),
+          reference: cost.reference,
+          amount: Number(cost.amount || 0),
+        }));
 
-      setValue('additional_costs', additional_costs, {
-        shouldValidate: true,
-        shouldDirty: true,
-      });
-    } else {
+        setValue('additional_costs', additional_costs, {
+          shouldValidate: true,
+          shouldDirty: true,
+        });
+      }
+    } else if (!isMaterialType) {
       const ledger_items = requisitionLedgerItem?.map((item) => ({
         requisition_ledger_item_id: item.id,
         quantity: item.quantity,
@@ -393,19 +505,39 @@ function ApprovalForm({
     requisitionAdditionalCosts,
     setValue,
     isPurchaseType,
+    isMaterialType,
   ]);
+
+  useEffect(() => {
+    if (isMaterialType && !hasImprestFulfillment) {
+      setValue('imprest_ledger_id', null, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+  }, [isMaterialType, hasImprestFulfillment, setValue]);
 
   const saveMutation = React.useMemo(() => {
     return isEdit ? editApprovalRequisition.mutate : approveRequisition.mutate;
   }, [isEdit, editApprovalRequisition, approveRequisition]);
 
+  const watchedImprestLedgerId = watch('imprest_ledger_id');
+  const watchedApprovalDate = watch('approval_date');
+
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
     const payload = {
       ...formData,
-      product_items: isPurchaseType ? formData.product_items : undefined,
+      product_items:
+        isPurchaseType || isMaterialType ? formData.product_items : undefined,
       additional_costs: isPurchaseType ? formData.additional_costs : undefined,
+      imprest_ledger_id:
+        isMaterialType && hasImprestFulfillment
+          ? formData.imprest_ledger_id
+          : undefined,
       ledger_items:
-        !isPurchaseType && !isLeaveType ? formData.ledger_items : undefined,
+        !isPurchaseType && !isMaterialType && !isLeaveType
+          ? formData.ledger_items
+          : undefined,
     };
     saveMutation(payload as FormValues);
   };
@@ -527,6 +659,35 @@ function ApprovalForm({
               />
             </Div>
           </Grid>
+          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+            <Div sx={{ mt: 1 }}>
+              <DateTimePicker
+                label='Date Required'
+                defaultValue={dateRequired}
+                minDate={
+                  watchedApprovalDate
+                    ? dayjs(watchedApprovalDate)
+                    : dayjs(requisition.requisition_date)
+                }
+                slotProps={{
+                  textField: {
+                    size: 'small',
+                    fullWidth: true,
+                    error: !!errors?.date_required,
+                    helperText: errors?.date_required?.message,
+                  },
+                }}
+                onChange={(newValue: Dayjs | null) => {
+                  if (newValue) {
+                    setValue('date_required', newValue.toISOString(), {
+                      shouldValidate: true,
+                      shouldDirty: true,
+                    });
+                  }
+                }}
+              />
+            </Div>
+          </Grid>
         </Grid>
       </DialogTitle>
       <DialogContent>
@@ -619,6 +780,71 @@ function ApprovalForm({
                   No additional costs on this requisition.
                 </Typography>
               )}
+          </>
+        ) : isMaterialType ? (
+          <>
+            {hasImprestFulfillment && (
+              <Grid container spacing={1} sx={{ mb: 2 }}>
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Autocomplete
+                    options={filteredImprestLedgerOptions}
+                    isOptionEqualToValue={(option, value) => {
+                      const optionId =
+                        option.ledger_id || option.ledger?.id || option.id;
+                      const valueId =
+                        value.ledger_id || value.ledger?.id || value.id;
+                      return Number(optionId) === Number(valueId);
+                    }}
+                    getOptionLabel={(option) =>
+                      option.ledger?.name ||
+                      option.name ||
+                      'Unknown Imprest Ledger'
+                    }
+                    value={
+                      filteredImprestLedgerOptions.find((option) => {
+                        const optionId =
+                          option.ledger_id || option.ledger?.id || option.id;
+                        return (
+                          Number(optionId) === Number(watchedImprestLedgerId)
+                        );
+                      }) || null
+                    }
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label='Imprest Ledger'
+                        size='small'
+                        fullWidth
+                        error={!!(errors as any).imprest_ledger_id}
+                        helperText={
+                          (errors as any).imprest_ledger_id?.message as string
+                        }
+                      />
+                    )}
+                    onChange={(_, selected: any) => {
+                      const ledgerId =
+                        selected?.ledger_id ||
+                        selected?.ledger?.id ||
+                        selected?.id ||
+                        null;
+                      setValue('imprest_ledger_id', ledgerId, {
+                        shouldValidate: true,
+                        shouldDirty: true,
+                      });
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            )}
+            <ApprovalRequisitionProductItem
+              approval={approval}
+              requisition={requisition}
+              errors={(errors as any).product_items}
+              requisitionProductItem={requisitionProductItem}
+              setRequisitionProductItem={setRequisitionProductItem}
+              handleItemChange={handleItemChange}
+              isMaterialMode={true}
+            />
           </>
         ) : (
           <ApprovalRequisitionLedgerItem

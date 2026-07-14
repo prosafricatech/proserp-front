@@ -538,6 +538,11 @@ function ProformaForm({ toggleOpen, proforma = null }: ProformaFormProps) {
                               shouldDirty: true,
                             });
                           }}
+                          onInputChange={(e, newValue) => {
+                            setValue('remarks', newValue || undefined, {
+                              shouldDirty: true,
+                            });
+                          }}
                         />
                       </Div>
                     </Grid>

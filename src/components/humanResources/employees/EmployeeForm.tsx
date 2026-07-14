@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
@@ -31,6 +32,8 @@ import { Controller, useForm, useWatch } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
+import { useDesignations } from '../designations/DesignationsProvider';
+import { Designation } from '../designations/DesignationsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
 
@@ -59,6 +62,15 @@ interface OptionType {
   value: string;
 }
 
+const getErrorMessage = (error: any) => {
+  if (axios.isAxiosError(error)) {
+    const errorObj = error.response?.data;
+    if (typeof errorObj === 'object') {
+      return Object.entries(errorObj)[0];
+    }
+  }
+};
+
 const EmployeeForm = ({
   setOpenDialog,
   employee = null,
@@ -66,6 +78,8 @@ const EmployeeForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { authUser, checkOrganizationPermission } = useJumboAuth();
+  const { designations, isFetching: fetchingDesignations } = useDesignations();
+  const designationsData = (designations || []) as Designation[];
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
 
@@ -155,7 +169,7 @@ const EmployeeForm = ({
         date_of_birth: formatDateToAPI(data.date_of_birth),
         join_date: formatDateToAPI(data.join_date),
         contract_start_date: formatDateToAPI(data.contract_start_date),
-        user_id: authUser?.user.id,
+        // user_id: authUser?.user.id,
         reason: data.reason || null,
       };
       return humanResourcesServices.addEmployee(formattedData);
@@ -166,6 +180,8 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
+      console.error('err: ', err.response.data);
+      // console.log('getErrorMessage: ', getErrorMessage(err));
       enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
         variant: 'error',
       });
@@ -220,6 +236,7 @@ const EmployeeForm = ({
     payable_ledger_name: yup.string().nullable().optional(),
     employment_type: yup.string().required('This field is required'),
     join_date: yup.string().nullable(),
+    designation_id: yup.number().nullable().typeError('This field is required'),
     basic_salary: yup
       .number()
       .nullable()
@@ -262,6 +279,7 @@ const EmployeeForm = ({
       payable_ledger_name: '',
       employment_type: '',
       join_date: '',
+      designation_id: undefined,
       basic_salary: null,
       contract_start_date: null,
       reason: '',
@@ -301,6 +319,7 @@ const EmployeeForm = ({
     const resolvedEmployment =
       EMPLOYMENT_OPTIONS.find((o) => o.value === employee.employment_type) ??
       null;
+    const designation = (employee as any)?.active_contract?.designation;
     const contractBasicSalary = (employee as any)?.active_contract
       ?.basic_salary;
     const contractStart = (employee as any)?.active_contract?.start_date;
@@ -334,6 +353,7 @@ const EmployeeForm = ({
       payable_ledger_name: '',
       employment_type: resolvedEmployment?.value || '',
       join_date: normalizedJoinDate,
+      designation_id: designation?.id || undefined,
       basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
@@ -684,7 +704,44 @@ const EmployeeForm = ({
               </Div>
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              {fetchingDesignations ? (
+                <LinearProgress />
+              ) : (
+                <Controller
+                  name='designation_id'
+                  control={control}
+                  rules={{ required: 'Designation is required' }}
+                  render={({ field, fieldState }) => (
+                    <Autocomplete
+                      size='small'
+                      options={designationsData}
+                      isOptionEqualToValue={(option, value) =>
+                        option.id === value.id
+                      }
+                      getOptionLabel={(option) => option.title || ' '}
+                      value={
+                        designationsData.find((e) => e.id === field.value) ||
+                        null
+                      }
+                      onChange={(event, newValue) => {
+                        field.onChange(newValue?.id || null);
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label='Designation'
+                          error={!!fieldState.error}
+                          helperText={fieldState.error?.message}
+                        />
+                      )}
+                    />
+                  )}
+                />
+              )}
+            </Grid>
+
+            <Grid size={{ xs: 12, md: 4 }}>
               <TextField
                 label='Basic Salary'
                 size='small'
@@ -699,7 +756,7 @@ const EmployeeForm = ({
               />
             </Grid>
 
-            <Grid size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 4 }}>
               <Controller
                 name='contract_start_date'
                 control={control}

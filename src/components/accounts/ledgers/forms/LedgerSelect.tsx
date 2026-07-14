@@ -1,6 +1,14 @@
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Autocomplete, Box, Checkbox, Chip, TextField } from '@mui/material';
-import React, { useEffect } from 'react';
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  Chip,
+  TextField,
+  CircularProgress,
+  createFilterOptions,
+} from '@mui/material';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
 
 const EMPTY_LEDGER_REFS: LedgerRef[] = [];
@@ -53,105 +61,155 @@ function LedgerSelect(props: LedgerSelectProps) {
     startAdornment,
   } = props;
 
-  const { ledgerOptions, extractLedgers } = useLedgerSelect();
-  const [options, setOptions] = React.useState<Ledger[]>([]);
-  const [selectedValue, setSelectedValue] = React.useState<
-    Ledger | Ledger[] | null
-  >(defaultValue ? defaultValue : multiple ? [] : value);
+  const { extractLedgers, isLoaded } = useLedgerSelect();
+  const [selectedValue, setSelectedValue] = useState<Ledger | Ledger[] | null>(
+    defaultValue ? defaultValue : multiple ? [] : value
+  );
+  const [inputValue, setInputValue] = useState('');
+
+  const toLedgerId = useCallback((entry: LedgerRef): number => {
+    return typeof entry === 'number' ? entry : entry.id;
+  }, []);
+
+  // Memoize filter sets to avoid recreation
+  const filterSets = useMemo(() => {
+    const allowedLedgerIds = new Set(allowedLedgers.map(toLedgerId));
+    const notAllowedLedgerIds = new Set(notAllowedLedgers.map(toLedgerId));
+    return { allowedLedgerIds, notAllowedLedgerIds };
+  }, [allowedLedgers, notAllowedLedgers, toLedgerId]);
+
+  // Compute options directly from provider cache; avoids per-instance async churn.
+  const options = useMemo(() => {
+    if (!isLoaded) return [];
+
+    try {
+      const { allowedLedgerIds, notAllowedLedgerIds } = filterSets;
+      return extractLedgers(
+        notAllowedGroups,
+        allowedGroups,
+        allowedLedgerIds,
+        notAllowedLedgerIds
+      );
+    } catch (error) {
+      console.error('Error generating ledger options:', error);
+      return [];
+    }
+  }, [
+    isLoaded,
+    extractLedgers,
+    notAllowedGroups,
+    allowedGroups,
+    filterSets,
+  ]);
 
   useEffect(() => {
     if (value) setSelectedValue(value);
   }, [value]);
 
-  const toLedgerId = React.useCallback((entry: LedgerRef) => {
-    return typeof entry === 'number' ? entry : entry.id;
-  }, []);
-
-  React.useEffect(() => {
-    const extractedOptions: Ledger[] = [];
-    extractLedgers(
-      ledgerOptions,
-      notAllowedGroups,
-      allowedGroups,
-      (updater) => {
-        if (typeof updater === 'function') {
-          const next = updater(extractedOptions);
-          extractedOptions.splice(0, extractedOptions.length, ...next);
-        } else {
-          extractedOptions.splice(0, extractedOptions.length, ...updater);
-        }
-      }
-    );
-
-    const allowedLedgerIds = new Set(allowedLedgers.map(toLedgerId));
-    const notAllowedLedgerIds = new Set(notAllowedLedgers.map(toLedgerId));
-
-    const filtered = extractedOptions.filter((ledger) => {
-      if (notAllowedLedgerIds.has(ledger.id)) return false;
-      if (allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledger.id))
-        return false;
-      return true;
-    });
-
-    setOptions((prev) => {
-      if (
-        prev.length === filtered.length &&
-        prev.every((ledger, index) => ledger.id === filtered[index]?.id)
-      ) {
-        return prev;
-      }
-
-      return filtered;
-    });
-  }, [
-    ledgerOptions,
-    allowedGroups,
-    notAllowedGroups,
-    allowedLedgers,
-    notAllowedLedgers,
-    extractLedgers,
-    toLedgerId,
-  ]);
-
-  React.useEffect(() => {
+  useEffect(() => {
     if (!addedLedger) return;
 
-    const value = multiple ? [addedLedger] : addedLedger;
-    setSelectedValue(value);
-    onChange?.(value);
-  }, [addedLedger]);
+    const newValue = multiple ? [addedLedger] : addedLedger;
+    setSelectedValue(newValue);
+    onChange?.(newValue);
+  }, [addedLedger, multiple, onChange]);
+
+  // Memoize option equality check
+  const isOptionEqualToValue = useCallback((option: Ledger, val: Ledger) => {
+    return option.id === val.id;
+  }, []);
+
+  // Memoize getOptionLabel
+  const getOptionLabel = useCallback((option: Ledger) => {
+    return option.name;
+  }, []);
+
+  const baseFilter = useMemo(
+    () =>
+      createFilterOptions<Ledger>({
+        trim: true,
+        stringify: (option) => `${option.name} ${option.code ?? ''}`,
+      }),
+    []
+  );
+
+  // Render a small subset on initial open; show more only after typing.
+  const filterOptions = useCallback(
+    (opts: Ledger[], state: { inputValue: string }) => {
+      const filtered = baseFilter(opts, state as any);
+      const hasSearch = !!state.inputValue?.trim();
+      return hasSearch ? filtered.slice(0, 400) : filtered.slice(0, 120);
+    },
+    [baseFilter]
+  );
+
+  // Memoize renderInput
+  const renderInput = useCallback((params: any) => (
+    <TextField
+      {...params}
+      size='small'
+      fullWidth
+      label={label}
+      error={!!frontError}
+      helperText={frontError?.message}
+      InputProps={{
+        ...params.InputProps,
+        startAdornment: (
+          <>
+            {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
+            {params.InputProps.startAdornment}
+          </>
+        ),
+      }}
+    />
+  ), [label, frontError, startAdornment]);
+
+  // Memoize renderTags
+  const renderTags = useCallback((tagValue: Ledger[], getTagProps: any) => {
+    return tagValue.map((option: Ledger, index: number) => {
+      const { key, ...restProps } = getTagProps({ index });
+      return (
+        <Chip
+          {...restProps}
+          key={`${option.id}-${key}`}
+          label={option.name}
+        />
+      );
+    });
+  }, []);
+
+  // Show loading state
+  if (!isLoaded) {
+    return (
+      <TextField
+        size='small'
+        fullWidth
+        label={label}
+        disabled
+        InputProps={{
+          startAdornment: startAdornment,
+          endAdornment: <CircularProgress size={20} />
+        }}
+      />
+    );
+  }
 
   return (
     <Autocomplete
       options={options}
-      getOptionLabel={(option: Ledger) => option.name}
+      filterOptions={filterOptions}
+      getOptionLabel={getOptionLabel}
       value={selectedValue}
+      inputValue={inputValue}
+      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       multiple={multiple}
-      isOptionEqualToValue={(option: Ledger, value: Ledger) =>
-        option.id === value.id
-      }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          size='small'
-          fullWidth
-          label={label}
-          error={!!frontError}
-          helperText={frontError?.message}
-          InputProps={{
-            ...params.InputProps,
-            startAdornment: (
-              <>
-                {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
-                {params.InputProps.startAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      isOptionEqualToValue={isOptionEqualToValue}
+      loading={!isLoaded}
+      loadingText="Loading ledgers..."
+      renderInput={renderInput}
       {...(multiple && {
         renderOption: (
-          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key }, // extend type to include key optionally
+          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
           option: Ledger,
           { selected }
         ) => {
@@ -177,18 +235,7 @@ function LedgerSelect(props: LedgerSelectProps) {
         onChange(newValue);
         setSelectedValue(newValue);
       }}
-      renderTags={(tagValue: Ledger[], getTagProps) => {
-        return tagValue.map((option: Ledger, index: number) => {
-          const { key, ...restProps } = getTagProps({ index });
-          return (
-            <Chip
-              {...restProps}
-              key={`${option.id}-${key}`}
-              label={option.name}
-            />
-          );
-        });
-      }}
+      renderTags={renderTags}
     />
   );
 }

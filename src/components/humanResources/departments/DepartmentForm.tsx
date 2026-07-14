@@ -1,8 +1,10 @@
 'use client';
 
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import { MODULES } from '@/utilities/constants/modules';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -65,8 +67,14 @@ const DepartmentForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const dictionary = useDictionary();
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { organizationHasSubscribed } = useJumboAuth();
+  const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
 
-  const [recentlyAddedLedger, setRecentlyAddedLedger] = useState<Ledger | null>(null);
+  const [recentlyAddedLedger, setRecentlyAddedLedger] = useState<Ledger | null>(
+    null
+  );
 
   const defaultValue = useMemo(() => {
     return ungroupedLedgerOptions.find(
@@ -143,11 +151,12 @@ const DepartmentForm = ({
     name: yup.string().required('Name is required').max(255),
     code: yup.string().max(50),
     description: yup.string(),
-    salary_expense_ledger_id: yup
-      .number()
-      .nullable()
-      .optional()
-      .positive('Invalid ledger selected'),
+    salary_expense_ledger_id: orgHasSubscribedAccountsAndFinance
+      ? yup
+          .number()
+          .required('This field is required')
+          .positive('Invalid ledger selected')
+      : yup.number().nullable().optional().positive('Invalid ledger selected'),
   });
 
   const {
@@ -242,39 +251,44 @@ const DepartmentForm = ({
             </Grid>
 
             {/* Salary Expense Ledger Selector */}
-            <Grid size={{ xs: 12, md: 5 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='salary_expense_ledger_id'
-                  control={control}
-                  render={({ field }) => (
-                    <LedgerSelect
-                      label='Salary Expense Ledger (Optional)'
-                      allowedGroups={['Expenses']}
-                      frontError={errors.salary_expense_ledger_id}
-                      key='salary-expense-ledger'
-                      value={recentlyAddedLedger || undefined}
-                      defaultValue={department?.salary_expense_ledger_id || undefined as any}
-                      onChange={(newValue) => {
-                        if (newValue && !Array.isArray(newValue)) {
-                          setRecentlyAddedLedger(newValue);
-                          setValue('salary_expense_ledger_id', newValue.id, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
-                        } else {
-                          setRecentlyAddedLedger(null);
-                          setValue('salary_expense_ledger_id', null, {
-                            shouldValidate: true,
-                            shouldDirty: true,
-                          });
+            {orgHasSubscribedAccountsAndFinance && (
+              <Grid size={{ xs: 12, md: 5 }}>
+                <Div sx={{ mt: 1, mb: 1 }}>
+                  <Controller
+                    name='salary_expense_ledger_id'
+                    control={control}
+                    render={({ field }) => (
+                      <LedgerSelect
+                        label='Salary Expense Ledger'
+                        allowedGroups={['Expenses']}
+                        frontError={errors.salary_expense_ledger_id}
+                        key='salary-expense-ledger'
+                        value={recentlyAddedLedger || undefined}
+                        defaultValue={
+                          department?.salary_expense_ledger_id ||
+                          (undefined as any)
                         }
-                      }}
-                    />
-                  )}
-                />
-              </Div>
-            </Grid>
+                        onChange={(newValue) => {
+                          if (newValue && !Array.isArray(newValue)) {
+                            setRecentlyAddedLedger(newValue);
+                            setValue('salary_expense_ledger_id', newValue.id, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          } else {
+                            setRecentlyAddedLedger(null);
+                            setValue('salary_expense_ledger_id', null, {
+                              shouldValidate: true,
+                              shouldDirty: true,
+                            });
+                          }
+                        }}
+                      />
+                    )}
+                  />
+                </Div>
+              </Grid>
+            )}
 
             <Grid size={{ xs: 12 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
