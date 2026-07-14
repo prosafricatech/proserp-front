@@ -28,8 +28,7 @@ import {
   Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
 import React, { useEffect, useState } from 'react';
@@ -50,7 +49,7 @@ interface FormValues {
   id?: number;
   requisition_id: number;
   approval_date: string;
-  date_required: string;
+  date_required?: string;
   process_type: string;
   remarks?: string;
   product_items?: any[];
@@ -256,6 +255,7 @@ function ApprovalForm({
       .string()
       .required('Approval Date is required')
       .typeError('Approval Date is required'),
+    date_required: yup.string().nullable(),
     product_items:
       isPurchaseType || isMaterialType
         ? yup.array().of(
@@ -300,13 +300,14 @@ function ApprovalForm({
                       .positive('Rate is required for final approval')
                       .typeError('Rate is required for final approval')
                   : yup.number().nullable(),
-              quantity: isFinal || isMaterialType
-                ? yup
-                    .number()
-                    .required('Quantity is required')
-                    .positive('Quantity is required')
-                    .typeError('Quantity is required')
-                : yup.number().nullable(),
+              quantity:
+                isFinal || isMaterialType
+                  ? yup
+                      .number()
+                      .required('Quantity is required')
+                      .positive('Quantity is required')
+                      .typeError('Quantity is required')
+                  : yup.number().nullable(),
             })
           )
         : yup.array().nullable(),
@@ -803,7 +804,9 @@ function ApprovalForm({
                       filteredImprestLedgerOptions.find((option) => {
                         const optionId =
                           option.ledger_id || option.ledger?.id || option.id;
-                        return Number(optionId) === Number(watchedImprestLedgerId);
+                        return (
+                          Number(optionId) === Number(watchedImprestLedgerId)
+                        );
                       }) || null
                     }
                     renderInput={(params) => (
