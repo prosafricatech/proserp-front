@@ -24,7 +24,6 @@ import {
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
@@ -73,22 +72,13 @@ const EMPLOYMENT_OPTIONS: OptionType[] = [
   { label: 'Casual', value: 'casual' },
 ];
 
-const getErrorMessage = (error: any) => {
-  if (axios.isAxiosError(error)) {
-    const errorObj = error.response?.data;
-    if (typeof errorObj === 'object') {
-      return Object.entries(errorObj)[0];
-    }
-  }
-};
-
 const EmployeeForm = ({
   setOpenDialog,
   employee = null,
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authUser, checkOrganizationPermission } = useJumboAuth();
+  const { checkOrganizationPermission } = useJumboAuth();
   const { designations, isFetching: fetchingDesignations } = useDesignations();
   const designationsData = (designations || []) as Designation[];
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -170,7 +160,6 @@ const EmployeeForm = ({
         date_of_birth: formatDateToAPI(data.date_of_birth),
         join_date: formatDateToAPI(data.join_date),
         contract_start_date: formatDateToAPI(data.contract_start_date),
-        // user_id: authUser?.user.id,
         reason: data.reason || null,
       };
       return humanResourcesServices.addEmployee(formattedData);
@@ -182,7 +171,6 @@ const EmployeeForm = ({
     },
     onError: (err: any) => {
       console.error('err: ', err.response.data);
-      // console.log('getErrorMessage: ', getErrorMessage(err));
       enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
         variant: 'error',
       });
