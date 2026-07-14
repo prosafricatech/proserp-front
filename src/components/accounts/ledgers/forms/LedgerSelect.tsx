@@ -35,7 +35,6 @@ interface LedgerSelectProps {
     option: Ledger,
     state: { selected: boolean }
   ) => React.ReactNode;
-  limit?: number; // Add limit prop for performance
 }
 
 function LedgerSelect(props: LedgerSelectProps) {
@@ -52,95 +51,98 @@ function LedgerSelect(props: LedgerSelectProps) {
     addedLedger = null,
     multiple = false,
     startAdornment,
-    limit = 1000, // Default limit to prevent rendering too many items
   } = props;
 
-  const { extractLedgers, isLoading: isLoadingLedgers } = useLedgerSelect();
+  const { extractLedgers, isLoaded } = useLedgerSelect();
   const [options, setOptions] = useState<Ledger[]>([]);
   const [selectedValue, setSelectedValue] = useState<Ledger | Ledger[] | null>(
     defaultValue ? defaultValue : multiple ? [] : value
   );
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const processingRef = useRef(false);
+  const lastFilterKeyRef = useRef<string>('');
 
-  const toLedgerId = useCallback((entry: LedgerRef) => {
+  const toLedgerId = useCallback((entry: LedgerRef): number => {
     return typeof entry === 'number' ? entry : entry.id;
   }, []);
 
-  // Create Set for faster lookups
-  const allowedLedgerIds = useMemo(() => {
-    return new Set(allowedLedgers.map(toLedgerId));
-  }, [allowedLedgers, toLedgerId]);
+  // Memoize filter sets to avoid recreation
+  const filterSets = useMemo(() => {
+    const allowedLedgerIds = new Set(allowedLedgers.map(toLedgerId));
+    const notAllowedLedgerIds = new Set(notAllowedLedgers.map(toLedgerId));
+    return { allowedLedgerIds, notAllowedLedgerIds };
+  }, [allowedLedgers, notAllowedLedgers, toLedgerId]);
 
-  const notAllowedLedgerIds = useMemo(() => {
-    return new Set(notAllowedLedgers.map(toLedgerId));
-  }, [notAllowedLedgers, toLedgerId]);
+  // Generate a unique key for the current filter combination
+  const getFilterKey = useCallback(() => {
+    const notAllowedKey = [...notAllowedGroups].sort().join('|');
+    const allowedKey = [...allowedGroups].sort().join('|');
+    const allowedIdsKey = [...allowedLedgers].map(toLedgerId).sort().join('|');
+    const notAllowedIdsKey = [...notAllowedLedgers].map(toLedgerId).sort().join('|');
+    return `${notAllowedKey}|${allowedKey}|${allowedIdsKey}|${notAllowedIdsKey}`;
+  }, [notAllowedGroups, allowedGroups, allowedLedgers, notAllowedLedgers, toLedgerId]);
 
-  // Use requestIdleCallback or setTimeout for async processing
-  const processLedgers = useCallback(() => {
-    if (processingRef.current) return;
+  // Optimized option generation
+  const generateOptions = useCallback(() => {
+    if (!isLoaded || processingRef.current) return;
+
+    const filterKey = getFilterKey();
+    if (filterKey === lastFilterKeyRef.current) {
+      // Skip if filters haven't changed
+      return;
+    }
+
     processingRef.current = true;
-    setIsProcessing(true);
+    setIsLoading(true);
 
-    const processData = () => {
+    // Use setTimeout to avoid blocking the main thread
+    setTimeout(() => {
       try {
-        // Extract ledgers based on filters - now returns array directly
-        const extractedOptions = extractLedgers(notAllowedGroups, allowedGroups);
+        const { allowedLedgerIds, notAllowedLedgerIds } = filterSets;
         
-        // Filter by allowed/not allowed ledgers
-        let filtered = extractedOptions;
-        
-        if (notAllowedLedgerIds.size > 0) {
-          filtered = filtered.filter(ledger => !notAllowedLedgerIds.has(ledger.id));
-        }
-        
-        if (allowedLedgerIds.size > 0) {
-          filtered = filtered.filter(ledger => allowedLedgerIds.has(ledger.id));
-        }
+        const result = extractLedgers(
+          notAllowedGroups,
+          allowedGroups,
+          allowedLedgerIds,
+          notAllowedLedgerIds
+        );
 
-        // Limit results to prevent rendering issues
-        if (filtered.length > limit) {
-          filtered = filtered.slice(0, limit);
-        }
-
-        // Update state
-        setOptions(prev => {
-          // Only update if the arrays are actually different
-          if (prev.length === filtered.length && 
-              prev.every((ledger, index) => ledger.id === filtered[index]?.id)) {
+        // Update state with the new options
+        setOptions((prev) => {
+          // Only update if the result is different
+          if (prev.length === result.length && 
+              prev.every((item, index) => item.id === result[index]?.id)) {
             return prev;
           }
-          return filtered;
+          return result;
         });
+        
+        lastFilterKeyRef.current = filterKey;
       } catch (error) {
-        console.error('Error processing ledgers:', error);
+        console.error('Error generating ledger options:', error);
       } finally {
         processingRef.current = false;
-        setIsProcessing(false);
+        setIsLoading(false);
       }
-    };
+    }, 10);
+  }, [isLoaded, extractLedgers, notAllowedGroups, allowedGroups, filterSets, getFilterKey]);
 
-    // Use requestIdleCallback for better performance with large datasets
-    if (typeof requestIdleCallback !== 'undefined') {
-      requestIdleCallback(processData, { timeout: 2000 });
-    } else {
-      setTimeout(processData, 0);
-    }
-  }, [extractLedgers, notAllowedGroups, allowedGroups, notAllowedLedgerIds, allowedLedgerIds, limit]);
-
-  // Process ledgers when dependencies change
+  // Generate options when dependencies change
   useEffect(() => {
-    processLedgers();
-  }, [processLedgers]);
+    generateOptions();
+  }, [
+    isLoaded,
+    notAllowedGroups,
+    allowedGroups,
+    allowedLedgers,
+    notAllowedLedgers,
+    generateOptions
+  ]);
 
-  // Update selected value when prop changes
   useEffect(() => {
-    if (value !== undefined && value !== null) {
-      setSelectedValue(value);
-    }
+    if (value) setSelectedValue(value);
   }, [value]);
 
-  // Handle added ledger
   useEffect(() => {
     if (!addedLedger) return;
 
@@ -149,11 +151,53 @@ function LedgerSelect(props: LedgerSelectProps) {
     onChange?.(newValue);
   }, [addedLedger, multiple, onChange]);
 
-  // Memoize options for Autocomplete
-  const memoizedOptions = useMemo(() => options, [options]);
+  // Memoize option equality check
+  const isOptionEqualToValue = useCallback((option: Ledger, val: Ledger) => {
+    return option.id === val.id;
+  }, []);
 
-  // If still loading, show loading state
-  if (isLoadingLedgers || isProcessing) {
+  // Memoize getOptionLabel
+  const getOptionLabel = useCallback((option: Ledger) => {
+    return option.name;
+  }, []);
+
+  // Memoize renderInput
+  const renderInput = useCallback((params: any) => (
+    <TextField
+      {...params}
+      size='small'
+      fullWidth
+      label={label}
+      error={!!frontError}
+      helperText={frontError?.message}
+      InputProps={{
+        ...params.InputProps,
+        startAdornment: (
+          <>
+            {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
+            {params.InputProps.startAdornment}
+          </>
+        ),
+      }}
+    />
+  ), [label, frontError, startAdornment]);
+
+  // Memoize renderTags
+  const renderTags = useCallback((tagValue: Ledger[], getTagProps: any) => {
+    return tagValue.map((option: Ledger, index: number) => {
+      const { key, ...restProps } = getTagProps({ index });
+      return (
+        <Chip
+          {...restProps}
+          key={`${option.id}-${key}`}
+          label={option.name}
+        />
+      );
+    });
+  }, []);
+
+  // Show loading state
+  if (!isLoaded) {
     return (
       <TextField
         size='small'
@@ -161,6 +205,7 @@ function LedgerSelect(props: LedgerSelectProps) {
         label={label}
         disabled
         InputProps={{
+          startAdornment: startAdornment,
           endAdornment: <CircularProgress size={20} />
         }}
       />
@@ -169,32 +214,14 @@ function LedgerSelect(props: LedgerSelectProps) {
 
   return (
     <Autocomplete
-      options={memoizedOptions}
-      getOptionLabel={(option: Ledger) => option.name}
+      options={options}
+      getOptionLabel={getOptionLabel}
       value={selectedValue}
       multiple={multiple}
-      isOptionEqualToValue={(option: Ledger, value: Ledger) =>
-        option.id === value.id
-      }
-      renderInput={(params) => (
-        <TextField
-          {...params}
-          size='small'
-          fullWidth
-          label={label}
-          error={!!frontError}
-          helperText={frontError?.message}
-          InputProps={{
-            ...params.InputProps,
-            startAdornment: (
-              <>
-                {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
-                {params.InputProps.startAdornment}
-              </>
-            ),
-          }}
-        />
-      )}
+      isOptionEqualToValue={isOptionEqualToValue}
+      loading={isLoading}
+      loadingText="Loading ledgers..."
+      renderInput={renderInput}
       {...(multiple && {
         renderOption: (
           props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
@@ -223,33 +250,7 @@ function LedgerSelect(props: LedgerSelectProps) {
         onChange(newValue);
         setSelectedValue(newValue);
       }}
-      renderTags={(tagValue: Ledger[], getTagProps) => {
-        return tagValue.map((option: Ledger, index: number) => {
-          const { key, ...restProps } = getTagProps({ index });
-          return (
-            <Chip
-              {...restProps}
-              key={`${option.id}-${key}`}
-              label={option.name}
-            />
-          );
-        });
-      }}
-      // Performance optimizations
-      disableListWrap={true}
-      autoHighlight={false}
-      blurOnSelect={true}
-      {...(memoizedOptions.length > 100 && {
-        ListboxProps: {
-          style: { maxHeight: 300 },
-          ...(typeof window !== 'undefined' && {
-            // Virtual scroll for large lists
-            onScroll: (e: React.UIEvent<HTMLUListElement>) => {
-              // Could implement virtual scrolling here if needed
-            }
-          })
-        }
-      })}
+      renderTags={renderTags}
     />
   );
 }
