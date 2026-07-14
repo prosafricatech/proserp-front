@@ -27,8 +27,8 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm, useFormState } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
@@ -62,6 +62,17 @@ interface OptionType {
   value: string;
 }
 
+// Constants
+const GENDER_OPTIONS: OptionType[] = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
+const EMPLOYMENT_OPTIONS: OptionType[] = [
+  { label: 'Full Time', value: 'full_time' },
+  { label: 'Part Time', value: 'part_time' },
+  { label: 'Casual', value: 'casual' },
+];
+
 const getErrorMessage = (error: any) => {
   if (axios.isAxiosError(error)) {
     const errorObj = error.response?.data;
@@ -83,17 +94,6 @@ const EmployeeForm = ({
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
 
-  // Constants
-  const GENDER_OPTIONS: OptionType[] = [
-    { label: 'Male', value: 'male' },
-    { label: 'Female', value: 'female' },
-  ];
-  const EMPLOYMENT_OPTIONS: OptionType[] = [
-    { label: 'Full Time', value: 'full_time' },
-    { label: 'Part Time', value: 'part_time' },
-    { label: 'Casual', value: 'casual' },
-  ];
-
   const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
   const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
   const [employeeDoB, setEmployeeDoB] = useState<string>('');
@@ -112,6 +112,7 @@ const EmployeeForm = ({
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
+    enabled: !!employee,
   });
 
   useEffect(() => {
@@ -286,28 +287,9 @@ const EmployeeForm = ({
     },
   });
 
-  const createPayable = useWatch({ control, name: 'create_payable' });
-
-  // Watch for changes to detect if cost center or department changed
-  const watchCostCenterId = watch('cost_center_id');
-  const watchDepartmentId = watch('department_id');
-  const [originalCostCenterId, setOriginalCostCenterId] = useState<
-    number | null
-  >(null);
-  const [originalDepartmentId, setOriginalDepartmentId] = useState<
-    number | null
-  >(null);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
-
-  // Check if cost center or department has changed from original values
-  const hasCostCenterChanged =
-    originalCostCenterId !== null && originalCostCenterId !== watchCostCenterId;
-  const hasDepartmentChanged =
-    originalDepartmentId !== null && originalDepartmentId !== watchDepartmentId;
-
-  // Only show reason field when there's an actual change AND user has interacted
+  const { isDirty, dirtyFields } = useFormState({ control });
   const showReasonField =
-    hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
+    !!employee && (dirtyFields.cost_center_id || dirtyFields.department_id);
 
   // Populate form when editing
   useEffect(() => {
@@ -329,10 +311,6 @@ const EmployeeForm = ({
     setEmployeeDoB(normalizedDateOfBirth);
     setJoinDate(normalizedJoinDate);
     setContractStartDate(normalizedContractStartDate || contractStart || '');
-
-    // Store original values for comparison
-    setOriginalCostCenterId(employee.cost_center_id ?? null);
-    setOriginalDepartmentId(employee.department_id ?? null);
 
     reset({
       employee_number: employee.employee_number || '',
@@ -358,30 +336,15 @@ const EmployeeForm = ({
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
     });
-
-    // Reset interaction flag when employee changes
-    setHasUserInteracted(false);
   }, [employee, reset]);
 
-  // Track user interaction with cost center and department fields
-  useEffect(() => {
-    if (employee) {
-      // If values differ from original, user has made changes
-      const hasChanged =
-        originalCostCenterId !== watchCostCenterId ||
-        originalDepartmentId !== watchDepartmentId;
+  // Memoize the lookup so it only recalculates when designation list or selected ID changes
+  const watchDesignationId = watch('designation_id');
 
-      if (hasChanged) {
-        setHasUserInteracted(true);
-      }
-    }
-  }, [
-    watchCostCenterId,
-    watchDepartmentId,
-    originalCostCenterId,
-    originalDepartmentId,
-    employee,
-  ]);
+  const selectedDesignation = useMemo(() => {
+    if (!watchDesignationId || !designationsData.length) return null;
+    return designationsData.find((d) => d.id === watchDesignationId) || null;
+  }, [watchDesignationId, designationsData]);
 
   const onSubmit = (data: FormData) => {
     employee?.id ? updateEmployee(data) : addEmployee(data);
@@ -720,10 +683,7 @@ const EmployeeForm = ({
                         option.id === value.id
                       }
                       getOptionLabel={(option) => option.title || ' '}
-                      value={
-                        designationsData.find((e) => e.id === field.value) ||
-                        null
-                      }
+                      value={selectedDesignation}
                       onChange={(event, newValue) => {
                         field.onChange(newValue?.id || null);
                       }}
