@@ -193,6 +193,7 @@ const PurchasesManifestPDF = ({
 }: PurchasesManifestPDFProps) => {
   const mainColor = (organization as any)?.settings?.main_color || '#2113AD';
   const lightColor = (organization as any)?.settings?.light_color || '#d9dfef';
+  console.log('organization: ', organization);
   const contrastText =
     (organization as any)?.settings?.contrast_text || '#FFFFFF';
 
@@ -433,11 +434,11 @@ const PurchasesManifestPDF = ({
 
                 <View style={{ ...styles.cell, flex: productFlex }}>
                   <Text>{item.product?.name || '-'}</Text>
-                  {item.product?.type && (
+                  {/* {item.product?.type && (
                     <Text style={styles.cellSecondary}>
                       Type: {item.product.type}
                     </Text>
-                  )}
+                  )} */}
                 </View>
 
                 <Text

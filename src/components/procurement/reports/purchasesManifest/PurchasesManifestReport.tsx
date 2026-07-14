@@ -86,11 +86,9 @@ const PurchasesManifestReport = ({
 
   const getMovements = async (filters: any) => {
     try {
-      console.log('filters: ', filters);
       setisFetching(true);
       const data = await purchaseServices.getPurchasesManifestData(filters);
       setReportsData(data);
-      console.log('data: ', data);
       setisFetching(false);
     } catch (error) {
       enqueueSnackbar('an error occurred', { variant: 'error' });

@@ -236,7 +236,7 @@ function AttachmentForm({
               size='small'
               onClick={() => setAttachDialog?.(false)}
             >
-              Cancel
+              Close
             </Button>
           </Grid>
         </DialogActions>
