@@ -435,7 +435,25 @@ function Sidebar({ menus }) {
                 // Accounts > Transactions
                 if (!checkOrganizationPermission([
                     PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
-                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+                    PERMISSIONS.PAYMENTS_READ,
+                    PERMISSIONS.PAYMENTS_CREATE,
+                    PERMISSIONS.PAYMENTS_EDIT,
+                    PERMISSIONS.PAYMENTS_DELETE,
+                    PERMISSIONS.FUND_TRANSFERS_READ,
+                    PERMISSIONS.FUND_TRANSFERS_CREATE,
+                    PERMISSIONS.FUND_TRANSFERS_DELETE,
+                    PERMISSIONS.FUND_TRANSFERS_EDIT,
+                    PERMISSIONS.RECEIPTS_READ,
+                    PERMISSIONS.RECEIPTS_EDIT,
+                    PERMISSIONS.RECEIPTS_CREATE,
+                    PERMISSIONS.RECEIPTS_DELETE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_READ,
+                    PERMISSIONS.JOURNAL_VOUCHERS_CREATE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_DELETE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_EDIT,
                 ])) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
                     if (accountsMenuIndex >= 0) {
@@ -448,7 +466,25 @@ function Sidebar({ menus }) {
                 //Accounts > Transactions
                 if (!checkOrganizationPermission([
                     PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
-                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+                    PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+                    PERMISSIONS.PAYMENTS_READ,
+                    PERMISSIONS.PAYMENTS_CREATE,
+                    PERMISSIONS.PAYMENTS_EDIT,
+                    PERMISSIONS.PAYMENTS_DELETE,
+                    PERMISSIONS.FUND_TRANSFERS_READ,
+                    PERMISSIONS.FUND_TRANSFERS_CREATE,
+                    PERMISSIONS.FUND_TRANSFERS_DELETE,
+                    PERMISSIONS.FUND_TRANSFERS_EDIT,
+                    PERMISSIONS.RECEIPTS_READ,
+                    PERMISSIONS.RECEIPTS_EDIT,
+                    PERMISSIONS.RECEIPTS_CREATE,
+                    PERMISSIONS.RECEIPTS_DELETE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_READ,
+                    PERMISSIONS.JOURNAL_VOUCHERS_CREATE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_DELETE,
+                    PERMISSIONS.JOURNAL_VOUCHERS_EDIT,
                 ])) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
                     if (accountsMenuIndex >= 0) {

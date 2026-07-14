@@ -360,6 +360,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
               sale={sale}
               vat_percentage={vat_percentage}
               organization={organization}
+              setValue={setValue}
             />
           </Grid>
 

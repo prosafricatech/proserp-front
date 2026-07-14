@@ -9,7 +9,7 @@ import {
 import { useQuery } from '@tanstack/react-query';
 import match from 'autosuggest-highlight/match';
 import parse from 'autosuggest-highlight/parse';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import storeServices from './store-services';
 
 function StoreSelector({
@@ -17,6 +17,7 @@ function StoreSelector({
   frontError = null,
   multiple = false,
   label = 'Store',
+  value = null,
   defaultValue,
   allowSubStores = false,
   excludeStores = null,
@@ -31,6 +32,10 @@ function StoreSelector({
   const [selectedStore, setSelectedStore] = useState(
     defaultValue ? defaultValue : multiple ? [] : null
   );
+
+  useEffect(() => {
+    if (value) setSelectedStore(value);
+  }, [value]);
 
   // Engine for stores when allowSubStores is true
   const toOptions = (stores, depth = 0, parent_id = null) => {

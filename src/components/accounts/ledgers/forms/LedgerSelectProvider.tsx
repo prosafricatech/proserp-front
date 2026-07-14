@@ -45,112 +45,135 @@ interface LedgerSelectProviderProps {
   children: ReactNode;
 }
 
-// Optimized recursive function that builds results without state updates
-function buildLedgerList(
-  groups: LedgerGroup[] | undefined,
-  notAllowedGroupsSet: Set<string>,
-  allowedGroupsSet: Set<string>,
-  allowedLedgerIds?: Set<number>,
-  notAllowedLedgerIds?: Set<number>,
-  parentNatureId: number | null = null,
-  inheritedAllowed: boolean = false
-): Ledger[] {
+interface IndexedLedgerRecord {
+  ledgerId: number;
+  projectedLedger: Ledger;
+  groupPath: string[];
+}
+
+interface PathBucket {
+  groupPath: string[];
+  ledgers: IndexedLedgerRecord[];
+}
+
+// Build once: flattened ledger records with group path metadata.
+// Filtering is done later without recursive traversal or re-spreading objects.
+function buildLedgerIndex(groups: LedgerGroup[] | undefined): IndexedLedgerRecord[] {
   if (!groups || groups.length === 0) return [];
 
-  const result: Ledger[] = [];
+  const result: IndexedLedgerRecord[] = [];
+  const currentPath: string[] = [];
 
-  for (const group of groups) {
-    const currentNatureId = parentNatureId ?? group.nature_id;
-    const groupName = group.original_name;
-    
-    // Determine if this group should be processed
-    const isGroupBlocked = notAllowedGroupsSet.has(groupName);
-    const isGroupAllowed = allowedGroupsSet.size === 0 || allowedGroupsSet.has(groupName);
-    
-    // A group is accessible if:
-    // 1. It's not blocked
-    // 2. Either allowedGroups is empty OR this group is in allowedGroups
-    // 3. OR it inherited allowed status from parent
-    const isAccessible = !isGroupBlocked && (isGroupAllowed || inheritedAllowed);
-    
-    // Process ledgers in this group
-    if (group.ledgers && group.ledgers.length > 0 && isAccessible) {
-      for (const ledger of group.ledgers) {
-        const ledgerId = ledger.id;
-        
-        // Apply ledger-level filters
-        if (notAllowedLedgerIds?.has(ledgerId)) continue;
-        if (allowedLedgerIds && allowedLedgerIds.size > 0 && !allowedLedgerIds.has(ledgerId)) continue;
-        
-        result.push({
-          ...ledger,
-          nature_id: currentNatureId
-        });
-      }
-    }
-    
-    // Process children recursively
-    if (group.children_with_ledgers && group.children_with_ledgers.length > 0) {
-      // Children inherit allowed status only if this group is accessible
-      const childInheritedAllowed = isAccessible || inheritedAllowed;
-      
-      const childLedgers = buildLedgerList(
-        group.children_with_ledgers,
-        notAllowedGroupsSet,
-        allowedGroupsSet,
-        allowedLedgerIds,
-        notAllowedLedgerIds,
-        currentNatureId,
-        childInheritedAllowed
-      );
-      
-      if (childLedgers.length > 0) {
-        result.push(...childLedgers);
-      }
-    }
-  }
+  const walk = (currentGroups: LedgerGroup[], parentNatureId: number | null) => {
+    for (const group of currentGroups) {
+      const currentNatureId = parentNatureId ?? group.nature_id;
+      currentPath.push(group.original_name);
 
+      if (group.ledgers && group.ledgers.length > 0) {
+        for (const ledger of group.ledgers) {
+          result.push({
+            ledgerId: ledger.id,
+            projectedLedger: {
+              ...ledger,
+              nature_id: currentNatureId,
+            },
+            groupPath: currentPath.slice(),
+          });
+        }
+      }
+
+      if (group.children_with_ledgers && group.children_with_ledgers.length > 0) {
+        walk(group.children_with_ledgers, currentNatureId);
+      }
+
+      currentPath.pop();
+    }
+  };
+
+  walk(groups, null);
   return result;
 }
 
-// Pre-compute the full flattened list once
-function flattenAllLedgers(groups: LedgerGroup[] | undefined): Ledger[] {
-  if (!groups) return [];
-  
-  const emptyNotAllowed = new Set<string>();
-  const emptyAllowed = new Set<string>();
-  
-  return buildLedgerList(
-    groups,
-    emptyNotAllowed,
-    emptyAllowed,
-    undefined,
-    undefined,
-    null,
-    false
-  );
+// Mirrors previous recursive accessibility logic exactly, but runs over precomputed paths.
+function isLedgerPathAccessible(
+  groupPath: string[],
+  notAllowedGroupsSet: Set<string>,
+  allowedGroupsSet: Set<string>
+): boolean {
+  let inheritedAllowed = false;
+
+  for (let i = 0; i < groupPath.length; i++) {
+    const groupName = groupPath[i];
+    const isGroupBlocked = notAllowedGroupsSet.has(groupName);
+    const isGroupAllowed: boolean =
+      allowedGroupsSet.size === 0 || allowedGroupsSet.has(groupName);
+    const isAccessible: boolean =
+      !isGroupBlocked && (isGroupAllowed || inheritedAllowed);
+
+    if (i === groupPath.length - 1) {
+      return isAccessible;
+    }
+
+    inheritedAllowed = isAccessible || inheritedAllowed;
+  }
+
+  return false;
 }
 
 function LedgerSelectProvider({ children }: LedgerSelectProviderProps) {
   const { data: ledgerOptions, isFetched, isLoading } = useQuery<LedgerGroup[]>({
     queryKey: ['ledgerOptions'],
     queryFn: ledgerServices.getLedgerOptions,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000, // 5 minutes cache
   });
 
-  // Pre-compute the full flattened list once
-  const fullLedgerList = useMemo(() => {
-    return flattenAllLedgers(ledgerOptions);
+  // Build searchable/indexed ledger records once per options refresh.
+  const indexedLedgers = useMemo(() => {
+    return buildLedgerIndex(ledgerOptions);
   }, [ledgerOptions]);
 
   // Memoize ungrouped ledger options
   const ungroupedLedgerOptions = useMemo(() => {
-    return fullLedgerList;
-  }, [fullLedgerList]);
+    return indexedLedgers.map((record) => record.projectedLedger);
+  }, [indexedLedgers]);
+
+  // Group ledgers by unique path once so access checks run per-path, not per-ledger.
+  const pathBuckets = useMemo<PathBucket[]>(() => {
+    if (indexedLedgers.length === 0) return [];
+
+    const bucketMap = new Map<string, PathBucket>();
+    for (const record of indexedLedgers) {
+      const pathKey = record.groupPath.join('>');
+      let bucket = bucketMap.get(pathKey);
+      if (!bucket) {
+        bucket = {
+          groupPath: record.groupPath,
+          ledgers: [],
+        };
+        bucketMap.set(pathKey, bucket);
+      }
+      bucket.ledgers.push(record);
+    }
+
+    return Array.from(bucketMap.values());
+  }, [indexedLedgers]);
 
   // Cache for filtered results to avoid recomputation
   const filterCache = useRef<Map<string, Ledger[]>>(new Map());
+  const setKeyCache = useRef<WeakMap<Set<number>, string>>(new WeakMap());
+
+  const getSetKey = useCallback((setValues?: Set<number>): string => {
+    if (!setValues || setValues.size === 0) return '';
+
+    const cachedKey = setKeyCache.current.get(setValues);
+    if (cachedKey) return cachedKey;
+
+    // Keep linear complexity for very large sets; order affects cache hit-rate, not correctness.
+    const key = Array.from(setValues).join('|');
+    setKeyCache.current.set(setValues, key);
+    return key;
+  }, []);
 
   // Generate cache key for filter combinations
   const getFilterCacheKey = useCallback((
@@ -161,14 +184,10 @@ function LedgerSelectProvider({ children }: LedgerSelectProviderProps) {
   ): string => {
     const notAllowedKey = [...notAllowedGroups].sort().join('|');
     const allowedKey = [...allowedGroups].sort().join('|');
-    const allowedIdsKey = allowedLedgerIds
-      ? Array.from(allowedLedgerIds).sort((a, b) => a - b).join('|')
-      : '';
-    const notAllowedIdsKey = notAllowedLedgerIds
-      ? Array.from(notAllowedLedgerIds).sort((a, b) => a - b).join('|')
-      : '';
+    const allowedIdsKey = getSetKey(allowedLedgerIds);
+    const notAllowedIdsKey = getSetKey(notAllowedLedgerIds);
     return `${notAllowedKey}|${allowedKey}|${allowedIdsKey}|${notAllowedIdsKey}`;
-  }, []);
+  }, [getSetKey]);
 
   // Optimized extractLedgers with memoization and caching
   const extractLedgers = useCallback((
@@ -177,7 +196,23 @@ function LedgerSelectProvider({ children }: LedgerSelectProviderProps) {
     allowedLedgerIds?: Set<number>,
     notAllowedLedgerIds?: Set<number>
   ): Ledger[] => {
-    if (!ledgerOptions) return [];
+    if (!indexedLedgers || indexedLedgers.length === 0) return [];
+
+    const hasAllowedGroups = allowedGroups.length > 0;
+    const hasNotAllowedGroups = notAllowedGroups.length > 0;
+    const hasAllowedLedgerIds = !!allowedLedgerIds && allowedLedgerIds.size > 0;
+    const hasNotAllowedLedgerIds =
+      !!notAllowedLedgerIds && notAllowedLedgerIds.size > 0;
+
+    // Fast path for the most common case: no filters at all.
+    if (
+      !hasAllowedGroups &&
+      !hasNotAllowedGroups &&
+      !hasAllowedLedgerIds &&
+      !hasNotAllowedLedgerIds
+    ) {
+      return ungroupedLedgerOptions;
+    }
 
     // Generate cache key
     const cacheKey = getFilterCacheKey(notAllowedGroups, allowedGroups, allowedLedgerIds, notAllowedLedgerIds);
@@ -192,16 +227,27 @@ function LedgerSelectProvider({ children }: LedgerSelectProviderProps) {
     const notAllowedGroupsSet = new Set(notAllowedGroups);
     const allowedGroupsSet = new Set(allowedGroups);
 
-    // Use requestIdleCallback or setTimeout to avoid blocking the main thread
-    const result = buildLedgerList(
-      ledgerOptions,
-      notAllowedGroupsSet,
-      allowedGroupsSet,
-      allowedLedgerIds,
-      notAllowedLedgerIds,
-      null,
-      false
-    );
+    const result: Ledger[] = [];
+    for (const bucket of pathBuckets) {
+      if (
+        !isLedgerPathAccessible(
+          bucket.groupPath,
+          notAllowedGroupsSet,
+          allowedGroupsSet
+        )
+      ) {
+        continue;
+      }
+
+      for (const record of bucket.ledgers) {
+        const ledgerId = record.ledgerId;
+
+        if (hasNotAllowedLedgerIds && notAllowedLedgerIds!.has(ledgerId)) continue;
+        if (hasAllowedLedgerIds && !allowedLedgerIds!.has(ledgerId)) continue;
+
+        result.push(record.projectedLedger);
+      }
+    }
 
     // Cache the result (limit cache size to prevent memory issues)
     if (filterCache.current.size > 100) {
@@ -214,11 +260,12 @@ function LedgerSelectProvider({ children }: LedgerSelectProviderProps) {
     filterCache.current.set(cacheKey, result);
 
     return result;
-  }, [ledgerOptions, getFilterCacheKey]);
+  }, [indexedLedgers, pathBuckets, getFilterCacheKey, ungroupedLedgerOptions]);
 
   // Clear cache when ledgerOptions change
   useEffect(() => {
     filterCache.current.clear();
+    setKeyCache.current = new WeakMap();
   }, [ledgerOptions]);
 
   return (

@@ -1,6 +1,14 @@
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
-import { Autocomplete, Box, Checkbox, Chip, TextField, CircularProgress } from '@mui/material';
-import React, { useEffect, useMemo, useCallback, useState, useRef } from 'react';
+import {
+  Autocomplete,
+  Box,
+  Checkbox,
+  Chip,
+  TextField,
+  CircularProgress,
+  createFilterOptions,
+} from '@mui/material';
+import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
 
 const EMPTY_LEDGER_REFS: LedgerRef[] = [];
@@ -54,13 +62,10 @@ function LedgerSelect(props: LedgerSelectProps) {
   } = props;
 
   const { extractLedgers, isLoaded } = useLedgerSelect();
-  const [options, setOptions] = useState<Ledger[]>([]);
   const [selectedValue, setSelectedValue] = useState<Ledger | Ledger[] | null>(
     defaultValue ? defaultValue : multiple ? [] : value
   );
-  const [isLoading, setIsLoading] = useState(true);
-  const processingRef = useRef(false);
-  const lastFilterKeyRef = useRef<string>('');
+  const [inputValue, setInputValue] = useState('');
 
   const toLedgerId = useCallback((entry: LedgerRef): number => {
     return typeof entry === 'number' ? entry : entry.id;
@@ -73,70 +78,28 @@ function LedgerSelect(props: LedgerSelectProps) {
     return { allowedLedgerIds, notAllowedLedgerIds };
   }, [allowedLedgers, notAllowedLedgers, toLedgerId]);
 
-  // Generate a unique key for the current filter combination
-  const getFilterKey = useCallback(() => {
-    const notAllowedKey = [...notAllowedGroups].sort().join('|');
-    const allowedKey = [...allowedGroups].sort().join('|');
-    const allowedIdsKey = [...allowedLedgers].map(toLedgerId).sort().join('|');
-    const notAllowedIdsKey = [...notAllowedLedgers].map(toLedgerId).sort().join('|');
-    return `${notAllowedKey}|${allowedKey}|${allowedIdsKey}|${notAllowedIdsKey}`;
-  }, [notAllowedGroups, allowedGroups, allowedLedgers, notAllowedLedgers, toLedgerId]);
+  // Compute options directly from provider cache; avoids per-instance async churn.
+  const options = useMemo(() => {
+    if (!isLoaded) return [];
 
-  // Optimized option generation
-  const generateOptions = useCallback(() => {
-    if (!isLoaded || processingRef.current) return;
-
-    const filterKey = getFilterKey();
-    if (filterKey === lastFilterKeyRef.current) {
-      // Skip if filters haven't changed
-      return;
+    try {
+      const { allowedLedgerIds, notAllowedLedgerIds } = filterSets;
+      return extractLedgers(
+        notAllowedGroups,
+        allowedGroups,
+        allowedLedgerIds,
+        notAllowedLedgerIds
+      );
+    } catch (error) {
+      console.error('Error generating ledger options:', error);
+      return [];
     }
-
-    processingRef.current = true;
-    setIsLoading(true);
-
-    // Use setTimeout to avoid blocking the main thread
-    setTimeout(() => {
-      try {
-        const { allowedLedgerIds, notAllowedLedgerIds } = filterSets;
-        
-        const result = extractLedgers(
-          notAllowedGroups,
-          allowedGroups,
-          allowedLedgerIds,
-          notAllowedLedgerIds
-        );
-
-        // Update state with the new options
-        setOptions((prev) => {
-          // Only update if the result is different
-          if (prev.length === result.length && 
-              prev.every((item, index) => item.id === result[index]?.id)) {
-            return prev;
-          }
-          return result;
-        });
-        
-        lastFilterKeyRef.current = filterKey;
-      } catch (error) {
-        console.error('Error generating ledger options:', error);
-      } finally {
-        processingRef.current = false;
-        setIsLoading(false);
-      }
-    }, 10);
-  }, [isLoaded, extractLedgers, notAllowedGroups, allowedGroups, filterSets, getFilterKey]);
-
-  // Generate options when dependencies change
-  useEffect(() => {
-    generateOptions();
   }, [
     isLoaded,
+    extractLedgers,
     notAllowedGroups,
     allowedGroups,
-    allowedLedgers,
-    notAllowedLedgers,
-    generateOptions
+    filterSets,
   ]);
 
   useEffect(() => {
@@ -160,6 +123,25 @@ function LedgerSelect(props: LedgerSelectProps) {
   const getOptionLabel = useCallback((option: Ledger) => {
     return option.name;
   }, []);
+
+  const baseFilter = useMemo(
+    () =>
+      createFilterOptions<Ledger>({
+        trim: true,
+        stringify: (option) => `${option.name} ${option.code ?? ''}`,
+      }),
+    []
+  );
+
+  // Render a small subset on initial open; show more only after typing.
+  const filterOptions = useCallback(
+    (opts: Ledger[], state: { inputValue: string }) => {
+      const filtered = baseFilter(opts, state as any);
+      const hasSearch = !!state.inputValue?.trim();
+      return hasSearch ? filtered.slice(0, 400) : filtered.slice(0, 120);
+    },
+    [baseFilter]
+  );
 
   // Memoize renderInput
   const renderInput = useCallback((params: any) => (
@@ -215,11 +197,14 @@ function LedgerSelect(props: LedgerSelectProps) {
   return (
     <Autocomplete
       options={options}
+      filterOptions={filterOptions}
       getOptionLabel={getOptionLabel}
       value={selectedValue}
+      inputValue={inputValue}
+      onInputChange={(_, newInputValue) => setInputValue(newInputValue)}
       multiple={multiple}
       isOptionEqualToValue={isOptionEqualToValue}
-      loading={isLoading}
+      loading={!isLoaded}
       loadingText="Loading ledgers..."
       renderInput={renderInput}
       {...(multiple && {
