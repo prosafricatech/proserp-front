@@ -158,7 +158,9 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
       store_id: order && !!order.instant_receive ? order.store.id : null,
       cost_centers: order?.cost_centers
         ? order.cost_centers
-        : costCenters.length === 1 && costCenters,
+        : costCenters?.length === 1
+        ? costCenters
+        : [],
       items: order ? order.purchase_order_items : [itemTemplate],
       terms_of_payment: order && order.terms_of_payment,
       remarks: order && order.remarks,

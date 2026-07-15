@@ -14,8 +14,16 @@ import { useParams, useSearchParams } from 'next/navigation';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import RFQListItem from './listItem/RFQListItem';
 import rfqServices from './rfq-services';
-import { STATUS_OPTIONS } from './rfq-types';
 import RFQActionTail from './RFQActionTail';
+
+// Status options with display names and values
+const STATUS_OPTIONS = [
+  { value: '', label: 'All' },
+  { value: 'Draft', label: 'Draft' },
+  { value: 'Sent', label: 'Sent' },
+  { value: 'Closed', label: 'Closed' },
+  { value: 'Canceled', label: 'Canceled' },
+];
 
 function RFQs() {
   const params = useParams();
@@ -27,12 +35,17 @@ function RFQs() {
     organizationHasSubscribed,
   } = useJumboAuth();
   const [mounted, setMounted] = useState(false);
+
+  // Separate state for keyword to prevent infinite loops
+  const [keyword, setKeyword] = useState(
+    getSanitizedSearchKeyword('RFQs', searchParams)
+  );
   const [queryOptions, setQueryOptions] = useState({
     queryKey: 'rfqs',
     queryParams: {
       id: params.id,
       keyword: getSanitizedSearchKeyword('RFQs', searchParams),
-      status: '',
+      status: '', // Empty string for 'All'
     },
     countKey: 'total',
     dataKey: 'data',
@@ -42,26 +55,39 @@ function RFQs() {
     setMounted(true);
   }, []);
 
+  // Update keyword when searchParams change
   useEffect(() => {
+    const newKeyword = getSanitizedSearchKeyword('RFQs', searchParams);
+    setKeyword(newKeyword);
     setQueryOptions((state) => ({
       ...state,
       queryParams: {
         ...state.queryParams,
-        keyword: getSanitizedSearchKeyword('RFQs', searchParams),
+        keyword: newKeyword,
         id: params.id,
       },
     }));
   }, [params, searchParams]);
 
-  const handleOnKeywordChange = React.useCallback((keyword: string) => {
+  // Handle keyword change without causing infinite loops
+  const handleKeywordChange = useCallback((newKeyword: string) => {
+    setKeyword(newKeyword);
     setQueryOptions((state) => ({
       ...state,
-      queryParams: {
-        ...state.queryParams,
-        keyword: keyword,
-      },
+      queryParams: { ...state.queryParams, keyword: newKeyword },
     }));
   }, []);
+
+  // Handle status change
+  const handleStatusChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQueryOptions((state) => ({
+        ...state,
+        queryParams: { ...state.queryParams, status: event.target.value },
+      }));
+    },
+    []
+  );
 
   const renderItem = useCallback((rfq: any) => <RFQListItem rfq={rfq} />, []);
 
@@ -114,30 +140,17 @@ function RFQs() {
                     size='small'
                     label='Status'
                     value={queryOptions.queryParams.status}
-                    onChange={(e) => {
-                      setQueryOptions((state) => ({
-                        ...state,
-                        queryParams: {
-                          ...state.queryParams,
-                          status: e.target.value,
-                        },
-                      }));
-                    }}
+                    onChange={handleStatusChange}
                   >
-                    {STATUS_OPTIONS.map((option: any) => {
-                      return (
-                        <MenuItem key={option.value} value={option.value}>
-                          {option.lable}
-                        </MenuItem>
-                      );
-                    })}
+                    {STATUS_OPTIONS.map((option) => (
+                      <MenuItem key={option.value} value={option.value}>
+                        {option.label}
+                      </MenuItem>
+                    ))}
                   </TextField>
                 </Grid>
                 <Grid size={{ xs: 12, md: 5 }}>
-                  <JumboSearch
-                    value={queryOptions.queryParams.keyword}
-                    onChange={handleOnKeywordChange}
-                  />
+                  <JumboSearch value={keyword} onChange={handleKeywordChange} />
                 </Grid>
                 <Grid size={{ xs: 12, md: 1 }}>
                   <RFQActionTail />

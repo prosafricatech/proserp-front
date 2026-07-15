@@ -1,10 +1,28 @@
 export interface RFQItem {
   id?: number;
   product_id?: number;
+  unit_symbol?: string;
   product?: {
     id: number;
     name?: string;
     item_name?: string;
+    measurement_unit_id?: number;
+    primary_unit?: {
+      id: number;
+      name?: string;
+      unit_symbol?: string;
+    };
+    measurement_unit?: {
+      id: number;
+      name?: string;
+      symbol?: string;
+      unit_symbol?: string;
+    };
+    secondary_units?: Array<{
+      id: number;
+      name?: string;
+      unit_symbol?: string;
+    }>;
   };
   measurement_unit_id?: number;
   measurement_unit?: {

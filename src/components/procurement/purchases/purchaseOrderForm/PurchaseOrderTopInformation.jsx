@@ -190,13 +190,7 @@ function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, regi
                             frontError={errors?.cost_centers}
                             multiple={true}
                             allowSameType={false}
-                            defaultValue={
-                                Array.isArray(order?.cost_centers) && order.cost_centers.length > 0
-                                    ? order.cost_centers
-                                    : costCenters.length === 1 
-                                    ? costCenters 
-                                    : []
-                            }
+                            defaultValue={watch('cost_centers') || []}
                             onChange={(newValue) => {
                                 const valueArray = Array.isArray(newValue)
                                 ? newValue

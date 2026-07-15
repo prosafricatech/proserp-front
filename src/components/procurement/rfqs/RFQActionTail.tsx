@@ -22,7 +22,7 @@ function RFQActionTail() {
     <React.Fragment>
       <Dialog
         fullWidth
-        maxWidth="xl"
+        maxWidth="lg"
         fullScreen={belowLargeScreen}
         scroll={belowLargeScreen ? 'body' : 'paper'}
         open={openDialog}
