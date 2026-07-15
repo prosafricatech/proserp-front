@@ -4,6 +4,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { Organization } from '@/types/auth-types';
 import {
   Box,
+  Divider,
   Grid,
   Paper,
   Table,
@@ -15,7 +16,7 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import React from 'react';
+import React, { useMemo } from 'react';
 
 export interface PurchaseManifestItem {
   order_date: string;
@@ -105,6 +106,8 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
     });
   };
 
+  const reportItems = reportData?.items || [];
+
   // Group and compute totals per unique currency
   const currencyTotals =
     reportData?.items?.reduce((acc: Record<string, number>, item) => {
@@ -113,6 +116,32 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
         (acc[code] || 0) + (item.quantity_ordered || 0) * (item.rate || 0);
       return acc;
     }, {}) || {};
+
+  // total recevied
+  const totalreceivedAmt = useMemo(() => {
+    return (
+      reportItems.reduce((acc: Record<string, number>, item) => {
+        const code = item.currency?.code || 'TZS';
+        const receivedAmt = (item.quantity_received || 0) * (item.rate || 0);
+        acc[code] = (acc[code] || 0) + receivedAmt;
+        return acc;
+      }, {}) || {}
+    );
+  }, [reportItems]);
+
+  // total recevied
+  const totalPendingAmt = useMemo(() => {
+    return (
+      reportItems.reduce((acc: Record<string, number>, item) => {
+        const code = item.currency?.code || 'TZS';
+        const pendingAmt =
+          ((item.quantity_ordered || 0) - (item.quantity_received || 0)) *
+          (item.rate || 0);
+        acc[code] = (acc[code] || 0) + pendingAmt;
+        return acc;
+      }, {}) || {}
+    );
+  }, [reportItems]);
 
   return (
     <Box sx={{ padding: 2 }}>
@@ -305,7 +334,27 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                     }}
                     align='right'
                   >
-                    Total Amount
+                    Ordered Amount
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                    align='right'
+                  >
+                    Received Amount
+                  </TableCell>
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                    align='right'
+                  >
+                    Pending Amount
                   </TableCell>
                 </TableRow>
               </TableHead>
@@ -313,6 +362,12 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                 {reportData?.items?.map((item, index) => {
                   const itemAmount =
                     (item.quantity_ordered || 0) * (item.rate || 0);
+                  const receivedAmt =
+                    (item.quantity_received || 0) * (item.rate || 0);
+                  const pendingAmt =
+                    ((item.quantity_ordered || 0) -
+                      (item.quantity_received || 0)) *
+                    (item.rate || 0);
                   const isFullyReceived =
                     item.status?.toLowerCase() === 'fully received';
 
@@ -387,6 +442,12 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                       <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
                         {formatCurrency(itemAmount, item.currency?.code)}
                       </TableCell>
+                      <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                        {formatCurrency(receivedAmt, item.currency?.code)}
+                      </TableCell>
+                      <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                        {formatCurrency(pendingAmt, item.currency?.code)}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
@@ -406,14 +467,65 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
               borderRadius: 1,
             }}
           >
+            {/* total ordered amount */}
             <Grid container spacing={1} alignItems='center'>
               <Grid size={7}>
                 <Typography variant='h6' color={headerColor}>
-                  Manifest Grand Total
+                  Total Ordered Amount
                 </Typography>
               </Grid>
               <Grid size={5} sx={{ textAlign: 'right' }}>
                 {Object.entries(currencyTotals).map(
+                  ([currencyCode, totalAmount]) => (
+                    <Typography
+                      key={currencyCode}
+                      variant='h6'
+                      color={headerColor}
+                      fontFamily='monospace'
+                      fontWeight={600}
+                    >
+                      {formatCurrency(totalAmount, currencyCode)}
+                    </Typography>
+                  )
+                )}
+              </Grid>
+            </Grid>
+            <Divider />
+
+            {/* total received amount */}
+            <Grid container spacing={1} alignItems='center' mt={2}>
+              <Grid size={7}>
+                <Typography variant='h6' color={headerColor}>
+                  Total Received Amount
+                </Typography>
+              </Grid>
+              <Grid size={5} sx={{ textAlign: 'right' }}>
+                {Object.entries(totalreceivedAmt).map(
+                  ([currencyCode, totalAmount]) => (
+                    <Typography
+                      key={currencyCode}
+                      variant='h6'
+                      color={headerColor}
+                      fontFamily='monospace'
+                      fontWeight={600}
+                    >
+                      {formatCurrency(totalAmount, currencyCode)}
+                    </Typography>
+                  )
+                )}
+              </Grid>
+            </Grid>
+            <Divider />
+
+            {/* total pending amount */}
+            <Grid container spacing={1} alignItems='center' mt={2}>
+              <Grid size={7}>
+                <Typography variant='h6' color={headerColor}>
+                  Total Pending Amount
+                </Typography>
+              </Grid>
+              <Grid size={5} sx={{ textAlign: 'right' }}>
+                {Object.entries(totalPendingAmt).map(
                   ([currencyCode, totalAmount]) => (
                     <Typography
                       key={currencyCode}

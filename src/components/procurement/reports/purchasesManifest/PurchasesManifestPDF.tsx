@@ -4,6 +4,7 @@ import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import PdfLogo from '@/components/pdf/PdfLogo';
 import { Organization, User } from '@/types/auth-types';
 import { Document, Page, StyleSheet, Text, View } from '@react-pdf/renderer';
+import { useMemo } from 'react';
 
 export interface PurchaseManifestItem {
   order_date: string;
@@ -145,8 +146,8 @@ const styles = StyleSheet.create({
   },
   totalsSection: {
     marginTop: 10,
-    alignSelf: 'flex-end',
-    width: '36%',
+    // alignSelf: 'flex-end',
+    width: '33%',
   },
   totalsRow: {
     flexDirection: 'row',
@@ -193,7 +194,6 @@ const PurchasesManifestPDF = ({
 }: PurchasesManifestPDFProps) => {
   const mainColor = (organization as any)?.settings?.main_color || '#2113AD';
   const lightColor = (organization as any)?.settings?.light_color || '#d9dfef';
-  console.log('organization: ', organization);
   const contrastText =
     (organization as any)?.settings?.contrast_text || '#FFFFFF';
 
@@ -211,6 +211,38 @@ const PurchasesManifestPDF = ({
       },
       {} as Record<string, { symbol: string; total: number }>
     );
+
+  // total recevied
+  const totalreceivedAmt = useMemo(() => {
+    return items.reduce(
+      (acc, item) => {
+        const code = item.currency?.code;
+        const symbol = code || item.currency?.symbol || 'TZS';
+        const receivedAmt = (item.quantity_received || 0) * (item.rate || 0);
+        if (!acc[code]) acc[code] = { symbol, total: 0 };
+        acc[code].total += receivedAmt;
+        return acc;
+      },
+      {} as Record<string, { symbol: string; total: number }>
+    );
+  }, [items]);
+
+  // total recevied
+  const totalPendingAmt = useMemo(() => {
+    return items.reduce(
+      (acc, item) => {
+        const code = item.currency?.code;
+        const symbol = code || item.currency?.symbol || 'TZS';
+        const pendingAmt =
+          ((item.quantity_ordered || 0) - (item.quantity_received || 0)) *
+          (item.rate || 0);
+        if (!acc[code]) acc[code] = { symbol, total: 0 };
+        acc[code].total += pendingAmt;
+        return acc;
+      },
+      {} as Record<string, { symbol: string; total: number }>
+    );
+  }, [items]);
 
   // Column flex weights
   const snFlex = 0.4;
@@ -256,7 +288,7 @@ const PurchasesManifestPDF = ({
           </View>
 
           <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Filter Status</Text>
+            <Text style={styles.filterLabel}>Status Filter</Text>
             <Text style={styles.filterValue}>{filters.status || 'All'}</Text>
           </View>
 
@@ -279,7 +311,7 @@ const PurchasesManifestPDF = ({
           )}
 
           <View style={styles.filterItem}>
-            <Text style={styles.filterLabel}>Requested By</Text>
+            <Text style={styles.filterLabel}>Printed By</Text>
             <Text style={styles.filterValue}>{getUserName(user)}</Text>
           </View>
         </View>
@@ -390,7 +422,29 @@ const PurchasesManifestPDF = ({
                 textAlign: 'right',
               }}
             >
-              Total Amount
+              Ordered Amount
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: totalFlex,
+                textAlign: 'right',
+              }}
+            >
+              Received Amount
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
+                flex: totalFlex,
+                textAlign: 'right',
+              }}
+            >
+              Pending Amount
             </Text>
           </View>
 
@@ -399,6 +453,11 @@ const PurchasesManifestPDF = ({
             const isEven = index % 2 === 0;
             const backgroundColor = isEven ? '#FFFFFF' : lightColor;
             const itemAmount = (item.quantity_ordered || 0) * (item.rate || 0);
+            const receivedAmt =
+              (item.quantity_received || 0) * (item.rate || 0);
+            const pendingAmt =
+              ((item.quantity_ordered || 0) - (item.quantity_received || 0)) *
+              (item.rate || 0);
             const isFullyReceived =
               item.status?.toLowerCase() === 'fully received';
             const statusColor = isFullyReceived ? '#2e7d32' : '#b45309';
@@ -494,37 +553,125 @@ const PurchasesManifestPDF = ({
                     item.currency?.code || item.currency?.symbol || ''
                   )}
                 </Text>
+
+                <Text
+                  style={{
+                    ...styles.cell,
+                    flex: totalFlex,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmtCurrency(
+                    receivedAmt,
+                    item.currency?.code || item.currency?.symbol || ''
+                  )}
+                </Text>
+
+                <Text
+                  style={{
+                    ...styles.cell,
+                    flex: totalFlex,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmtCurrency(
+                    pendingAmt,
+                    item.currency?.code || item.currency?.symbol || ''
+                  )}
+                </Text>
               </View>
             );
           })}
         </View>
 
-        {/* ---- Currency totals ---- */}
-        <View style={styles.totalsSection}>
-          <View
-            style={{
-              ...styles.totalsRow,
-              backgroundColor: mainColor,
-              borderRadius: 2,
-            }}
-          >
-            <Text style={{ ...styles.totalsLabel, color: contrastText }}>
-              Manifest Grand Total
-            </Text>
-          </View>
-          {Object.entries(currencyTotals).map(([code, { symbol, total }]) => (
+        <View style={{ display: 'flex', flexDirection: 'row', gap: 2 }}>
+          {/* ---- Currency totals ---- */}
+          <View style={styles.totalsSection}>
             <View
-              key={`pdf-pm-total-${code}`}
-              style={{ ...styles.totalsRow, backgroundColor: lightColor }}
+              style={{
+                ...styles.totalsRow,
+                backgroundColor: mainColor,
+                borderRadius: 2,
+              }}
             >
-              <Text style={{ ...styles.totalsLabel, color: mainColor }}>
-                {code}
-              </Text>
-              <Text style={{ ...styles.totalsAmount, color: mainColor }}>
-                {fmtCurrency(total, symbol)}
+              <Text style={{ ...styles.totalsLabel, color: contrastText }}>
+                Total Ordered Amount
               </Text>
             </View>
-          ))}
+            {Object.entries(currencyTotals).map(([code, { symbol, total }]) => (
+              <View
+                key={`pdf-pm-total-${code}`}
+                style={{ ...styles.totalsRow, backgroundColor: lightColor }}
+              >
+                <Text style={{ ...styles.totalsLabel, color: mainColor }}>
+                  {code}
+                </Text>
+                <Text style={{ ...styles.totalsAmount, color: mainColor }}>
+                  {fmtCurrency(total, symbol)}
+                </Text>
+              </View>
+            ))}
+          </View>
+
+          {/* ---- Total received amount ---- */}
+          <View style={styles.totalsSection}>
+            <View
+              style={{
+                ...styles.totalsRow,
+                backgroundColor: mainColor,
+                borderRadius: 2,
+              }}
+            >
+              <Text style={{ ...styles.totalsLabel, color: contrastText }}>
+                Total Received Amount
+              </Text>
+            </View>
+            {Object.entries(totalreceivedAmt).map(
+              ([code, { symbol, total }]) => (
+                <View
+                  key={`pdf-pm-total-${code}`}
+                  style={{ ...styles.totalsRow, backgroundColor: lightColor }}
+                >
+                  <Text style={{ ...styles.totalsLabel, color: mainColor }}>
+                    {code}
+                  </Text>
+                  <Text style={{ ...styles.totalsAmount, color: mainColor }}>
+                    {fmtCurrency(total, symbol)}
+                  </Text>
+                </View>
+              )
+            )}
+          </View>
+
+          {/* ---- Total pending amount ---- */}
+          <View style={styles.totalsSection}>
+            <View
+              style={{
+                ...styles.totalsRow,
+                backgroundColor: mainColor,
+                borderRadius: 2,
+              }}
+            >
+              <Text style={{ ...styles.totalsLabel, color: contrastText }}>
+                Total Pending Amount
+              </Text>
+            </View>
+            {Object.entries(totalPendingAmt).map(
+              ([code, { symbol, total }]) => (
+                <View
+                  key={`pdf-pm-total-${code}`}
+                  style={{ ...styles.totalsRow, backgroundColor: lightColor }}
+                >
+                  <Text style={{ ...styles.totalsLabel, color: mainColor }}>
+                    {code}
+                  </Text>
+                  <Text style={{ ...styles.totalsAmount, color: mainColor }}>
+                    {fmtCurrency(total, symbol)}
+                  </Text>
+                </View>
+              )
+            )}
+          </View>
         </View>
       </Page>
     </Document>
