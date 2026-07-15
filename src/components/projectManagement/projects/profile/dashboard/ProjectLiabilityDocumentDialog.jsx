@@ -1,9 +1,11 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import ledgerServices from '@/components/accounts/ledgers/ledger-services';
+import LedgerStatementOnScreen from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementOnScreen';
 import PDFContent from '@/components/pdf/PDFContent';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { LoadingButton } from '@mui/lab';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { HighlightOff } from '@mui/icons-material';
 import {
   Box,
   Button,
@@ -12,17 +14,14 @@ import {
   DialogContent,
   DialogTitle,
   Grid,
+  IconButton,
   Skeleton,
   Stack,
-  Tab,
-  Tabs,
   Typography,
   useMediaQuery,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useEffect, useState } from 'react';
-import LedgerStatementOnScreen from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementOnScreen';
+import { useState } from 'react';
 import ProjectLiabilityDocumentPDF from './ProjectLiabilityDocumentPDF';
 
 const ProjectLiabilityDocumentDialog = ({
@@ -35,17 +34,11 @@ const ProjectLiabilityDocumentDialog = ({
   activeTab,
 }) => {
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedTab, setSelectedTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
 
   const hasSelectedLedger = Boolean(liabilitiesPaylod?.ledger_id);
-
-  useEffect(() => {
-    if (openDialog && smallScreen) {
-      setSelectedTab(0);
-    }
-  }, [openDialog, smallScreen]);
 
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['budgetItemsDetails', liabilitiesPaylod],
@@ -79,42 +72,38 @@ const ProjectLiabilityDocumentDialog = ({
   };
 
   return (
-    <Dialog open={openDialog} fullWidth fullScreen={smallScreen} maxWidth={'md'}>
+    <Dialog
+      open={openDialog}
+      fullWidth
+      fullScreen={smallScreen}
+      maxWidth={'lg'}
+    >
       <DialogTitle>
         <Typography textAlign={'center'}>
           {liabilitiesPaylod?.liabilityName ?? 'Liability'} Statement
         </Typography>
-        <Grid size={{ xs: 12 }} textAlign={'right'}>
-          <Stack
-            direction='row'
-            spacing={0.5}
-            justifyContent='flex-end'
-            alignItems='center'
-          >
-            <LoadingButton
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportExcel
+              handlExcelExport={() => handlExcelExport(exportedData)}
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+              exportingExcel={isExporting}
+            />
+          }
+          closeButton={
+            <IconButton
               size='small'
-              onClick={() => handlExcelExport(exportedData)}
-              loading={isExporting}
-              variant='contained'
-              color='success'
+              color='primary'
+              onClick={() => onClose(false)}
             >
-              <FontAwesomeIcon icon={faFileExcel} color='green' />
-              Excel
-            </LoadingButton>
-          </Stack>
-        </Grid>
-        {smallScreen && (
-          <Grid size={12} mt={1}>
-            <Tabs
-              value={selectedTab}
-              onChange={(_event, newValue) => setSelectedTab(newValue)}
-              variant='fullWidth'
-            >
-              <Tab label='On Screen' />
-              <Tab label='PDF' />
-            </Tabs>
-          </Grid>
-        )}
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
       </DialogTitle>
       <DialogContent>
         {isLoading ? (
@@ -142,7 +131,7 @@ const ProjectLiabilityDocumentDialog = ({
               </Stack>
             </Grid>
           </Grid>
-        ) : smallScreen && selectedTab === 0 ? (
+        ) : showOnScreen ? (
           <LedgerStatementOnScreen
             transactionsData={transactions}
             authOrganization={organization}

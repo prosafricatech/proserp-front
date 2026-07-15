@@ -2,6 +2,8 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { BackdropSpinner } from '@/shared/ProgressIndicators/BackdropSpinner';
 import { Organization, User } from '@/types/auth-types';
@@ -23,7 +25,6 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   Switch,
   Tab,
@@ -62,22 +63,13 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
   setOpenDocumentDialog,
 }) => {
   const [thermalPrinter, setThermalPrinter] = useState(false);
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const [pdfKey, setPdfKey] = useState(0); // Force remount when changing format
 
   const { data: sale, isFetching } = useQuery({
     queryKey: ['sale', { id: saleId }],
     queryFn: () => posServices.saleDetails(saleId),
   });
-
-  const { theme } = useJumboTheme();
-  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
-  const handleTabChange = (_: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-    setThermalPrinter(false); // Reset format when switching tabs
-    setPdfKey((prev) => prev + 1); // Force PDF remount
-  };
 
   const handleThermalToggle = (e: React.ChangeEvent<HTMLInputElement>) => {
     setThermalPrinter(e.target.checked);
@@ -89,33 +81,32 @@ const DocumentDialogContent: React.FC<DocumentDialogContentProps> = ({
 
   return (
     <>
-      {belowLargeScreen && (
-        <DialogTitle sx={{ p: 2 }}>
-          <Grid container alignItems='center'>
-            <Grid size={11}>
-              <Tabs
-                value={activeTab}
-                onChange={handleTabChange}
-                variant='fullWidth'
-              >
-                <Tab label='ONSCREEN' />
-                <Tab label='PDF' />
-              </Tabs>
-            </Grid>
-            <Grid size={1} textAlign='right'>
-              <IconButton
-                size='small'
-                onClick={() => setOpenDocumentDialog(false)}
-              >
-                <HighlightOff />
-              </IconButton>
-            </Grid>
-          </Grid>
-        </DialogTitle>
-      )}
+      {/* {belowLargeScreen && ( */}
+      <DialogTitle sx={{ p: 2 }}>
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
+      </DialogTitle>
+      {/* )} */}
 
       <DialogContent dividers>
-        {belowLargeScreen && activeTab === 0 ? (
+        {showOnScreen ? (
           <Suspense fallback={<BackdropSpinner />}>
             <SalePreviewOnscreen organization={organization} sale={sale} />
           </Suspense>
