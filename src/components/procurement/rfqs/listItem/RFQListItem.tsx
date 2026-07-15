@@ -34,20 +34,17 @@ import { RFQListRow } from '../rfq-types';
 function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   const [expanded, setExpanded] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const [shouldFetchDetails, setShouldFetchDetails] = useState(false);
   const { checkOrganizationPermission } = useJumboAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  // Only fetch details when shouldFetchDetails is true
   const { data: rfqDetails, isLoading } = useQuery({
     queryKey: ['rfq', rfq?.id],
     queryFn: () => rfqServices.getOne(rfq.id),
-    enabled: shouldFetchDetails && !!rfq?.id,
+    enabled: expanded && !!rfq?.id,
     refetchOnWindowFocus: false,
-    staleTime: 5 * 60 * 1000,
   });
 
   const details = (rfqDetails?.data || rfqDetails || rfq) as any;
@@ -71,17 +68,12 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
       if (rfq?.id) {
         queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
       }
-      if (data?.message) {
-        // eslint-disable-next-line no-console
-        console.info(data.message);
-      }
     },
   });
 
   // Handle edit button click - fetch details and open dialog
   const handleEditClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    setShouldFetchDetails(true);
     setOpenEdit(true);
   };
 
@@ -102,9 +94,6 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   // Handle dialog close
   const handleDialogClose = (open: boolean) => {
     setOpenEdit(open);
-    if (!open) {
-      setShouldFetchDetails(false);
-    }
   };
 
   // Handle accordion change
@@ -199,6 +188,67 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
                 )}
               </Stack>
             </Grid>
+
+            {isLoading ? (
+              <Grid size={{ xs: 12 }}>
+                <LinearProgress />
+              </Grid>
+            ) : (
+              <>
+                <Grid size={12}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Suppliers
+                  </Typography>
+                  <Stack direction="row" spacing={1} flexWrap="wrap">
+                    {(details?.stakeholders || []).map((stakeholder: any) => (
+                      <Chip key={stakeholder.id} size="small" label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} />
+                    ))}
+                    {!details?.stakeholders?.length && <Typography variant="body2" color="text.secondary">No suppliers invited yet</Typography>}
+                  </Stack>
+                </Grid>
+                <Grid size={12}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Items
+                  </Typography>
+                  {details?.items?.length ? (
+                    details.items.map((item: any, index: number) => (
+                      <Grid
+                        key={`${item.id || index}`}
+                        container
+                        spacing={1}
+                        alignItems="center"
+                        sx={{ borderBottom: 1, borderColor: 'divider', py: 0.5 }}
+                      >
+                        <Grid size={{ xs: 1 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            {index + 1}.
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 7, md: 4 }}>
+                          <Typography variant="body2">
+                            {item.product?.name || item.product?.item_name || 'Item'}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 3 }} textAlign="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {item.quantity}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 2, md: 3 }} textAlign="right">
+                          <Typography variant="body2" color="text.secondary">
+                            {item.unit_symbol || item.measurement_unit?.symbol || ''}
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    ))
+                  ) : (
+                    <Alert variant="outlined" severity="info">
+                      No items found
+                    </Alert>
+                  )}
+                </Grid>
+              </>
+            )}
           </Grid>
         </AccordionDetails>
       </Accordion>
