@@ -61,7 +61,7 @@ function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, regi
             <Grid size={{xs: 12, md: 8}}>
                 <Div sx={{ mt: 0.3 }}>
                     <StakeholderSelector
-                        label='Supplier'
+                        label='Vendor'
                         frontError={errors?.stakeholder_id}
                         defaultValue={order && order.stakeholder.id}
                         addedStakeholder={addedStakeholder}

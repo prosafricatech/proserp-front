@@ -1,5 +1,6 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
@@ -7,6 +8,7 @@ import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDial
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
 import {
+  AttachmentOutlined,
   DeleteOutlined,
   EditOutlined,
   HighlightOff,
@@ -272,6 +274,7 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
 }) => {
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const [openSaleDialog, setOpenSaleDialog] = useState(false);
+  const [attachDialog, setAttachDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const { enqueueSnackbar } = useSnackbar();
@@ -302,6 +305,11 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
         title: 'Sale',
         action: 'sale',
       },
+    {
+      icon: <AttachmentOutlined />,
+      title: 'Attachments',
+      action: 'attachments',
+    },
     checkOrganizationPermission(PERMISSIONS.PROFORMA_INVOICES_EDIT) &&
       String(activeOutlet?.id) !== 'all' && {
         icon: <EditOutlined />,
@@ -335,6 +343,9 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
       case 'sale':
         setOpenSaleDialog(true);
         break;
+      case 'attachments':
+        setAttachDialog(true);
+        break;
       case 'open':
         setOpenDocumentDialog(true);
         break;
@@ -346,11 +357,14 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
   return (
     <>
       <Dialog
-        open={openEditDialog || openSaleDialog || openDocumentDialog}
+        open={
+          openEditDialog || openSaleDialog || openDocumentDialog || attachDialog
+        }
         onClose={() => {
           setOpenEditDialog(false);
           setOpenSaleDialog(false);
           setOpenDocumentDialog(false);
+          setAttachDialog(false);
         }}
         scroll={belowLargeScreen ? 'body' : 'paper'}
         fullWidth
@@ -367,6 +381,15 @@ const ProformaItemAction: React.FC<ProformaItemActionProps> = ({
           <SaleProforma
             proforma={proforma}
             setOpenSaleDialog={setOpenSaleDialog}
+          />
+        )}
+        {attachDialog && (
+          <AttachmentForm
+            setAttachDialog={setAttachDialog}
+            attachment_sourceNo={proforma?.proformaNo}
+            attachmentable_type={'proforma_invoice'}
+            attachment_name={'Proforma Invoice'}
+            attachmentable_id={proforma?.id as number}
           />
         )}
         {!!openDocumentDialog && (
