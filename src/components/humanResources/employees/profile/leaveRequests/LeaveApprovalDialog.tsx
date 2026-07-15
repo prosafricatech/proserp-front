@@ -81,6 +81,14 @@ export const getNextPendingLeaveLevel = (
   return levels[latestLevelIndex + 1];
 };
 
+const getEditedApprovalLevelId = (approval: any) => {
+  return Number(
+    approval?.approval_chain_level?.id ||
+    approval?.chain_level_id ||
+    approval?.approval_chain_level_id
+  );
+};
+
 const LeaveApprovalDialog = ({
   open,
   isEditMode,
@@ -137,27 +145,10 @@ const LeaveApprovalDialog = ({
     },
   });
 
-  const { mutate: updateApproval, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: any) =>
-      humanResourcesServices.updateLeaveRequestApproval(approval?.id!, payload),
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['showLeaveRequest', leaveRequest.id] });
-      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
-      enqueueSnackbar(data?.message || 'Approval updated', { variant: 'success' });
-      onClose();
-    },
-    onError: (error: any) => {
-      enqueueSnackbar(
-        error?.response?.data?.message || 'Something went wrong',
-        { variant: 'error' }
-      );
-    },
-  });
-
-  const isSubmitting = isAdding || isUpdating;
+  const isSubmitting = isAdding;
 
   const handleDecision = (status: LeaveApprovalDecision) => {
-    if ((status === 'rejected' || status === 'on hold') && !remarks.trim()) {
+    if (status === 'rejected' && !remarks.trim()) {
       setRemarksError('Remarks are required');
       return;
     }
@@ -170,24 +161,20 @@ const LeaveApprovalDialog = ({
     setRemarksError('');
     setDaysError('');
 
-    if (isEditMode) {
-      updateApproval({
-        days_approved: Number(daysApproved),
-        remarks,
-        status,
-        approval_date: approvalDate || undefined,
-      });
-      return;
-    }
+    const chainLevelId = isEditMode
+      ? getEditedApprovalLevelId(approval)
+      : Number(pendingLevel?.id);
 
-    if (!pendingLevel?.id) {
+      console.log('chainLevelId', chainLevelId, 'pendingLevel', pendingLevel, 'approval', approval);
+
+    if (!chainLevelId) {
       enqueueSnackbar('Pending approval level not found', { variant: 'error' });
       return;
     }
 
     addApproval({
       leave_request_id: leaveRequest.id,
-      chain_level_id: Number(pendingLevel.id),
+      chain_level_id: chainLevelId,
       status,
       days_approved: status === 'approved' ? Number(daysApproved) : undefined,
       remarks,
@@ -251,14 +238,6 @@ const LeaveApprovalDialog = ({
           onClick={() => handleDecision('rejected')}
         >
           Reject
-        </LoadingButton>
-        <LoadingButton
-          loading={isSubmitting}
-          variant='contained'
-          size='small'
-          onClick={() => handleDecision('on hold')}
-        >
-          Hold
         </LoadingButton>
         <LoadingButton
           loading={isSubmitting}

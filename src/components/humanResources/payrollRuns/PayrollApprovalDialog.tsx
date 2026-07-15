@@ -69,6 +69,7 @@ export const getNextPendingPayrollLevel = (
 
   const latestApproval = payrollRun.approvals?.[payrollRun.approvals.length - 1];
   if (!latestApproval) return levels[0];
+  console.log('latestApproval', latestApproval)
 
   if (getPayrollApprovalDecision(latestApproval) !== 'approved') return undefined;
 
@@ -85,6 +86,14 @@ export const getNextPendingPayrollLevel = (
   if (latestLevelIndex < 0) return undefined;
 
   return levels[latestLevelIndex + 1];
+};
+
+const getEditedPayrollApprovalLevelId = (approval: any) => {
+  return Number(
+    approval?.approval_chain_level?.id ||
+    approval?.chain_level_id ||
+    approval?.approval_chain_level_id
+  );
 };
 
 const calculateSummaryFromPayslips = (payslips: any[] = []) => {
@@ -150,6 +159,7 @@ const PayrollApprovalDialog = ({
   const queryClient = useQueryClient();
 
   const summary = calculateSummaryFromPayslips(payrollRun.payslips as any[]);
+  console.log(payrollRun)
   const pendingLevel = getNextPendingPayrollLevel(payrollRun);
 
   useEffect(() => {
@@ -164,7 +174,7 @@ const PayrollApprovalDialog = ({
     setRemarksError('');
   }, [open, approval?.approval_date, approval?.remarks]);
 
-  const { mutate: addApproval, isPending: isAdding } = useMutation({
+  const { mutate: addApproval, isPending: isSubmitting } = useMutation({
     mutationFn: humanResourcesServices.addPayrollRunApproval,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
@@ -179,25 +189,6 @@ const PayrollApprovalDialog = ({
       );
     },
   });
-
-  const { mutate: updateApproval, isPending: isUpdating } = useMutation({
-    mutationFn: (payload: any) =>
-      humanResourcesServices.updatePayrollRunApproval(approval?.id!, payload),
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails', payrollRun.id] });
-      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
-      enqueueSnackbar(data?.message || 'Approval updated', { variant: 'success' });
-      onClose();
-    },
-    onError: (error: any) => {
-      enqueueSnackbar(
-        error?.response?.data?.message || 'Something went wrong',
-        { variant: 'error' }
-      );
-    },
-  });
-
-  const isSubmitting = isAdding || isUpdating;
 
   const handleOpenSalarySheet = async () => {
     setIsLoadingSalarySheet(true);
@@ -273,30 +264,25 @@ const PayrollApprovalDialog = ({
   };
 
   const handleDecision = (status: ApprovalDecision) => {
-    if ((status === 'rejected' || status === 'on hold') && !remarks.trim()) {
+    if (status === 'rejected' && !remarks.trim()) {
       setRemarksError('Remarks are required');
+      return;
+    }
+
+    const chainLevelId = isEditMode
+      ? getEditedPayrollApprovalLevelId(approval)
+      : Number(pendingLevel?.id);
+
+    if (!chainLevelId) {
+      enqueueSnackbar('Unable to resolve approval chain level', { variant: 'error' });
       return;
     }
 
     setRemarksError('');
 
-    if (isEditMode) {
-      updateApproval({
-        remarks,
-        status,
-        approval_date: approvalDate || undefined,
-      });
-      return;
-    }
-
-    if (!pendingLevel?.id) {
-      enqueueSnackbar('Pending approval level not found', { variant: 'error' });
-      return;
-    }
-
     addApproval({
       payroll_run_id: payrollRun.id,
-      chain_level_id: Number(pendingLevel.id),
+      chain_level_id: chainLevelId,
       status,
       remarks,
       approval_date: approvalDate || undefined,
@@ -398,14 +384,6 @@ const PayrollApprovalDialog = ({
             onClick={() => handleDecision('rejected')}
           >
             Reject
-          </LoadingButton>
-          <LoadingButton
-            loading={isSubmitting}
-            variant='contained'
-            size='small'
-            onClick={() => handleDecision('on hold')}
-          >
-            Hold
           </LoadingButton>
           <LoadingButton
             loading={isSubmitting}
