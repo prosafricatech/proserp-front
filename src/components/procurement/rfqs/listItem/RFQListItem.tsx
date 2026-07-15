@@ -145,19 +145,27 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
         >
           <Grid container spacing={1} alignItems="center" sx={{ width: '100%', m: 0 }}>
             <Grid size={{ xs: 4, md: 4 }}>
-              <Typography>{details?.rfqNo || rfq.rfqNo || `RFQ/${rfq.id}`}</Typography>
-              <Typography variant="caption" color="text.secondary">
-                {readableDate(details?.rfq_date || rfq.rfq_date)}
-              </Typography>
+              <Tooltip title="RFQ Number">
+                <Typography>{details?.rfqNo || rfq.rfqNo || `RFQ/${rfq.id}`}</Typography>
+              </Tooltip>
+              <Tooltip title="RFQ Date">
+                <Typography variant="caption" color="text.secondary">
+                  {readableDate(details?.rfq_date || rfq.rfq_date, false)}
+                </Typography>
+              </Tooltip>
             </Grid>
             <Grid size={{ xs: 4, md: 4 }}>
-              <Typography variant="caption" color="text.secondary" display="block">
-                {readableDate(details?.response_deadline || rfq.response_deadline)}
-              </Typography>
+              <Tooltip title="Response Deadline">
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {readableDate(details?.response_deadline || rfq.response_deadline, false)}
+                </Typography>
+              </Tooltip>
             </Grid>
             <Grid size={{ xs: 4, md: 4 }} textAlign="end">
               <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="flex-end">
-                <Chip size="small" label={formattedStatus} color={statusColor as any} />
+                <Tooltip title="RFQ Status">
+                  <Chip size="small" label={formattedStatus} color={statusColor as any} />
+                </Tooltip>
               </Stack>
             </Grid>
           </Grid>
@@ -196,20 +204,33 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
             ) : (
               <>
                 <Grid size={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Suppliers
-                  </Typography>
+                  <Tooltip title="List of invited suppliers">
+                    <Typography variant="subtitle2" gutterBottom>
+                      Suppliers
+                    </Typography>
+                  </Tooltip>
                   <Stack direction="row" spacing={1} flexWrap="wrap">
                     {(details?.stakeholders || []).map((stakeholder: any) => (
-                      <Chip key={stakeholder.id} size="small" label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} />
+                      <Tooltip key={stakeholder.id} title={`Supplier: ${stakeholder.name}${stakeholder.status ? ` (${stakeholder.status})` : ''}`}>
+                        <Chip 
+                          size="small" 
+                          label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} 
+                        />
+                      </Tooltip>
                     ))}
-                    {!details?.stakeholders?.length && <Typography variant="body2" color="text.secondary">No suppliers invited yet</Typography>}
+                    {!details?.stakeholders?.length && (
+                      <Typography variant="body2" color="text.secondary">
+                        No suppliers invited yet
+                      </Typography>
+                    )}
                   </Stack>
                 </Grid>
                 <Grid size={12}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Items
-                  </Typography>
+                  <Tooltip title="List of RFQ items">
+                    <Typography variant="subtitle2" gutterBottom>
+                      Items
+                    </Typography>
+                  </Tooltip>
                   {details?.items?.length ? (
                     details.items.map((item: any, index: number) => (
                       <Grid
@@ -225,19 +246,25 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 7, md: 4 }}>
-                          <Typography variant="body2">
-                            {item.product?.name || item.product?.item_name || 'Item'}
-                          </Typography>
+                          <Tooltip title={`Product: ${item.product?.name || item.product?.item_name || 'Item'}`}>
+                            <Typography variant="body2">
+                              {item.product?.name || item.product?.item_name || 'Item'}
+                            </Typography>
+                          </Tooltip>
                         </Grid>
                         <Grid size={{ xs: 3 }} textAlign="right">
-                          <Typography variant="body2" color="text.secondary">
-                            {item.quantity}
-                          </Typography>
+                          <Tooltip title={`Quantity: ${item.quantity}`}>
+                            <Typography variant="body2" color="text.secondary">
+                              {item.quantity}
+                            </Typography>
+                          </Tooltip>
                         </Grid>
                         <Grid size={{ xs: 2, md: 3 }} textAlign="right">
-                          <Typography variant="body2" color="text.secondary">
-                            {item.unit_symbol || item.measurement_unit?.symbol || ''}
-                          </Typography>
+                          <Tooltip title={`Unit: ${item.unit_symbol || item.measurement_unit?.symbol || ''}`}>
+                            <Typography variant="body2" color="text.secondary">
+                              {item.unit_symbol || item.measurement_unit?.symbol || ''}
+                            </Typography>
+                          </Tooltip>
                         </Grid>
                       </Grid>
                     ))
