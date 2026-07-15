@@ -3,20 +3,20 @@
 import React, { useEffect, useState } from 'react';
 import {
   Alert,
-  Autocomplete,
   Button,
   DialogContent,
   DialogTitle,
   Divider,
   Grid,
-  IconButton,
   MenuItem,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LoadingButton } from '@mui/lab';
-import { AddOutlined, DeleteOutlined } from '@mui/icons-material';
+import { AddOutlined } from '@mui/icons-material';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -24,16 +24,14 @@ import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import dayjs from 'dayjs';
 
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
-import StakeholderSelectProvider, {
-  useStakeholderSelect,
-} from '@/components/masters/stakeholders/StakeholderSelectProvider';
+import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import rfqServices from '../rfq-services';
 import { RFQ, RFQItem } from '../rfq-types';
+import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
+import RFQItemForm from './RFQItemForm';
+import RFQItemRow from './RFQItemRow';
 
 interface RFQDialogFormProps {
   toggleOpen: (open: boolean) => void;
@@ -41,43 +39,31 @@ interface RFQDialogFormProps {
 }
 
 interface FormValues {
-  rfq_date: string;
-  response_deadline: string;
+  rfq_date: dayjs.Dayjs | null;
+  response_deadline: dayjs.Dayjs | null;
   reference?: string;
   remarks?: string;
   status: string;
+  stakeholder_ids?: number[];
 }
 
-type EditableRFQItem = RFQItem & {
-  product?: any;
-  product_id?: number;
-  unit_symbol?: string;
-};
-
 const validationSchema = yup.object({
-  rfq_date: yup.string().required('RFQ date is required'),
-  response_deadline: yup.string().required('Response deadline is required'),
+  rfq_date: yup.mixed().required('RFQ date is required').nullable(),
+  response_deadline: yup.mixed().required('Response deadline is required').nullable(),
   reference: yup.string().nullable(),
   remarks: yup.string().nullable(),
   status: yup.string().required('Status is required'),
 });
 
 function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
-  const { stakeholders = [] } = useStakeholderSelect() as { stakeholders: Stakeholder[] };
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<string | null>(null);
   const [selectedStakeholders, setSelectedStakeholders] = useState<Stakeholder[]>([]);
-  const [items, setItems] = useState<EditableRFQItem[]>([
-    {
-      product_id: undefined,
-      product: undefined,
-      measurement_unit_id: undefined,
-      quantity: undefined,
-      remarks: '',
-      unit_symbol: undefined,
-    },
-  ]);
+  const [items, setItems] = useState<RFQItem[]>([]);
+  const [isDirty, setIsDirty] = useState(false);
+  const [clearFormKey, setClearFormKey] = useState(0);
+  const [submitItemForm, setSubmitItemForm] = useState(false);
 
   const isEditMode = !!rfq?.id;
 
@@ -89,11 +75,12 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      rfq_date: rfq?.rfq_date || dayjs().toISOString(),
-      response_deadline: rfq?.response_deadline || dayjs().add(7, 'day').toISOString(),
+      rfq_date: rfq?.rfq_date ? dayjs(rfq.rfq_date) : dayjs(),
+      response_deadline: rfq?.response_deadline ? dayjs(rfq.response_deadline) : dayjs().add(7, 'day'),
       reference: rfq?.reference || '',
       remarks: rfq?.remarks || '',
-      status: rfq?.status || 'draft',
+      status: String(rfq?.status || 'draft').toLowerCase(),
+      stakeholder_ids: rfq?.stakeholders?.map((stakeholder) => stakeholder.id) || [],
     },
   });
 
@@ -104,40 +91,20 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
           ...item,
           product: item.product,
           product_id: item.product_id || item.product?.id,
-          unit_symbol: item.measurement_unit?.symbol || item.unit_symbol,
+          measurement_unit_id: item.measurement_unit_id || item.measurement_unit?.id,
+          unit_symbol: item.measurement_unit?.symbol || item.unit_symbol || item.product?.primary_unit?.unit_symbol,
         }))
       );
     }
     if (rfq?.stakeholders?.length) {
       setSelectedStakeholders(rfq.stakeholders as Stakeholder[]);
+      setValue(
+        'stakeholder_ids',
+        rfq.stakeholders.map((stakeholder) => stakeholder.id),
+        { shouldValidate: true }
+      );
     }
-  }, [rfq]);
-
-  const addBlankItem = () => {
-    setItems((prev) => [
-      ...prev,
-      {
-        product_id: undefined,
-        product: undefined,
-        measurement_unit_id: undefined,
-        quantity: undefined,
-        remarks: '',
-        unit_symbol: undefined,
-      },
-    ]);
-  };
-
-  const updateItem = (index: number, key: keyof EditableRFQItem, value: any) => {
-    setItems((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [key]: value };
-      return next;
-    });
-  };
-
-  const removeItem = (index: number) => {
-    setItems((prev) => prev.filter((_, itemIndex) => itemIndex !== index));
-  };
+  }, [rfq, setValue]);
 
   const addMutation = useMutation({
     mutationFn: rfqServices.add,
@@ -187,14 +154,18 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
     const payload = {
       id: rfq?.id,
-      ...formData,
+      rfq_date: formData.rfq_date?.toISOString(),
+      response_deadline: formData.response_deadline?.toISOString(),
+      reference: formData.reference,
+      remarks: formData.remarks,
+      status: String(formData.status || 'draft').toLowerCase(),
       requisition_approval_id: rfq?.requisition_approval_id ?? null,
       stakeholder_ids: selectedStakeholders.map((stakeholder) => stakeholder.id),
       items: items.map((item) => ({
         product_id: item.product_id,
-        measurement_unit_id: item.measurement_unit_id,
+        measurement_unit_id: item.measurement_unit_id || item.measurement_unit?.id,
         quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
-        remarks: item.remarks,
+        remarks: item.remarks || '',
       })),
     };
 
@@ -209,7 +180,7 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
   return (
     <>
-      <Grid container columnSpacing={1} rowSpacing={1} component="form" autoComplete="off">
+      <Grid container columnSpacing={1} rowSpacing={1}>
         <Grid size={12}>
           <Divider />
         </Grid>
@@ -221,29 +192,39 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
         )}
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <TextField
-            label="RFQ Date"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={watch('rfq_date') ? dayjs(watch('rfq_date')).format('YYYY-MM-DDTHH:mm') : ''}
-            error={!!errors.rfq_date}
-            helperText={errors.rfq_date?.message}
-            onChange={(e) => setValue('rfq_date', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="RFQ Date"
+              value={watch('rfq_date')}
+              onChange={(newValue) => setValue('rfq_date', newValue, { shouldDirty: true, shouldValidate: true })}
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                  error: !!errors.rfq_date,
+                  helperText: errors.rfq_date?.message,
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <TextField
-            label="Response Deadline"
-            type="datetime-local"
-            fullWidth
-            size="small"
-            value={watch('response_deadline') ? dayjs(watch('response_deadline')).format('YYYY-MM-DDTHH:mm') : ''}
-            error={!!errors.response_deadline}
-            helperText={errors.response_deadline?.message}
-            onChange={(e) => setValue('response_deadline', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DateTimePicker
+              label="Response Deadline"
+              value={watch('response_deadline')}
+              onChange={(newValue) => setValue('response_deadline', newValue, { shouldDirty: true, shouldValidate: true })}
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                  error: !!errors.response_deadline,
+                  helperText: errors.response_deadline?.message,
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
@@ -271,99 +252,76 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
           >
             {['draft', 'sent', 'closed', 'canceled'].map((option) => (
               <MenuItem key={option} value={option}>
-                {option}
+                {option.charAt(0).toUpperCase() + option.slice(1)}
               </MenuItem>
             ))}
           </TextField>
         </Grid>
 
-        <Grid size={12}>
-          <Autocomplete<Stakeholder, true, false, false>
-            multiple
-            options={stakeholders}
-            value={selectedStakeholders}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            getOptionLabel={(option) => option.name || ''}
-            onChange={(_, newValue) => setSelectedStakeholders(newValue)}
-            renderInput={(params) => (
-              <TextField {...params} label="Invited Suppliers" size="small" fullWidth />
-            )}
+        <Grid size={{ xs: 12, md: 4 }}>
+          <StakeholderSelector
+            label='Invited Suppliers'
+            multiple={true}
+            defaultValue={selectedStakeholders}
+            onChange={(newValue) => {
+              const stakeholders = Array.isArray(newValue)
+                ? newValue
+                : newValue
+                ? [newValue]
+                : [];
+              setSelectedStakeholders(stakeholders);
+              setValue(
+                'stakeholder_ids',
+                stakeholders.map((stakeholder) => stakeholder.id),
+                { shouldDirty: true, shouldValidate: true }
+              );
+            }}
           />
         </Grid>
 
+        <Grid size={{ xs: 12, md: 8 }}>
+          <TextField
+            label="Remarks"
+            fullWidth
+            size="small"
+            multiline
+            rows={2}
+            value={watch('remarks') || ''}
+            error={!!errors.remarks}
+            helperText={errors.remarks?.message}
+            onChange={(e) => setValue('remarks', e.target.value, { shouldDirty: true, shouldValidate: true })}
+          />
+        </Grid>
+
+        {/* Add Item Form */}
         <Grid size={12}>
-          <Divider sx={{ my: 1 }} />
+          <RFQItemForm
+            key={clearFormKey}
+            setClearFormKey={setClearFormKey}
+            submitItemForm={submitItemForm}
+            setSubmitItemForm={setSubmitItemForm}
+            setIsDirty={setIsDirty}
+            setItems={setItems}
+            items={items}
+          />
         </Grid>
 
-        <Grid size={12} display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">RFQ Items</Typography>
-          <Button size="small" variant="outlined" startIcon={<AddOutlined />} onClick={addBlankItem}>
-            Add Item
-          </Button>
+        {/* Display existing items */}
+        <Grid size={12}>
+          {items.map((item, index) => (
+            <RFQItemRow
+              key={item.id || index}
+              setClearFormKey={setClearFormKey}
+              setSubmitItemForm={setSubmitItemForm}
+              submitItemForm={submitItemForm}
+              setIsDirty={setIsDirty}
+              items={items}
+              setItems={setItems}
+              item={item}
+              index={index}
+            />
+          ))}
         </Grid>
-
-        {items.map((item, index) => (
-          <React.Fragment key={`${item.id || index}-${index}`}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <ProductSelect
-                label="Product"
-                defaultValue={item.product}
-                frontError={null}
-                onChange={(newValue: any) => {
-                  updateItem(index, 'product', newValue);
-                  updateItem(index, 'product_id', newValue?.id);
-                  const unitId = newValue?.primary_unit?.id || newValue?.measurement_unit_id;
-                  updateItem(index, 'measurement_unit_id', unitId);
-                  updateItem(index, 'unit_symbol', newValue?.primary_unit?.unit_symbol || newValue?.measurement_unit?.symbol);
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6, md: 2 }}>
-              <TextField
-                label="Quantity"
-                fullWidth
-                size="small"
-                value={item.quantity ?? ''}
-                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                onChange={(e) => {
-                  const value = e.target.value ? sanitizedNumber(e.target.value) : '';
-                  updateItem(index, 'quantity', Number.isFinite(value) ? value : '');
-                }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 6, md: 2 }}>
-              <TextField
-                label="Unit"
-                fullWidth
-                size="small"
-                value={item.unit_symbol || item.product?.primary_unit?.unit_symbol || item.product?.measurement_unit?.symbol || ''}
-                InputProps={{ readOnly: true }}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 10, md: 3 }}>
-              <TextField
-                label="Remarks"
-                fullWidth
-                size="small"
-                value={item.remarks || ''}
-                onChange={(e) => updateItem(index, 'remarks', e.target.value)}
-              />
-            </Grid>
-
-            <Grid size={{ xs: 2, md: 1 }} textAlign="end">
-              {items.length > 1 && (
-                <Tooltip title="Remove Item">
-                  <IconButton size="small" onClick={() => removeItem(index)}>
-                    <DeleteOutlined fontSize="small" color="error" />
-                  </IconButton>
-                </Tooltip>
-              )}
-            </Grid>
-          </React.Fragment>
-        ))}
       </Grid>
 
       <Grid container justifyContent="space-between" mt={2}>
@@ -375,7 +333,7 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
             Cancel
           </Button>
           <LoadingButton loading={loading} size="small" variant="contained" onClick={handleSave}>
-            {isEditMode ? 'Update RFQ' : 'Save RFQ'}
+            {isEditMode ? 'Update' : 'Submit'}
           </LoadingButton>
         </Grid>
       </Grid>
