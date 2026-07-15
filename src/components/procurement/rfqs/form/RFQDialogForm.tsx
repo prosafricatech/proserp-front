@@ -1,6 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { AddOutlined, DeleteOutlined } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Autocomplete,
@@ -15,25 +17,24 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { LoadingButton } from '@mui/lab';
-import { AddOutlined, DeleteOutlined } from '@mui/icons-material';
-import { yupResolver } from '@hookform/resolvers/yup';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import dayjs from 'dayjs';
 
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import ProductSelect from '@/components/productAndServices/products/ProductSelect';
-import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
 import StakeholderSelectProvider, {
   useStakeholderSelect,
 } from '@/components/masters/stakeholders/StakeholderSelectProvider';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import ProductSelect from '@/components/productAndServices/products/ProductSelect';
+import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
+import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import rfqServices from '../rfq-services';
-import { RFQ, RFQItem } from '../rfq-types';
+import { RFQ, RFQItem, STATUS_OPTIONS } from '../rfq-types';
 
 interface RFQDialogFormProps {
   toggleOpen: (open: boolean) => void;
@@ -63,11 +64,15 @@ const validationSchema = yup.object({
 });
 
 function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
-  const { stakeholders = [] } = useStakeholderSelect() as { stakeholders: Stakeholder[] };
+  const { stakeholders = [] } = useStakeholderSelect() as {
+    stakeholders: Stakeholder[];
+  };
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [selectedStakeholders, setSelectedStakeholders] = useState<Stakeholder[]>([]);
+  const [selectedStakeholders, setSelectedStakeholders] = useState<
+    Stakeholder[]
+  >([]);
   const [items, setItems] = useState<EditableRFQItem[]>([
     {
       product_id: undefined,
@@ -90,7 +95,8 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       rfq_date: rfq?.rfq_date || dayjs().toISOString(),
-      response_deadline: rfq?.response_deadline || dayjs().add(7, 'day').toISOString(),
+      response_deadline:
+        rfq?.response_deadline || dayjs().add(7, 'day').toISOString(),
       reference: rfq?.reference || '',
       remarks: rfq?.remarks || '',
       status: rfq?.status || 'draft',
@@ -127,7 +133,11 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
     ]);
   };
 
-  const updateItem = (index: number, key: keyof EditableRFQItem, value: any) => {
+  const updateItem = (
+    index: number,
+    key: keyof EditableRFQItem,
+    value: any
+  ) => {
     setItems((prev) => {
       const next = [...prev];
       next[index] = { ...next[index], [key]: value };
@@ -142,22 +152,33 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
   const addMutation = useMutation({
     mutationFn: rfqServices.add,
     onSuccess: (data) => {
-      enqueueSnackbar(data?.message || 'RFQ saved successfully', { variant: 'success' });
+      enqueueSnackbar(data?.message || 'RFQ saved successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       toggleOpen(false);
     },
     onError: (error: any) => {
-      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', {
-        variant: 'error',
-      });
+      setServerError(
+        error?.response?.data?.message ||
+          'Please check the information you submitted'
+      );
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Please check the information you submitted',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: rfqServices.update,
     onSuccess: (data) => {
-      enqueueSnackbar(data?.message || 'RFQ updated successfully', { variant: 'success' });
+      enqueueSnackbar(data?.message || 'RFQ updated successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       if (rfq?.id) {
         queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
@@ -166,10 +187,17 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       toggleOpen(false);
     },
     onError: (error: any) => {
-      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', {
-        variant: 'error',
-      });
+      setServerError(
+        error?.response?.data?.message ||
+          'Please check the information you submitted'
+      );
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Please check the information you submitted',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -179,9 +207,13 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       return;
     }
 
-    const invalidItem = items.find((item) => !item.product_id || !item.quantity);
+    const invalidItem = items.find(
+      (item) => !item.product_id || !item.quantity
+    );
     if (invalidItem) {
-      enqueueSnackbar('Each RFQ item needs a product and quantity', { variant: 'error' });
+      enqueueSnackbar('Each RFQ item needs a product and quantity', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -189,11 +221,15 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       id: rfq?.id,
       ...formData,
       requisition_approval_id: rfq?.requisition_approval_id ?? null,
-      stakeholder_ids: selectedStakeholders.map((stakeholder) => stakeholder.id),
+      stakeholder_ids: selectedStakeholders.map(
+        (stakeholder) => stakeholder.id
+      ),
       items: items.map((item) => ({
         product_id: item.product_id,
         measurement_unit_id: item.measurement_unit_id,
-        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+        quantity: Number.isFinite(Number(item.quantity))
+          ? Number(item.quantity)
+          : 0,
         remarks: item.remarks,
       })),
     };
@@ -209,19 +245,25 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
   return (
     <>
-      <Grid container columnSpacing={1} rowSpacing={1} component="form" autoComplete="off">
+      <Grid
+        container
+        columnSpacing={1}
+        rowSpacing={1}
+        component='form'
+        autoComplete='off'
+      >
         <Grid size={12}>
           <Divider />
         </Grid>
 
         {serverError && (
           <Grid size={12}>
-            <Alert severity="error">{serverError}</Alert>
+            <Alert severity='error'>{serverError}</Alert>
           </Grid>
         )}
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <TextField
+          {/* <TextField
             label="RFQ Date"
             type="datetime-local"
             fullWidth
@@ -230,50 +272,115 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
             error={!!errors.rfq_date}
             helperText={errors.rfq_date?.message}
             onChange={(e) => setValue('rfq_date', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
+          /> */}
+          <DateTimePicker
+            label='RFQ Date'
+            defaultValue={watch('rfq_date') ? dayjs(watch('rfq_date')) : null}
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+                error: !!errors.rfq_date,
+                helperText: errors.rfq_date?.message,
+              },
+            }}
+            onChange={(v) =>
+              setValue('rfq_date', dayjs(v).toISOString(), {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <TextField
-            label="Response Deadline"
-            type="datetime-local"
+          {/* <TextField
+            label='Response Deadline'
+            type='datetime-local'
             fullWidth
-            size="small"
-            value={watch('response_deadline') ? dayjs(watch('response_deadline')).format('YYYY-MM-DDTHH:mm') : ''}
+            size='small'
+            value={
+              watch('response_deadline')
+                ? dayjs(watch('response_deadline')).format('YYYY-MM-DDTHH:mm')
+                : ''
+            }
             error={!!errors.response_deadline}
             helperText={errors.response_deadline?.message}
-            onChange={(e) => setValue('response_deadline', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue(
+                'response_deadline',
+                dayjs(e.target.value).toISOString(),
+                { shouldDirty: true, shouldValidate: true }
+              )
+            }
+          /> */}
+
+          <DateTimePicker
+            label='Response Deadline'
+            defaultValue={
+              watch('response_deadline')
+                ? dayjs(watch('response_deadline'))
+                : null
+            }
+            slotProps={{
+              textField: {
+                size: 'small',
+                fullWidth: true,
+                error: !!errors.response_deadline,
+                helperText: errors.response_deadline?.message,
+              },
+            }}
+            onChange={(v) =>
+              setValue('response_deadline', dayjs(v).toISOString(), {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
           <TextField
-            label="Reference"
+            label='Reference'
             fullWidth
-            size="small"
+            size='small'
             value={watch('reference') || ''}
             error={!!errors.reference}
             helperText={errors.reference?.message}
-            onChange={(e) => setValue('reference', e.target.value, { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue('reference', e.target.value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
           <TextField
-            label="Status"
+            label='Status'
             select
             fullWidth
-            size="small"
+            size='small'
             value={watch('status') || 'draft'}
             error={!!errors.status}
             helperText={errors.status?.message}
-            onChange={(e) => setValue('status', e.target.value, { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue('status', e.target.value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           >
-            {['draft', 'sent', 'closed', 'canceled'].map((option) => (
-              <MenuItem key={option} value={option}>
-                {option}
-              </MenuItem>
-            ))}
+            {STATUS_OPTIONS.map((option: any) => {
+              if (option.lable !== 'All') {
+                return (
+                  <MenuItem key={option.value} value={option.value}>
+                    {option.lable}
+                  </MenuItem>
+                );
+              }
+            })}
           </TextField>
         </Grid>
 
@@ -286,7 +393,12 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
             getOptionLabel={(option) => option.name || ''}
             onChange={(_, newValue) => setSelectedStakeholders(newValue)}
             renderInput={(params) => (
-              <TextField {...params} label="Invited Suppliers" size="small" fullWidth />
+              <TextField
+                {...params}
+                label='Invited Suppliers'
+                size='small'
+                fullWidth
+              />
             )}
           />
         </Grid>
@@ -295,9 +407,19 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
           <Divider sx={{ my: 1 }} />
         </Grid>
 
-        <Grid size={12} display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6">RFQ Items</Typography>
-          <Button size="small" variant="outlined" startIcon={<AddOutlined />} onClick={addBlankItem}>
+        <Grid
+          size={12}
+          display='flex'
+          justifyContent='space-between'
+          alignItems='center'
+        >
+          <Typography variant='h6'>RFQ Items</Typography>
+          <Button
+            size='small'
+            variant='outlined'
+            startIcon={<AddOutlined />}
+            onClick={addBlankItem}
+          >
             Add Item
           </Button>
         </Grid>
@@ -306,58 +428,75 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
           <React.Fragment key={`${item.id || index}-${index}`}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ProductSelect
-                label="Product"
+                label='Product'
                 defaultValue={item.product}
                 frontError={null}
                 onChange={(newValue: any) => {
                   updateItem(index, 'product', newValue);
                   updateItem(index, 'product_id', newValue?.id);
-                  const unitId = newValue?.primary_unit?.id || newValue?.measurement_unit_id;
+                  const unitId =
+                    newValue?.primary_unit?.id || newValue?.measurement_unit_id;
                   updateItem(index, 'measurement_unit_id', unitId);
-                  updateItem(index, 'unit_symbol', newValue?.primary_unit?.unit_symbol || newValue?.measurement_unit?.symbol);
+                  updateItem(
+                    index,
+                    'unit_symbol',
+                    newValue?.primary_unit?.unit_symbol ||
+                      newValue?.measurement_unit?.symbol
+                  );
                 }}
               />
             </Grid>
 
             <Grid size={{ xs: 6, md: 2 }}>
               <TextField
-                label="Quantity"
+                label='Quantity'
                 fullWidth
-                size="small"
+                size='small'
                 value={item.quantity ?? ''}
                 InputProps={{ inputComponent: CommaSeparatedField as any }}
                 onChange={(e) => {
-                  const value = e.target.value ? sanitizedNumber(e.target.value) : '';
-                  updateItem(index, 'quantity', Number.isFinite(value) ? value : '');
+                  const value = e.target.value
+                    ? sanitizedNumber(e.target.value)
+                    : '';
+                  updateItem(
+                    index,
+                    'quantity',
+                    Number.isFinite(value) ? value : ''
+                  );
                 }}
               />
             </Grid>
 
             <Grid size={{ xs: 6, md: 2 }}>
               <TextField
-                label="Unit"
+                label='Unit'
                 fullWidth
-                size="small"
-                value={item.unit_symbol || item.product?.primary_unit?.unit_symbol || item.product?.measurement_unit?.symbol || ''}
+                size='small'
+                value={
+                  item.unit_symbol ||
+                  item.product?.primary_unit?.unit_symbol ||
+                  item.product?.measurement_unit?.symbol ||
+                  ''
+                }
                 InputProps={{ readOnly: true }}
               />
             </Grid>
 
             <Grid size={{ xs: 10, md: 3 }}>
               <TextField
-                label="Remarks"
+                label='Remarks'
                 fullWidth
-                size="small"
+                size='small'
                 value={item.remarks || ''}
                 onChange={(e) => updateItem(index, 'remarks', e.target.value)}
               />
             </Grid>
 
-            <Grid size={{ xs: 2, md: 1 }} textAlign="end">
+            <Grid size={{ xs: 2, md: 1 }} textAlign='end'>
               {items.length > 1 && (
-                <Tooltip title="Remove Item">
-                  <IconButton size="small" onClick={() => removeItem(index)}>
-                    <DeleteOutlined fontSize="small" color="error" />
+                <Tooltip title='Remove Item'>
+                  <IconButton size='small' onClick={() => removeItem(index)}>
+                    <DeleteOutlined fontSize='small' color='error' />
                   </IconButton>
                 </Tooltip>
               )}
@@ -366,15 +505,20 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
         ))}
       </Grid>
 
-      <Grid container justifyContent="space-between" mt={2}>
+      <Grid container justifyContent='space-between' mt={2}>
         <Grid size={12}>
           <Divider />
         </Grid>
-        <Grid size={12} display="flex" justifyContent="flex-end" gap={1} mt={1}>
-          <Button size="small" onClick={() => toggleOpen(false)}>
+        <Grid size={12} display='flex' justifyContent='flex-end' gap={1} mt={1}>
+          <Button size='small' onClick={() => toggleOpen(false)}>
             Cancel
           </Button>
-          <LoadingButton loading={loading} size="small" variant="contained" onClick={handleSave}>
+          <LoadingButton
+            loading={loading}
+            size='small'
+            variant='contained'
+            onClick={handleSave}
+          >
             {isEditMode ? 'Update RFQ' : 'Save RFQ'}
           </LoadingButton>
         </Grid>
@@ -386,8 +530,10 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 function RFQDialogForm({ toggleOpen, rfq = null }: RFQDialogFormProps) {
   return (
     <ProductsSelectProvider>
-      <StakeholderSelectProvider type="suppliers">
-        <DialogTitle textAlign="center">{rfq?.id ? 'Edit RFQ' : 'New RFQ'}</DialogTitle>
+      <StakeholderSelectProvider type='suppliers'>
+        <DialogTitle textAlign='center'>
+          {rfq?.id ? 'Edit RFQ' : 'New RFQ'}
+        </DialogTitle>
         <DialogContent>
           <RFQDialogFormContent toggleOpen={toggleOpen} rfq={rfq} />
         </DialogContent>

@@ -110,3 +110,11 @@ export interface RFQComparison {
   rfqNo?: string;
   items: RFQComparisonItem[];
 }
+
+export const STATUS_OPTIONS = [
+  { lable: 'All', value: '' },
+  { lable: 'Draft', value: 'draft' },
+  { lable: 'Sent', value: 'sent' },
+  { lable: 'Closed', value: 'closed' },
+  { lable: 'Canceled', value: 'canceled' },
+];
