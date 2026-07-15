@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo, useCallback } from 'react';
 import {
   Autocomplete,
   Grid,
@@ -10,18 +10,20 @@ import {
   TextField,
   Tooltip,
   Typography,
+  CircularProgress,
 } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { AddOutlined, CheckOutlined, DisabledByDefaultOutlined } from '@mui/icons-material';
-import { Button, CircularProgress } from '@mui/material';
+import { Button } from '@mui/material';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { useProjectProfile } from '@/components/projectManagement/projects/profile/ProjectProfileProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import projectsServices from '@/components/projectManagement/projects/project-services';
+import debounce from 'lodash/debounce';
 
 interface Deliverable {
   id: number;
@@ -29,12 +31,18 @@ interface Deliverable {
   currency_id: number;
   contract_rate: number;
   unit_symbol?: string;
+  group_name?: string;
+  top_group_name?: string;
+  code: string;
   measurement_unit?: {
     symbol: string;
   };
 }
 
 interface ProjectDeliverableGroup {
+  id?: number;
+  name?: string;
+  code?: string;
   deliverables?: Deliverable[];
   children?: ProjectDeliverableGroup[];
 }
@@ -48,7 +56,7 @@ interface ClaimedDeliverableItem {
   rate?: number;
   certified_quantity?: number | string;
   remarks?: string;
-  unit_symbol?: string
+  unit_symbol?: string;
   measurement_unit?: {
     symbol: string;
   };
@@ -118,6 +126,10 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
   const [unitToDisplay, setUnitToDisplay] = useState<string | undefined>(
     deliverableItem?.unit_symbol || deliverableItem?.measurement_unit?.symbol
   );
+  const [searchInput, setSearchInput] = useState('');
+  const [isSearching, setIsSearching] = useState(false);
+  const [filteredDeliverables, setFilteredDeliverables] = useState<Deliverable[]>([]);
+  const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
   const {
     handleSubmit,
@@ -133,7 +145,7 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
       project_deliverable_id: deliverableItem?.project_deliverable_id || deliverableItem?.project_deliverable?.id,
       revenue_ledger_id: deliverableItem?.revenue_ledger_id || deliverableItem?.revenue_ledger?.id,
       certified_quantity: deliverableItem?.certified_quantity || '',
-      rate: deliverableItem?.project_deliverable?.contract_rate || deliverableItem?.rate,
+      rate: deliverableItem?.rate ? deliverableItem?.rate : deliverableItem?.project_deliverable?.contract_rate,
       remarks: deliverableItem?.remarks || '',
       response_uncertified_quantity: deliverableItem?.response_uncertified_quantity,
     },
@@ -154,10 +166,95 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
     }
   }, [submitItemForm, trigger, handleSubmit, setSubmitItemForm]);
 
+  // Get all deliverables from the nested structure with top-level group name tracking
+  const getAllDeliverables = useCallback((
+    groups: ProjectDeliverableGroup[] = [],
+    topGroupName: string = ''
+  ): Deliverable[] => {
+    if (!Array.isArray(groups)) return [];
+
+    return groups.flatMap((group) => {
+      // Use the first non-empty topGroupName, or fallback to current group name
+      const currentTopGroupName = topGroupName || group.name || '';
+
+      const deliverableOptions = (group.deliverables || []).map((del) => ({
+        id: del.id,
+        description: del.description,
+        code: del.code,
+        group_name: group.name || '',
+        top_group_name: currentTopGroupName, // Store the top-level group name
+        currency_id: del.currency_id,
+        contract_rate: del.contract_rate,
+        unit_symbol: del.measurement_unit?.symbol,
+        measurement_unit: del.measurement_unit,
+      }));
+
+      // Recursively process children, passing the top-level group name
+      const childrenOptions = getAllDeliverables(group.children || [], currentTopGroupName);
+
+      return [...deliverableOptions, ...childrenOptions];
+    });
+  }, []);
+
+  // Get all deliverables once
+  const allDeliverables = useMemo(() => {
+    return getAllDeliverables(deliverable_groups);
+  }, [deliverable_groups, getAllDeliverables]);
+
+  // Filter deliverables by currency
+  const deliverablesByCurrency = useMemo(() => {
+    return allDeliverables.filter(
+      (del) => Number(del.currency_id) === Number(selectedCurrencyId)
+    );
+  }, [allDeliverables, selectedCurrencyId]);
+
+  // Debounced search function
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((searchTerm: string) => {
+        setIsSearching(true);
+        try {
+          const filtered = deliverablesByCurrency.filter((option) =>
+            option.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            option.code?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            option.top_group_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            option.group_name?.toLowerCase().includes(searchTerm.toLowerCase())
+          );
+          setFilteredDeliverables(filtered);
+        } catch (error) {
+          setFilteredDeliverables([]);
+        } finally {
+          setIsSearching(false);
+        }
+      }, 300),
+    [deliverablesByCurrency]
+  );
+
+  // Handle search input change
+  const handleSearchChange = (event: React.SyntheticEvent, value: string) => {
+    setSearchInput(value);
+    if (value.length >= 2) {
+      debouncedSearch(value);
+    } else {
+      setFilteredDeliverables([]);
+    }
+  };
+
+  // Load initial options when dropdown opens
+  const handleOpen = () => {
+    if (filteredDeliverables.length === 0 && deliverablesByCurrency.length > 0) {
+      setIsLoadingOptions(true);
+      setTimeout(() => {
+        setFilteredDeliverables(deliverablesByCurrency);
+        setIsLoadingOptions(false);
+      }, 100);
+    }
+  };
+
   const updateItems = async (formData: FormValues) => {
     setIsAdding(true);
 
-    const selectedDeliverable = deliverables.find((d) => d.id === formData.project_deliverable_id);
+    const selectedDeliverable = allDeliverables.find((d) => d.id === formData.project_deliverable_id);
 
     const itemToAdd = {
       ...formData,
@@ -184,7 +281,10 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
     setIsRetrievingDetails(true);
     try {
       const details = await projectsServices.showDelUncertifiedQTY(delId, claimDate);
-      setValue('response_uncertified_quantity', deliverableItem ? deliverableItem.certified_quantity + (details?.uncertified_quantity ?? 0) : details?.uncertified_quantity ?? 0);
+      const existingQuantity = deliverableItem?.certified_quantity || 0;
+      setValue('response_uncertified_quantity', 
+        Number(existingQuantity) + (details?.uncertified_quantity ?? 0)
+      );
     } catch (error) {
       console.error('Failed to retrieve uncertified quantity', error);
     } finally {
@@ -199,28 +299,8 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
     }
   }, [deliverableItem]);
 
-  const getDeliverablesOptions = (groups: ProjectDeliverableGroup[] = []): Deliverable[] => {
-    if (!Array.isArray(groups)) return [];
-
-    return groups.flatMap((group) => {
-      const deliverableOptions = (group.deliverables || []).map((del) => ({
-        id: del.id,
-        description: del.description,
-        currency_id: del.currency_id,
-        contract_rate: del.contract_rate,
-        unit_symbol: del.measurement_unit?.symbol,
-      }));
-
-      const childrenOptions = getDeliverablesOptions(group.children || []);
-
-      return [...deliverableOptions, ...childrenOptions];
-    });
-  };
-
-  const deliverables = getDeliverablesOptions(deliverable_groups);
   const watchedDeliverableId = watch('project_deliverable_id');
-  const filteredDeliverables = deliverables.filter((del) => del.currency_id === selectedCurrencyId);
-  const selectedDeliverable = filteredDeliverables.find(
+  const selectedDeliverable = allDeliverables.find(
     (d) => d.id === watchedDeliverableId
   );
 
@@ -231,14 +311,26 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
       {/* Deliverable Selection */}
       <Grid size={{ xs: 12, md: 4 }}>
         <Autocomplete<Deliverable>
-          options={filteredDeliverables}
-          getOptionLabel={(option) => option.description || ''}
+          options={filteredDeliverables.length > 0 || searchInput.length >= 2 ? filteredDeliverables : []}
+          getOptionLabel={(option) => {
+            const topGroupPart = option.top_group_name ? ` [${option.top_group_name}]` : '';
+            const codePart = option.code ? `${option.code} - ` : '';
+            return `${codePart}${option.description}${topGroupPart}`;
+          }}
           isOptionEqualToValue={(option, value) => option.id === value?.id}
           value={selectedDeliverable || null}
+          loading={isLoadingOptions || isSearching}
+          loadingText="Loading..."
+          noOptionsText={
+            searchInput.length >= 2 
+              ? 'No deliverables found' 
+              : 'Type at least 2 characters to search'
+          }
+          onOpen={handleOpen}
+          onInputChange={handleSearchChange}
           onChange={(_, newValue) => {
             if (newValue) {
               setUnitToDisplay(newValue.unit_symbol);
-              setValue('unit_symbol' as any, newValue.unit_symbol);
               setValue('rate', newValue.contract_rate);
               setValue('project_deliverable_id', newValue.id, {
                 shouldDirty: true,
@@ -248,12 +340,14 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
             } else {
               setUnitToDisplay(undefined);
               setValue('rate', undefined);
-              setValue('unit_symbol' as any, undefined);
               setValue('project_deliverable_id', undefined, {
                 shouldDirty: true,
                 shouldValidate: true,
               });
             }
+            // Clear search after selection
+            setSearchInput('');
+            setFilteredDeliverables([]);
           }}
           renderInput={(params) => (
             <TextField
@@ -263,8 +357,42 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
               fullWidth
               error={!!errors.project_deliverable_id}
               helperText={errors.project_deliverable_id?.message}
+              InputProps={{
+                ...params.InputProps,
+                endAdornment: (
+                  <>
+                    {(isLoadingOptions || isSearching) && <CircularProgress size={20} />}
+                    {params.InputProps.endAdornment}
+                  </>
+                ),
+              }}
             />
           )}
+          ListboxProps={{
+            style: {
+              maxHeight: 400,
+            },
+          }}
+          renderOption={(props, option) => {
+            const { key, ...optionProps } = props;
+            return (
+              <li key={option.id} {...optionProps}>
+                <div>
+                  <Typography variant="body2">
+                    {option.code ? `${option.code} - ` : ''}{option.description}
+                  </Typography>
+                  {option.top_group_name && (
+                    <Typography variant="caption" color="text.secondary" display="block">
+                      {option.top_group_name}
+                      {option.group_name && option.group_name !== option.top_group_name && (
+                        <> → {option.group_name}</>
+                      )}
+                    </Typography>
+                  )}
+                </div>
+              </li>
+            );
+          }}
         />
       </Grid>
 
@@ -318,15 +446,22 @@ const ClaimedDeliverablesItemForm: React.FC<ClaimedDeliverablesItemFormProps> = 
         )}
       </Grid>
 
+      {/* Rate */}
       <Grid size={{ xs: 12, md: 2 }}>
         <TextField
           label="Rate"
           fullWidth
           size="small"
-          value={watch('rate')?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+          value={watch('rate') ?? ''}
           InputProps={{
-            readOnly: true,
             inputComponent: CommaSeparatedField as any,
+          }}
+          onChange={(e) => {
+            const num = e.target.value ? sanitizedNumber(e.target.value) : '';
+            setValue('rate', num as any, {
+              shouldDirty: true,
+              shouldValidate: true,
+            });
           }}
         />
       </Grid>
