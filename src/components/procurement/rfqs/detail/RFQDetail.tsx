@@ -29,7 +29,7 @@ import {
 import { DeleteOutlined, EditOutlined, ReplyOutlined, ArrowBackOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useForm } from 'react-hook-form';
@@ -53,7 +53,7 @@ import RFQDialogForm from '../form/RFQDialogForm';
 import purchaseServices from '@/components/procurement/purchases/purchase-services';
 
 interface RFQDetailProps {
-  rfqId: string;
+  rfqId?: string;
 }
 
 interface ResponseFormValues {
@@ -273,11 +273,19 @@ function RFQResponseDialog({
   );
 }
 
-function RFQDetail({ rfqId }: RFQDetailProps) {
+function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
+  const params = useParams();
   const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  
+  // Get rfqId from prop or from URL params
+  const rfqId = rfqIdProp || (params?.id as string);
+  const lang = (params?.lang as string) || 'en-US';
+  
   const [activeTab, setActiveTab] = useState(0);
   const [openEdit, setOpenEdit] = useState(false);
   const [responseDialog, setResponseDialog] = useState<{ open: boolean; stakeholder: any | null }>({ open: false, stakeholder: null });
@@ -299,7 +307,7 @@ function RFQDetail({ rfqId }: RFQDetailProps) {
     mutationFn: rfqServices.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
-      router.push('/en-US/procurement/rfqs');
+      router.push(`/${lang}/procurement/rfqs`);
     },
   });
 
@@ -373,9 +381,11 @@ function RFQDetail({ rfqId }: RFQDetailProps) {
       <Grid container spacing={1}>
         <Grid size={12} display="flex" alignItems="center" justifyContent="space-between">
           <Stack direction="row" spacing={1} alignItems="center">
-            <IconButton onClick={() => router.push('/en-US/procurement/rfqs')}>
-              <ArrowBackOutlined />
-            </IconButton>
+            <Tooltip title="Back to RFQs">
+              <IconButton onClick={() => router.push(`/${lang}/procurement/rfqs`)}>
+                <ArrowBackOutlined />
+              </IconButton>
+            </Tooltip>
             <Typography variant="h4">{rfq?.rfqNo || 'RFQ Details'}</Typography>
           </Stack>
           <Stack direction="row" spacing={1}>

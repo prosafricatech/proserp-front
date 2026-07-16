@@ -19,7 +19,7 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { DeleteOutlined, EditOutlined, OpenInNewOutlined } from '@mui/icons-material';
@@ -36,6 +36,8 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   const [openEdit, setOpenEdit] = useState(false);
   const { checkOrganizationPermission } = useJumboAuth();
   const router = useRouter();
+  const params = useParams();
+  const lang = (params?.lang as string) || 'en-US';
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -88,7 +90,7 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   // Handle open button click
   const handleOpenClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    router.push(`/en-US/procurement/rfqs/${rfq.id}`);
+    router.push(`/${lang}/procurement/rfqs/${rfq.id}`);
   };
 
   // Handle dialog close
