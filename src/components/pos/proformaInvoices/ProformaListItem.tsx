@@ -81,6 +81,19 @@ const ProformaListItem: React.FC<ProformaListItemProps> = ({ proforma }) => {
               size='small'
             />
           </Tooltip>
+
+          {proforma.attachments_count !== undefined &&
+            proforma.attachments_count > 0 && (
+              <Tooltip title='Attachments Count'>
+                <Chip
+                  label={proforma.attachments_count}
+                  color='primary'
+                  size='small'
+                  variant='filled'
+                  sx={{ mr: 2 }}
+                />
+              </Tooltip>
+            )}
           <Tooltip title='Amount'>
             <Typography>
               {(

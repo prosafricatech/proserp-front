@@ -163,8 +163,22 @@ const PurchaseOrderListItem = ({ order }) => {
                   </Tooltip>
                 )}
               </Grid>
+              <Grid size={{ xs: 1 }}>
+                {order.attachments_count !== undefined &&
+                  order.attachments_count > 0 && (
+                    <Tooltip title='Attachments Count'>
+                      <Chip
+                        label={order.attachments_count}
+                        color='primary'
+                        size='small'
+                        variant='filled'
+                        sx={{ mr: 2 }}
+                      />
+                    </Tooltip>
+                  )}
+              </Grid>
               <Grid
-                size={{ xs: 12, md: 4.5 }}
+                size={{ xs: 11, md: 3.5 }}
                 display={'flex'}
                 alignItems={'center'}
                 justifyContent={'space-between'}
