@@ -1,14 +1,14 @@
 'use client';
 
-import React from 'react';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Grid, Tab, Tabs } from '@mui/material';
+import React from 'react';
+import { PaymentApprovalRequisition } from '../ApprovalRequisitionType';
 import ApprovedPaymentActionTail from '../approvedPayment/ApprovedPaymentActionTail';
 import ApprovedPaymentListItem from '../approvedPayment/ApprovedPaymentListItem';
 import ImprestRetirementActionTail from './ImprestRetirementActionTail';
 import ImprestRetirementListItem from './ImprestRetirementListItem';
-import { PaymentApprovalRequisition } from '../ApprovalRequisitionType';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface ImprestRequisitionTabsProps {
   approvedRequisition: PaymentApprovalRequisition;
@@ -41,16 +41,16 @@ function ImprestRequisitionTabs({
         <Tabs
           value={activeTab}
           onChange={(_event, newValue) => setActiveTab(newValue)}
-          aria-label="Imprest tabs"
+          aria-label='Imprest tabs'
         >
-          <Tab label="Payments" />
-          {canReadRetirements && <Tab label="Retirements" />}
+          <Tab label='Payments' />
+          {canReadRetirements && <Tab label='Retirements' />}
         </Tabs>
       </Grid>
 
       {activeTab === 0 && (
         <Grid size={{ xs: 12 }}>
-          <Grid container spacing={1} justifyContent="flex-end" mb={1}>
+          <Grid container spacing={1} justifyContent='flex-end' mb={1}>
             {!isFullyPaid && (
               <Grid>
                 <ApprovedPaymentActionTail
@@ -70,12 +70,14 @@ function ImprestRequisitionTabs({
 
       {canReadRetirements && activeTab === 1 && (
         <Grid size={{ xs: 12 }}>
-          <Grid container spacing={1} justifyContent="flex-end" mb={1}>
-            <Grid size={{ xs: 12 }} textAlign="right">
-              <ImprestRetirementActionTail
-                approvedRequisition={approvedRequisition}
-                isExpanded={isExpanded}
-              />
+          <Grid container spacing={1} justifyContent='flex-end' mb={1}>
+            <Grid size={{ xs: 12 }} textAlign='right'>
+              {approvedRequisition?.can_retire && (
+                <ImprestRetirementActionTail
+                  approvedRequisition={approvedRequisition}
+                  isExpanded={isExpanded}
+                />
+              )}
             </Grid>
             <Grid size={{ xs: 12 }}>
               <ImprestRetirementListItem
