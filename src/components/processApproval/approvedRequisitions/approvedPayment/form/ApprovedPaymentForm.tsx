@@ -28,7 +28,7 @@ import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { ApprovalRequisition } from '../../ApprovalRequisitionType';
@@ -104,6 +104,27 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     null;
 
   const resolvedImprestCreditLedgerName= imprestLedger?.name || '';
+  const isEditMode = !!payment;
+
+  const buildItemDescription = useCallback(
+    (rawDescription: string | undefined, debitLedgerName?: string) => {
+      const base = String(rawDescription || '').trim();
+      const debitLabel = String(debitLedgerName || '').trim();
+
+      // During edit, keep the user-entered description as-is.
+      if (isEditMode || !isImprestPayment) return base;
+      if (!debitLabel) return base;
+
+      const normalizedBase = base.toLowerCase();
+      const normalizedDebitLabel = debitLabel.toLowerCase();
+
+      // Do not append when debit label is already part of description.
+      if (normalizedBase.includes(normalizedDebitLabel)) return base;
+
+      return base ? `${base} ${debitLabel}` : `${debitLabel}`;
+    },
+    [isImprestPayment, isEditMode]
+  );
 
   const [items, setItems] = useState<PaymentItem[]>(() => {
     if (payment) {
@@ -127,7 +148,10 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             },
             debit_ledger_id: Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
             amount: Number(payItem?.amount || 0),
-            description: payItem?.description || payItem?.remarks || '',
+            description: buildItemDescription(
+              payItem.remarks || payItem.description || '-',
+              payItem?.ledger?.name
+            ),
             unpaid_amount: prevItem
               ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
               : 0,
@@ -177,12 +201,14 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           debit_ledger_id:
             forcedImprestLedger?.id || Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
           amount: paidAmount,
-          description:
+          description: buildItemDescription(
             payItem?.description ||
-            payItem?.remarks ||
-            prevItem?.remarks ||
-            prevItem?.description ||
-            '',
+              payItem?.remarks ||
+              prevItem?.remarks ||
+              prevItem?.description ||
+              '',
+            (forcedImprestLedger || fallbackLedger)?.name
+          ),
           unpaid_amount: Number.isFinite(computedUnpaid) ? computedUnpaid : 0,
           requisition_approval_ledger_item_id:
             Number(
@@ -197,6 +223,10 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           ...item,
           debit_ledger_id: item.ledger.id,
           amount: item.unpaid_amount,
+          description: buildItemDescription(
+            item?.description || item?.remarks || '',
+            item?.ledger?.name
+          ),
           requisition_approval_ledger_item_id: item.id,
         }));
     }
@@ -359,7 +389,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           amount: Number.isFinite(Number(item.amount))
             ? Number(item.amount)
             : 0,
-          description: item.remarks || item.description
+          // Keep user-entered description as-is during submit.
+          description: String(item.description || item.remarks || '').trim(),
         })),
     };
     await savePayment(updatedData);

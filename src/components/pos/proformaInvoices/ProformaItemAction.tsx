@@ -1,6 +1,8 @@
 'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { Organization } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
@@ -21,11 +23,8 @@ import {
   Button,
   Dialog,
   DialogContent,
-  Grid,
   IconButton,
   Skeleton,
-  Tab,
-  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
@@ -149,14 +148,15 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryKey: ['proformaDetails', { id: proforma.id }],
     queryFn: () => proformaServices.getProformaDetails(proforma.id),
   });
-  const [selectedTab, setSelectedTab] = useState(0);
+  // const [selectedTab, setSelectedTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-  };
+  // const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  //   setSelectedTab(newValue);
+  // };
 
   if (isPending) {
     return (
@@ -193,9 +193,8 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       fullScreen={belowLargeScreen}
     >
       <DialogContent>
-        {belowLargeScreen ? (
-          <Box>
-            <Grid container alignItems='center' justifyContent='space-between'>
+        <Box>
+          {/* <Grid container alignItems='center' justifyContent='space-between'>
               <Grid size={{ xs: 11, md: 11 }}>
                 <Tabs value={selectedTab} onChange={handleTabChange}>
                   <Tab label='On Screen' />
@@ -216,38 +215,46 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
                   </Tooltip>
                 </Grid>
               )}
-            </Grid>
-            <Box>
-              {selectedTab === 0 && (
-                <ProformaOnScreen
-                  proforma={proformaDetails}
-                  organization={organization}
-                />
-              )}
-              {selectedTab === 1 && (
-                <PDFContent
-                  document={
-                    <ProformaInvoicePDF
-                      organization={organization}
-                      proforma={proformaDetails}
-                    />
-                  }
-                  fileName={proforma.proformaNo}
-                />
-              )}
-            </Box>
-          </Box>
-        ) : (
-          <PDFContent
-            document={
-              <ProformaInvoicePDF
-                organization={organization}
-                proforma={proformaDetails}
+            </Grid> */}
+          <PreviewTopBar
+            fileExportGrid={
+              <FileExportGrid
+                exportPdf
+                handlePdf={() => {
+                  setShowOnScreen((prev) => !prev);
+                }}
               />
             }
-            fileName={proforma.proformaNo}
+            closeButton={
+              <IconButton
+                size='small'
+                color='primary'
+                onClick={() => setOpenDocumentDialog(false)}
+              >
+                <HighlightOff color='primary' />
+              </IconButton>
+            }
           />
-        )}
+          <Box>
+            {showOnScreen && (
+              <ProformaOnScreen
+                proforma={proformaDetails}
+                organization={organization}
+              />
+            )}
+            {!showOnScreen && (
+              <PDFContent
+                document={
+                  <ProformaInvoicePDF
+                    organization={organization}
+                    proforma={proformaDetails}
+                  />
+                }
+                fileName={proforma.proformaNo}
+              />
+            )}
+          </Box>
+        </Box>
       </DialogContent>
       {belowLargeScreen && (
         <Box textAlign='right' margin={2}>

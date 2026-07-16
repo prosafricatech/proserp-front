@@ -1,6 +1,11 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
+import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
+import { yupResolver } from '@hookform/resolvers/yup';
+import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Button,
@@ -10,26 +15,18 @@ import {
   Grid,
   MenuItem,
   TextField,
-  Typography,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LoadingButton } from '@mui/lab';
-import { AddOutlined } from '@mui/icons-material';
-import { yupResolver } from '@hookform/resolvers/yup';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
-import dayjs from 'dayjs';
-
-import ProductsSelectProvider from '@/components/productAndServices/products/ProductsSelectProvider';
-import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
-import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 import rfqServices from '../rfq-services';
 import { RFQ, RFQItem } from '../rfq-types';
-import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import RFQItemForm from './RFQItemForm';
 import RFQItemRow from './RFQItemRow';
 
@@ -49,7 +46,10 @@ interface FormValues {
 
 const validationSchema = yup.object({
   rfq_date: yup.mixed().required('RFQ date is required').nullable(),
-  response_deadline: yup.mixed().required('Response deadline is required').nullable(),
+  response_deadline: yup
+    .mixed()
+    .required('Response deadline is required')
+    .nullable(),
   reference: yup.string().nullable(),
   remarks: yup.string().nullable(),
   status: yup.string().required('Status is required'),
@@ -59,7 +59,9 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<string | null>(null);
-  const [selectedStakeholders, setSelectedStakeholders] = useState<Stakeholder[]>([]);
+  const [selectedStakeholders, setSelectedStakeholders] = useState<
+    Stakeholder[]
+  >([]);
   const [items, setItems] = useState<RFQItem[]>([]);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
@@ -76,11 +78,14 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       rfq_date: rfq?.rfq_date ? dayjs(rfq.rfq_date) : dayjs(),
-      response_deadline: rfq?.response_deadline ? dayjs(rfq.response_deadline) : dayjs().add(7, 'day'),
+      response_deadline: rfq?.response_deadline
+        ? dayjs(rfq.response_deadline)
+        : dayjs().add(7, 'day'),
       reference: rfq?.reference || '',
       remarks: rfq?.remarks || '',
       status: String(rfq?.status || 'draft').toLowerCase(),
-      stakeholder_ids: rfq?.stakeholders?.map((stakeholder) => stakeholder.id) || [],
+      stakeholder_ids:
+        rfq?.stakeholders?.map((stakeholder) => stakeholder.id) || [],
     },
   });
 
@@ -91,8 +96,12 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
           ...item,
           product: item.product,
           product_id: item.product_id || item.product?.id,
-          measurement_unit_id: item.measurement_unit_id || item.measurement_unit?.id,
-          unit_symbol: item.measurement_unit?.symbol || item.unit_symbol || item.product?.primary_unit?.unit_symbol,
+          measurement_unit_id:
+            item.measurement_unit_id || item.measurement_unit?.id,
+          unit_symbol:
+            item.measurement_unit?.symbol ||
+            item.unit_symbol ||
+            item.product?.primary_unit?.unit_symbol,
         }))
       );
     }
@@ -109,22 +118,33 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
   const addMutation = useMutation({
     mutationFn: rfqServices.add,
     onSuccess: (data) => {
-      enqueueSnackbar(data?.message || 'RFQ saved successfully', { variant: 'success' });
+      enqueueSnackbar(data?.message || 'RFQ saved successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       toggleOpen(false);
     },
     onError: (error: any) => {
-      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', {
-        variant: 'error',
-      });
+      setServerError(
+        error?.response?.data?.message ||
+          'Please check the information you submitted'
+      );
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Please check the information you submitted',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: rfqServices.update,
     onSuccess: (data) => {
-      enqueueSnackbar(data?.message || 'RFQ updated successfully', { variant: 'success' });
+      enqueueSnackbar(data?.message || 'RFQ updated successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       if (rfq?.id) {
         queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
@@ -133,10 +153,17 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       toggleOpen(false);
     },
     onError: (error: any) => {
-      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', {
-        variant: 'error',
-      });
+      setServerError(
+        error?.response?.data?.message ||
+          'Please check the information you submitted'
+      );
+      enqueueSnackbar(
+        error?.response?.data?.message ||
+          'Please check the information you submitted',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -146,9 +173,13 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       return;
     }
 
-    const invalidItem = items.find((item) => !item.product_id || !item.quantity);
+    const invalidItem = items.find(
+      (item) => !item.product_id || !item.quantity
+    );
     if (invalidItem) {
-      enqueueSnackbar('Each RFQ item needs a product and quantity', { variant: 'error' });
+      enqueueSnackbar('Each RFQ item needs a product and quantity', {
+        variant: 'error',
+      });
       return;
     }
 
@@ -160,11 +191,16 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       remarks: formData.remarks,
       status: String(formData.status || 'draft').toLowerCase(),
       requisition_approval_id: rfq?.requisition_approval_id ?? null,
-      stakeholder_ids: selectedStakeholders.map((stakeholder) => stakeholder.id),
+      stakeholder_ids: selectedStakeholders.map(
+        (stakeholder) => stakeholder.id
+      ),
       items: items.map((item) => ({
         product_id: item.product_id,
-        measurement_unit_id: item.measurement_unit_id || item.measurement_unit?.id,
-        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
+        measurement_unit_id:
+          item.measurement_unit_id || item.measurement_unit?.id,
+        quantity: Number.isFinite(Number(item.quantity))
+          ? Number(item.quantity)
+          : 0,
         remarks: item.remarks || '',
       })),
     };
@@ -187,16 +223,21 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
         {serverError && (
           <Grid size={12}>
-            <Alert severity="error">{serverError}</Alert>
+            <Alert severity='error'>{serverError}</Alert>
           </Grid>
         )}
 
         <Grid size={{ xs: 12, md: 3 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              label="RFQ Date"
+              label='RFQ Date'
               value={watch('rfq_date')}
-              onChange={(newValue) => setValue('rfq_date', newValue, { shouldDirty: true, shouldValidate: true })}
+              onChange={(newValue) =>
+                setValue('rfq_date', newValue, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               slotProps={{
                 textField: {
                   size: 'small',
@@ -212,9 +253,14 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
         <Grid size={{ xs: 12, md: 3 }}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <DateTimePicker
-              label="Response Deadline"
+              label='Response Deadline'
               value={watch('response_deadline')}
-              onChange={(newValue) => setValue('response_deadline', newValue, { shouldDirty: true, shouldValidate: true })}
+              onChange={(newValue) =>
+                setValue('response_deadline', newValue, {
+                  shouldDirty: true,
+                  shouldValidate: true,
+                })
+              }
               slotProps={{
                 textField: {
                   size: 'small',
@@ -229,26 +275,36 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
         <Grid size={{ xs: 12, md: 3 }}>
           <TextField
-            label="Reference"
+            label='Reference'
             fullWidth
-            size="small"
+            size='small'
             value={watch('reference') || ''}
             error={!!errors.reference}
             helperText={errors.reference?.message}
-            onChange={(e) => setValue('reference', e.target.value, { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue('reference', e.target.value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
           <TextField
-            label="Status"
+            label='Status'
             select
             fullWidth
-            size="small"
+            size='small'
             value={watch('status') || 'draft'}
             error={!!errors.status}
             helperText={errors.status?.message}
-            onChange={(e) => setValue('status', e.target.value, { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue('status', e.target.value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           >
             {['draft', 'sent', 'closed', 'canceled'].map((option) => (
               <MenuItem key={option} value={option}>
@@ -267,8 +323,8 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
               const stakeholders = Array.isArray(newValue)
                 ? newValue
                 : newValue
-                ? [newValue]
-                : [];
+                  ? [newValue]
+                  : [];
               setSelectedStakeholders(stakeholders);
               setValue(
                 'stakeholder_ids',
@@ -281,15 +337,20 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 
         <Grid size={{ xs: 12, md: 8 }}>
           <TextField
-            label="Remarks"
+            label='Remarks'
             fullWidth
-            size="small"
+            size='small'
             multiline
             rows={2}
             value={watch('remarks') || ''}
             error={!!errors.remarks}
             helperText={errors.remarks?.message}
-            onChange={(e) => setValue('remarks', e.target.value, { shouldDirty: true, shouldValidate: true })}
+            onChange={(e) =>
+              setValue('remarks', e.target.value, {
+                shouldDirty: true,
+                shouldValidate: true,
+              })
+            }
           />
         </Grid>
 
@@ -324,15 +385,20 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
         </Grid>
       </Grid>
 
-      <Grid container justifyContent="space-between" mt={2}>
+      <Grid container justifyContent='space-between' mt={2}>
         <Grid size={12}>
           <Divider />
         </Grid>
-        <Grid size={12} display="flex" justifyContent="flex-end" gap={1} mt={1}>
-          <Button size="small" onClick={() => toggleOpen(false)}>
+        <Grid size={12} display='flex' justifyContent='flex-end' gap={1} mt={1}>
+          <Button size='small' onClick={() => toggleOpen(false)}>
             Cancel
           </Button>
-          <LoadingButton loading={loading} size="small" variant="contained" onClick={handleSave}>
+          <LoadingButton
+            loading={loading}
+            size='small'
+            variant='contained'
+            onClick={handleSave}
+          >
             {isEditMode ? 'Update' : 'Submit'}
           </LoadingButton>
         </Grid>
@@ -344,8 +410,10 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
 function RFQDialogForm({ toggleOpen, rfq = null }: RFQDialogFormProps) {
   return (
     <ProductsSelectProvider>
-      <StakeholderSelectProvider type="suppliers">
-        <DialogTitle textAlign="center">{rfq?.id ? 'Edit RFQ' : 'New RFQ'}</DialogTitle>
+      <StakeholderSelectProvider type='suppliers'>
+        <DialogTitle textAlign='center'>
+          {rfq?.id ? 'Edit RFQ' : 'New RFQ'}
+        </DialogTitle>
         <DialogContent>
           <RFQDialogFormContent toggleOpen={toggleOpen} rfq={rfq} />
         </DialogContent>
