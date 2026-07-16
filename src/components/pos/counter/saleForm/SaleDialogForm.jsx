@@ -387,6 +387,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
           )}
         </Grid>
       </DialogTitle>
+
       {!majorInfoOnly && (
         <DialogContent>
           {errors?.items?.message && items.length < 1 && (

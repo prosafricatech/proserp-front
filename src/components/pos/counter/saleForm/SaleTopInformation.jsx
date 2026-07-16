@@ -287,6 +287,7 @@ function SaleTopInformation({
             </Grid>
           </>
         )}
+
         <Grid size={{ xs: 12, md: 6, lg: 4 }}>
           {isFetchingSalesPeople ? (
             <LinearProgress />
@@ -315,6 +316,7 @@ function SaleTopInformation({
             />
           )}
         </Grid>
+
         <Grid size={{ xs: 12, md: 6, lg: majorInfoOnly ? 4 : 8 }}>
           <TextField
             label='Remarks'
