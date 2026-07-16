@@ -347,7 +347,7 @@ function ProjectDashboard() {
   cost_center_id.push(project?.cost_center?.id);
 
   const [liabilitiesPayload, setLiabilitiesPayload] = useState({
-    from: project.commencement_date
+    from: project?.commencement_date
       ? dayjs(project.commencement_date).toISOString()
       : dayjs(organization?.recording_start_date).toISOString(),
     to: dayjs().toISOString(),
@@ -423,7 +423,7 @@ function ProjectDashboard() {
 
   // inventory values
   const inventoryValuesParam = {
-    from: project.commencement_date
+    from: project?.commencement_date
       ? dayjs(project.commencement_date).toISOString()
       : dayjs(organization?.recording_start_date).toISOString(),
     to: dayjs().toISOString(),
