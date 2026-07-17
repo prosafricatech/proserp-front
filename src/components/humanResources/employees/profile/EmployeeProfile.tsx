@@ -1,6 +1,11 @@
 'use client';
 
+import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { EditOutlined } from '@mui/icons-material';
 import {
   Avatar,
@@ -17,32 +22,29 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useEffect, useMemo, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
 import { useRouter } from 'next/navigation';
-import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { EmployeesProvider } from '../EmployeesProvider';
-import { DesignationsProvider } from '../../designations/DesignationsProvider';
+import { useSnackbar } from 'notistack';
+import { useEffect, useMemo, useState } from 'react';
 import { DepartmentsProvider } from '../../departments/DepartmentsProvider';
-import EmployeeProfileProvider, { useEmployeeProfile } from './EmployeeProfileProvider';
-import PersonalInfoTab from './PersonalInfoTab';
-import EmployeesContracts from './employeesContracts/EmployeesContracts';
-import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
-import NextOfKins from './nextOfKins/NextOfKins';
-import EmployeeAllowances from './employeeAllowances/EmployeeAllowances';
-import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
-import EmployeeEmployerContributions from './employeeEmployerContributions/EmployeeEmployerContributions';
-import EmployeeLeaveTab from './EmployeeLeaveTab';
-import EmployeeForm from '../EmployeeForm';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import { DesignationsProvider } from '../../designations/DesignationsProvider';
 import humanResourcesServices from '../../humanResourcesServices';
+import EmployeeForm from '../EmployeeForm';
+import { EmployeesProvider } from '../EmployeesProvider';
 import { Employee } from '../EmployeesType';
 import AuditTrailTab from './auditTrail/AuditTrailTab';
 import SalaryHistoryTab from './auditTrail/SalaryHistoryTab';
+import EmployeeAllowances from './employeeAllowances/EmployeeAllowances';
+import EmployeeBankAccounts from './employeeBankAccounts/EmployeeBankAccounts';
+import EmployeeDeductions from './employeeDeductions/EmployeeDeductions';
+import EmployeeEmployerContributions from './employeeEmployerContributions/EmployeeEmployerContributions';
+import EmployeeLeaveTab from './EmployeeLeaveTab';
+import EmployeeProfileProvider, {
+  useEmployeeProfile,
+} from './EmployeeProfileProvider';
+import EmployeesContracts from './employeesContracts/EmployeesContracts';
+import NextOfKins from './nextOfKins/NextOfKins';
+import PersonalInfoTab from './PersonalInfoTab';
 
 type TabKey =
   | 'personalInfo'
@@ -67,7 +69,7 @@ const VALID_TABS: TabKey[] = [
   'employerContributions',
   'leave',
   'attachments',
-  'movements',  
+  'movements',
   'salaryHistory',
 ];
 
@@ -94,7 +96,9 @@ function ProfileContent() {
 
   const [activeTab, setActiveTab] = useState<TabKey>(() => {
     if (typeof window !== 'undefined') {
-      const saved = sessionStorage.getItem('employeeProfileActiveTab') as TabKey;
+      const saved = sessionStorage.getItem(
+        'employeeProfileActiveTab'
+      ) as TabKey;
       return saved && VALID_TABS.includes(saved) ? saved : 'personalInfo';
     }
     return 'personalInfo';
@@ -118,16 +122,17 @@ function ProfileContent() {
     },
   });
 
-  const { mutate: fetchEmployeeForEdit, isPending: isLoadingEditEmployee } = useMutation({
-    mutationFn: (id: number) => humanResourcesServices.showEmployee(id),
-    onSuccess: (fullEmployee: Employee) => {
-      setEditingEmployee(fullEmployee);
-      setOpenEditDialog(true);
-    },
-    onError: () => {
-      enqueueSnackbar('Error loading employee details', { variant: 'error' });
-    },
-  });
+  const { mutate: fetchEmployeeForEdit, isPending: isLoadingEditEmployee } =
+    useMutation({
+      mutationFn: (id: number) => humanResourcesServices.showEmployee(id),
+      onSuccess: (fullEmployee: Employee) => {
+        setEditingEmployee(fullEmployee);
+        setOpenEditDialog(true);
+      },
+      onError: () => {
+        enqueueSnackbar('Error loading employee details', { variant: 'error' });
+      },
+    });
 
   const handleTabChange = (_: React.SyntheticEvent, newValue: TabKey) => {
     setActiveTab(newValue);
@@ -165,7 +170,13 @@ function ProfileContent() {
       return (
         <Stack spacing={2} sx={{ width: '100%' }}>
           {Array.from({ length: 5 }).map((_, i) => (
-            <Skeleton key={i} variant='rectangular' width='100%' height={48} sx={{ borderRadius: 1 }} />
+            <Skeleton
+              key={i}
+              variant='rectangular'
+              width='100%'
+              height={48}
+              sx={{ borderRadius: 1 }}
+            />
           ))}
         </Stack>
       );
@@ -190,7 +201,7 @@ function ProfileContent() {
         return <EmployeeDeductions employeeId={employeeId} />;
       case 'employerContributions':
         return <EmployeeEmployerContributions employeeId={employeeId} />;
-        case 'movements':
+      case 'movements':
         return <AuditTrailTab employeeId={employeeId} />;
       case 'salaryHistory':
         return <SalaryHistoryTab employeeId={employeeId} />;
@@ -201,7 +212,9 @@ function ProfileContent() {
           <AttachmentForm
             hideFeatures
             attachment_name='Employee'
-            attachment_sourceNo={employee?.employee_number || String(employeeId)}
+            attachment_sourceNo={
+              employee?.employee_number || String(employeeId)
+            }
             attachmentable_type='employee'
             attachmentable_id={employeeId}
           />
@@ -213,39 +226,65 @@ function ProfileContent() {
 
   return (
     <>
-      <Dialog open={openEditDialog} fullWidth maxWidth='md' fullScreen={belowLargeScreen}>
+      <Dialog
+        open={openEditDialog}
+        fullWidth
+        maxWidth='md'
+        fullScreen={belowLargeScreen}
+      >
         <DepartmentsProvider>
-          <EmployeeForm
-            employee={editingEmployee ?? employee ?? undefined}
-            setOpenDialog={(v) => {
-              setOpenEditDialog(v);
-              if (!v) {
-                setEditingEmployee(null);
-                reFetchEmployee();
-              }
-            }}
-          />
+          <DesignationsProvider>
+            <EmployeeForm
+              employee={editingEmployee ?? employee ?? undefined}
+              setOpenDialog={(v) => {
+                setOpenEditDialog(v);
+                if (!v) {
+                  setEditingEmployee(null);
+                  reFetchEmployee();
+                }
+              }}
+            />
+          </DesignationsProvider>
         </DepartmentsProvider>
       </Dialog>
 
       <JumboContentLayout
         header={
-          <Stack direction='row' alignItems='flex-start' spacing={2} flexWrap='wrap'>
-            <Avatar sx={{ width: 64, height: 64, bgcolor: 'primary.main', fontSize: 24 }}>
+          <Stack
+            direction='row'
+            alignItems='flex-start'
+            spacing={2}
+            flexWrap='wrap'
+          >
+            <Avatar
+              sx={{
+                width: 64,
+                height: 64,
+                bgcolor: 'primary.main',
+                fontSize: 24,
+              }}
+            >
               {employee?.first_name?.[0] ?? '?'}
             </Avatar>
             <Stack flex={1} spacing={0.25}>
               <Typography variant='h4'>{fullName}</Typography>
               <Typography variant='body2' color='text.secondary'>
                 {employee?.employee_number}
-                {employee?.department?.name ? ` · ${employee.department.name}` : ''}
+                {employee?.department?.name
+                  ? ` · ${employee.department.name}`
+                  : ''}
                 {employee?.active_contract?.designation?.title
                   ? ` · ${employee.active_contract.designation.title}`
                   : ''}
               </Typography>
               <Stack direction='row' spacing={1} alignItems='center' mt={0.5}>
                 {empTypeBadge && (
-                  <Chip label={empTypeBadge} size='small' color='primary' variant='outlined' />
+                  <Chip
+                    label={empTypeBadge}
+                    size='small'
+                    color='primary'
+                    variant='outlined'
+                  />
                 )}
                 {employee?.join_date && (
                   <Typography variant='body2' color='text.secondary'>
@@ -260,7 +299,11 @@ function ProfileContent() {
                   size='small'
                   variant='outlined'
                   startIcon={
-                    isLoadingEditEmployee ? <CircularProgress size={16} /> : <EditOutlined />
+                    isLoadingEditEmployee ? (
+                      <CircularProgress size={16} />
+                    ) : (
+                      <EditOutlined />
+                    )
                   }
                   disabled={isLoadingEditEmployee}
                   onClick={handleEdit}
@@ -297,7 +340,10 @@ function ProfileContent() {
               <Tab label='Next of Kin' value='nextOfKin' />
               <Tab label='Allowances' value='allowances' />
               <Tab label='Deductions' value='deductions' />
-              <Tab label='Employer Contributions' value='employerContributions' />
+              <Tab
+                label='Employer Contributions'
+                value='employerContributions'
+              />
               <Tab label='Leave' value='leave' />
               <Tab label='Attachments' value='attachments' />
               <Tab label='Movements' value='movements' />
@@ -321,4 +367,3 @@ export default function EmployeeProfile() {
     </EmployeeProfileProvider>
   );
 }
-

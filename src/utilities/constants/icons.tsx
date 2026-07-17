@@ -5,6 +5,7 @@ import {
   faUsersGear,
 } from '@fortawesome/free-solid-svg-icons';
 import {
+  AccessibilityNewOutlined,
   AccountBalanceOutlined,
   AccountTreeOutlined,
   AssessmentOutlined,
@@ -83,6 +84,7 @@ export const ICONS = {
   editAttributes: EditAttributesOutlined,
   accountTree: AccountTreeOutlined,
   employees: PeopleAltOutlined,
+  myHr: AccessibilityNewOutlined,
   employee_contracts: ContactPage,
   businessCenter: BusinessCenterOutlined,
 } as const;

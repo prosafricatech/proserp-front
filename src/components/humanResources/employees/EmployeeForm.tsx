@@ -6,6 +6,8 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import costCenterservices from '@/components/masters/costCenters/cost-center-services';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import organizationServices from '@/components/organizations/organizationServices';
+import UsersSelector from '@/components/sharedComponents/UsersSelector';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
@@ -26,8 +28,8 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useEffect, useState } from 'react';
-import { Controller, useForm, useWatch } from 'react-hook-form';
+import { useEffect, useMemo, useState } from 'react';
+import { Controller, useForm, useFormState } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDepartments } from '../departments/DepartmentsProvider';
 import { Department } from '../departments/DepartmentsType';
@@ -35,6 +37,12 @@ import { useDesignations } from '../designations/DesignationsProvider';
 import { Designation } from '../designations/DesignationsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
+
+interface User {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
 
 interface EmployeeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -61,28 +69,30 @@ interface OptionType {
   value: string;
 }
 
+// Constants
+const GENDER_OPTIONS: OptionType[] = [
+  { label: 'Male', value: 'male' },
+  { label: 'Female', value: 'female' },
+];
+const EMPLOYMENT_OPTIONS: OptionType[] = [
+  { label: 'Full Time', value: 'full_time' },
+  { label: 'Part Time', value: 'part_time' },
+  { label: 'Casual', value: 'casual' },
+];
+
 const EmployeeForm = ({
   setOpenDialog,
   employee = null,
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { authUser, checkOrganizationPermission } = useJumboAuth();
+  const { checkOrganizationPermission, authOrganization, hasOrganizationRole } =
+    useJumboAuth();
+  const organization = authOrganization?.organization;
   const { designations, isFetching: fetchingDesignations } = useDesignations();
   const designationsData = (designations || []) as Designation[];
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { departments, isFetching } = useDepartments();
-
-  // Constants
-  const GENDER_OPTIONS: OptionType[] = [
-    { label: 'Male', value: 'male' },
-    { label: 'Female', value: 'female' },
-  ];
-  const EMPLOYMENT_OPTIONS: OptionType[] = [
-    { label: 'Full Time', value: 'full_time' },
-    { label: 'Part Time', value: 'part_time' },
-    { label: 'Casual', value: 'casual' },
-  ];
 
   const [departmentsData, setDepartmentsData] = useState<Department[]>([]);
   const [selectedDpt, setSelectedDpt] = useState<Department | null>(null);
@@ -98,11 +108,29 @@ const EmployeeForm = ({
     null
   );
   const [customeName, setCustomeName] = useState(false);
+  const [defaultUser, setDefaultUser] = useState<User | null>(null);
 
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
+    enabled: !!employee,
   });
+
+  const { data: rawUsers = [], isFetching: usersLoading } = useQuery<User[]>({
+    queryKey: ['users', organization?.id],
+    queryFn: () =>
+      organizationServices.getOrganizationUsers({
+        organizationId: organization?.id,
+      }),
+    enabled: !!employee?.id,
+  });
+
+  useEffect(() => {
+    if (rawUsers && rawUsers.length > 0) {
+      const linkedUser = rawUsers.find((user) => user.id === employee?.user_id);
+      linkedUser ? setDefaultUser(linkedUser) : setDefaultUser(null);
+    }
+  }, [rawUsers]);
 
   useEffect(() => {
     if (fetchedCostCenters) {
@@ -159,7 +187,6 @@ const EmployeeForm = ({
         date_of_birth: formatDateToAPI(data.date_of_birth),
         join_date: formatDateToAPI(data.join_date),
         contract_start_date: formatDateToAPI(data.contract_start_date),
-        user_id: authUser?.user.id,
         reason: data.reason || null,
       };
       return humanResourcesServices.addEmployee(formattedData);
@@ -170,6 +197,7 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
+      console.error('err: ', err.response.data);
       enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
         variant: 'error',
       });
@@ -235,6 +263,7 @@ const EmployeeForm = ({
       .typeError('Basic salary must be a number'),
     contract_start_date: yup.string().nullable(),
     reason: yup.string().nullable().optional(),
+    user_id: yup.number().nullable(),
   });
 
   // Form
@@ -271,31 +300,13 @@ const EmployeeForm = ({
       basic_salary: null,
       contract_start_date: null,
       reason: '',
+      user_id: null,
     },
   });
 
-  const createPayable = useWatch({ control, name: 'create_payable' });
-
-  // Watch for changes to detect if cost center or department changed
-  const watchCostCenterId = watch('cost_center_id');
-  const watchDepartmentId = watch('department_id');
-  const [originalCostCenterId, setOriginalCostCenterId] = useState<
-    number | null
-  >(null);
-  const [originalDepartmentId, setOriginalDepartmentId] = useState<
-    number | null
-  >(null);
-  const [hasUserInteracted, setHasUserInteracted] = useState(false);
-
-  // Check if cost center or department has changed from original values
-  const hasCostCenterChanged =
-    originalCostCenterId !== null && originalCostCenterId !== watchCostCenterId;
-  const hasDepartmentChanged =
-    originalDepartmentId !== null && originalDepartmentId !== watchDepartmentId;
-
-  // Only show reason field when there's an actual change AND user has interacted
+  const { isDirty, dirtyFields } = useFormState({ control });
   const showReasonField =
-    hasUserInteracted && (hasCostCenterChanged || hasDepartmentChanged);
+    !!employee && (dirtyFields.cost_center_id || dirtyFields.department_id);
 
   // Populate form when editing
   useEffect(() => {
@@ -317,10 +328,6 @@ const EmployeeForm = ({
     setEmployeeDoB(normalizedDateOfBirth);
     setJoinDate(normalizedJoinDate);
     setContractStartDate(normalizedContractStartDate || contractStart || '');
-
-    // Store original values for comparison
-    setOriginalCostCenterId(employee.cost_center_id ?? null);
-    setOriginalDepartmentId(employee.department_id ?? null);
 
     reset({
       employee_number: employee.employee_number || '',
@@ -345,31 +352,17 @@ const EmployeeForm = ({
       basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
+      user_id: employee.user_id ?? null,
     });
-
-    // Reset interaction flag when employee changes
-    setHasUserInteracted(false);
   }, [employee, reset]);
 
-  // Track user interaction with cost center and department fields
-  useEffect(() => {
-    if (employee) {
-      // If values differ from original, user has made changes
-      const hasChanged =
-        originalCostCenterId !== watchCostCenterId ||
-        originalDepartmentId !== watchDepartmentId;
+  // Memoize the lookup so it only recalculates when designation list or selected ID changes
+  const watchDesignationId = watch('designation_id');
 
-      if (hasChanged) {
-        setHasUserInteracted(true);
-      }
-    }
-  }, [
-    watchCostCenterId,
-    watchDepartmentId,
-    originalCostCenterId,
-    originalDepartmentId,
-    employee,
-  ]);
+  const selectedDesignation = useMemo(() => {
+    if (!watchDesignationId || !designationsData.length) return null;
+    return designationsData.find((d) => d.id === watchDesignationId) || null;
+  }, [watchDesignationId, designationsData]);
 
   const onSubmit = (data: FormData) => {
     employee?.id ? updateEmployee(data) : addEmployee(data);
@@ -708,10 +701,7 @@ const EmployeeForm = ({
                         option.id === value.id
                       }
                       getOptionLabel={(option) => option.title || ' '}
-                      value={
-                        designationsData.find((e) => e.id === field.value) ||
-                        null
-                      }
+                      value={selectedDesignation}
                       onChange={(event, newValue) => {
                         field.onChange(newValue?.id || null);
                       }}
@@ -834,6 +824,35 @@ const EmployeeForm = ({
                     </Grid>
                   )
                 )}
+              </>
+            )}
+
+            {/* linked user account */}
+            {hasOrganizationRole('Administrator') && (
+              <>
+                <Grid size={12}>
+                  <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                    Linked User Account
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <UsersSelector
+                    label='Linked User Account'
+                    defaultValue={defaultUser}
+                    frontError={errors.user_id}
+                    onChange={(v) => {
+                      if (v && Array.isArray(v)) {
+                        setValue('user_id', v[0].id);
+                      }
+                      if (v && !Array.isArray(v)) {
+                        setValue('user_id', v.id);
+                      }
+                      if (!v || v === null) {
+                        setValue('user_id', null);
+                      }
+                    }}
+                  />
+                </Grid>
               </>
             )}
           </Grid>

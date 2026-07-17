@@ -23,7 +23,7 @@ export interface Employee {
   payable_ledger_name?: string | null;
   employment_type?: string;
   join_date?: string;
-  user_id: number;
+  user_id?: number | null;
   created_by: number;
   created_at?: string;
   updated_at?: string;
