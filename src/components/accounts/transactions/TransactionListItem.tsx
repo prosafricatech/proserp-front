@@ -117,7 +117,7 @@ function TransactionListItem({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6, lg: 2.5 }}>
+      <Grid size={{ xs: 6, md: 6, lg: 2.5 }}>
         <ListItemText
           primary={
             <JumboChipsGroup
@@ -148,19 +148,8 @@ function TransactionListItem({
         />
       </Grid>
 
-      <Grid size={{ xs: 1, md: 1, lg: 0.5 }}>
-        {transaction.attachments_count !== undefined &&
-          transaction.attachments_count > 0 && (
-            <Tooltip title='Attachments Count'>
-              <Badge badgeContent={transaction.attachments_count} color='info'>
-                <Attachment fontSize='small' />
-              </Badge>
-            </Tooltip>
-          )}
-      </Grid>
-
       <Grid
-        size={{ xs: 5, md: 4, lg: 1.5 }}
+        size={{ xs: 9, md: 4, lg: 1.5 }}
         sx={{
           display: 'flex',
           flexDirection: 'row',
@@ -186,8 +175,17 @@ function TransactionListItem({
           </Box>
         </Tooltip>
       </Grid>
-
-      <Grid size={{ xs: 12, md: 1, lg: 0.5 }}>
+      <Grid size={{ xs: 2, md: 1, lg: 0.5 }}>
+        {transaction.attachments_count !== undefined &&
+          transaction.attachments_count > 0 && (
+            <Tooltip title='Attachments Count'>
+              <Badge badgeContent={transaction.attachments_count} color='info'>
+                <Attachment fontSize='small' />
+              </Badge>
+            </Tooltip>
+          )}
+      </Grid>
+      <Grid size={{ xs: 1, md: 1, lg: 0.5 }}>
         <Box display={'flex'} flexDirection={'row'} justifyContent={'flex-end'}>
           <SecondaryAction />
         </Box>

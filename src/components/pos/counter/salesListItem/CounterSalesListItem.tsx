@@ -121,16 +121,6 @@ const CounterSalesListItem: React.FC<CounterSalesListItemProps> = ({
               <Typography variant='caption'>{sale.remarks}</Typography>
             </Tooltip>
           </Grid>
-          <Grid size={{ xs: 1 }}>
-            {sale.attachments_count !== undefined &&
-              sale.attachments_count > 0 && (
-                <Tooltip title='Attachments Count'>
-                  <Badge badgeContent={sale.attachments_count} color='info'>
-                    <Attachment fontSize='small' />
-                  </Badge>
-                </Tooltip>
-              )}
-          </Grid>
           <Grid
             size={{ xs: 11, md: 3 }}
             display={'flex'}
@@ -145,6 +135,7 @@ const CounterSalesListItem: React.FC<CounterSalesListItemProps> = ({
                 <VerifiedRounded fontSize='small' color='success' />
               </Tooltip>
             )}
+
             <Tooltip title='Amount'>
               <Typography>
                 {(sale.amount + sale.vat_amount).toLocaleString('en-US', {
@@ -153,6 +144,17 @@ const CounterSalesListItem: React.FC<CounterSalesListItemProps> = ({
                 })}
               </Typography>
             </Tooltip>
+          </Grid>
+
+          <Grid size={{ xs: 1 }} textAlign={'right'}>
+            {sale.attachments_count !== undefined &&
+              sale.attachments_count > 0 && (
+                <Tooltip title='Attachments Count'>
+                  <Badge badgeContent={sale.attachments_count} color='info'>
+                    <Attachment fontSize='small' />
+                  </Badge>
+                </Tooltip>
+              )}
           </Grid>
         </Grid>
         <Divider />
