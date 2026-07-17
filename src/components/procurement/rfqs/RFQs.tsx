@@ -15,6 +15,8 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import RFQListItem from './listItem/RFQListItem';
 import rfqServices from './rfq-services';
 import RFQActionTail from './RFQActionTail';
+import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 // Status options with display names and values
 const STATUS_OPTIONS = [
@@ -30,7 +32,6 @@ function RFQs() {
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const {
-    authOrganization,
     checkOrganizationPermission,
     organizationHasSubscribed,
   } = useJumboAuth();
@@ -107,60 +108,62 @@ function RFQs() {
   }
 
   return (
-    <>
-      <Typography variant='h4' mb={2}>
-        RFQs
-      </Typography>
-      <JumboRqList
-        ref={listRef}
-        wrapperComponent={Card}
-        service={rfqServices.getList}
-        primaryKey='id'
-        queryOptions={queryOptions}
-        itemsPerPage={10}
-        itemsPerPageOptions={[10, 15, 20, 50, 100]}
-        renderItem={renderItem}
-        componentElement='div'
-        wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
-        toolbar={
-          <JumboListToolbar
-            hideItemsPerPage={true}
-            action={
-              <Grid
-                container
-                columnSpacing={1}
-                rowSpacing={1}
-                justifyContent={'end'}
-                alignItems={'center'}
-              >
-                <Grid size={{ xs: 12, md: 4 }}>
-                  <TextField
-                    select
-                    fullWidth
-                    size='small'
-                    label='Status'
-                    value={queryOptions.queryParams.status}
-                    onChange={handleStatusChange}
-                  >
-                    {STATUS_OPTIONS.map((option) => (
-                      <MenuItem key={option.value} value={option.value}>
-                        {option.label}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+    <CurrencySelectProvider>
+      <LedgerSelectProvider>
+        <Typography variant='h4' mb={2}>
+          RFQs
+        </Typography>
+        <JumboRqList
+          ref={listRef}
+          wrapperComponent={Card}
+          service={rfqServices.getList}
+          primaryKey='id'
+          queryOptions={queryOptions}
+          itemsPerPage={10}
+          itemsPerPageOptions={[10, 15, 20, 50, 100]}
+          renderItem={renderItem}
+          componentElement='div'
+          wrapperSx={{ flex: 1, display: 'flex', flexDirection: 'column' }}
+          toolbar={
+            <JumboListToolbar
+              hideItemsPerPage={true}
+              action={
+                <Grid
+                  container
+                  columnSpacing={1}
+                  rowSpacing={1}
+                  justifyContent={'end'}
+                  alignItems={'center'}
+                >
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <TextField
+                      select
+                      fullWidth
+                      size='small'
+                      label='Status'
+                      value={queryOptions.queryParams.status}
+                      onChange={handleStatusChange}
+                    >
+                      {STATUS_OPTIONS.map((option) => (
+                        <MenuItem key={option.value} value={option.value}>
+                          {option.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 5 }}>
+                    <JumboSearch value={keyword} onChange={handleKeywordChange} />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 1 }}>
+                    <RFQActionTail />
+                  </Grid>
                 </Grid>
-                <Grid size={{ xs: 12, md: 5 }}>
-                  <JumboSearch value={keyword} onChange={handleKeywordChange} />
-                </Grid>
-                <Grid size={{ xs: 12, md: 1 }}>
-                  <RFQActionTail />
-                </Grid>
-              </Grid>
-            }
-          />
-        }
-      />
-    </>
+              }
+            />
+          }
+        />
+      </LedgerSelectProvider>
+    </CurrencySelectProvider>
   );
 }
 

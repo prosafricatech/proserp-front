@@ -7,13 +7,13 @@ import {
   AccordionSummary,
   Alert,
   Dialog,
-  Button,
   Chip,
   Divider,
   Grid,
-  IconButton,
   LinearProgress,
   Stack,
+  Tabs,
+  Tab,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -22,28 +22,46 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
-import { DeleteOutlined, EditOutlined, OpenInNewOutlined } from '@mui/icons-material';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import rfqServices from '../rfq-services';
 import RFQDialogForm from '../form/RFQDialogForm';
+import RFQListItemAction from './RFQListItemAction';
+import RFQListResponseTab from './RFQListResponseTab';
 import { RFQListRow } from '../rfq-types';
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel({ children, value, index, ...other }: TabPanelProps) {
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`rfq-tabpanel-${index}`}
+      aria-labelledby={`rfq-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Grid container spacing={1} sx={{ pt: 2 }}>{children}</Grid>}
+    </div>
+  );
+}
 
 function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   const [expanded, setExpanded] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
-  const { checkOrganizationPermission } = useJumboAuth();
-  const router = useRouter();
-  const params = useParams();
-  const lang = (params?.lang as string) || 'en-US';
+  const [tabValue, setTabValue] = useState(0);
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const { data: rfqDetails, isLoading } = useQuery({
-    queryKey: ['rfq', rfq?.id],
+    queryKey: ['rfqDetails', rfq?.id],
     queryFn: () => rfqServices.getOne(rfq.id),
     enabled: expanded && !!rfq?.id,
     refetchOnWindowFocus: false,
@@ -68,7 +86,7 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       if (rfq?.id) {
-        queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
+        queryClient.invalidateQueries({ queryKey: ['rfqDetails', rfq.id] });
       }
     },
   });
@@ -87,12 +105,6 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
     }
   };
 
-  // Handle open button click
-  const handleOpenClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    router.push(`/${lang}/procurement/rfqs/${rfq.id}`);
-  };
-
   // Handle dialog close
   const handleDialogClose = (open: boolean) => {
     setOpenEdit(open);
@@ -101,6 +113,11 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   // Handle accordion change
   const handleAccordionChange = () => {
     setExpanded((prev) => !prev);
+  };
+
+  // Handle tab change
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setTabValue(newValue);
   };
 
   // Prevent action clicks from triggering accordion toggle
@@ -174,30 +191,12 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
           <Divider />
         </AccordionSummary>
         <AccordionDetails sx={{ backgroundColor: 'background.paper', marginBottom: 3 }}>
-          <Grid container spacing={1}>
-            <Grid size={{ xs: 12 }} textAlign="end" onClick={handleActionContainerClick}>
-              <Stack direction="row" spacing={0.5} justifyContent="flex-end">
-                <Tooltip title="Open RFQ">
-                  <IconButton size="small" onClick={handleOpenClick}>
-                    <OpenInNewOutlined fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                {checkOrganizationPermission(PERMISSIONS.RFQS_EDIT) && (
-                  <Tooltip title="Edit RFQ">
-                    <IconButton size="small" onClick={handleEditClick}>
-                      <EditOutlined fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-                {checkOrganizationPermission(PERMISSIONS.RFQS_DELETE) && (
-                  <Tooltip title="Delete RFQ">
-                    <IconButton size="small" onClick={handleDeleteClick}>
-                      <DeleteOutlined fontSize="small" color="error" />
-                    </IconButton>
-                  </Tooltip>
-                )}
-              </Stack>
-            </Grid>
+          <Grid container spacing={1} width="100%" onClick={handleActionContainerClick}>
+            <RFQListItemAction
+              rfqId={rfq.id as any}
+              onEdit={handleEditClick}
+              onDelete={handleDeleteClick}
+            />
 
             {isLoading ? (
               <Grid size={{ xs: 12 }}>
@@ -205,77 +204,98 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
               </Grid>
             ) : (
               <>
+                <Tabs 
+                  value={tabValue} 
+                  onChange={handleTabChange} 
+                  variant="fullWidth"
+                  sx={{ borderBottom: 1, borderColor: 'divider' }}
+                >
+                  <Tab label="Summary" />
+                  <Tab label="Responses" />
+                </Tabs>
+
                 <Grid size={12}>
-                  <Tooltip title="List of invited suppliers">
-                    <Typography variant="subtitle2" gutterBottom>
-                      Suppliers
-                    </Typography>
-                  </Tooltip>
-                  <Stack direction="row" spacing={1} flexWrap="wrap">
-                    {(details?.stakeholders || []).map((stakeholder: any) => (
-                      <Tooltip key={stakeholder.id} title={`Supplier: ${stakeholder.name}${stakeholder.status ? ` (${stakeholder.status})` : ''}`}>
-                        <Chip 
-                          size="small" 
-                          label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} 
-                        />
+                  <TabPanel value={tabValue} index={0}>
+                    <Grid size={12}>
+                      <Tooltip title="List of invited suppliers">
+                        <Typography variant="subtitle2" gutterBottom>
+                          Suppliers
+                        </Typography>
                       </Tooltip>
-                    ))}
-                    {!details?.stakeholders?.length && (
-                      <Typography variant="body2" color="text.secondary">
-                        No suppliers invited yet
-                      </Typography>
-                    )}
-                  </Stack>
-                </Grid>
-                <Grid size={12}>
-                  <Tooltip title="List of RFQ items">
-                    <Typography variant="subtitle2" gutterBottom>
-                      Items
-                    </Typography>
-                  </Tooltip>
-                  {details?.items?.length ? (
-                    details.items.map((item: any, index: number) => (
-                      <Grid
-                        key={`${item.id || index}`}
-                        container
-                        spacing={1}
-                        alignItems="center"
-                        sx={{ borderBottom: 1, borderColor: 'divider', py: 0.5 }}
-                      >
-                        <Grid size={{ xs: 1 }}>
+                      <Stack direction="row" spacing={1} flexWrap="wrap">
+                        {(details?.stakeholders || []).map((stakeholder: any) => (
+                          <Tooltip key={stakeholder.id} title={`Supplier: ${stakeholder.name}${stakeholder.status ? ` (${stakeholder.status})` : ''}`}>
+                            <Chip 
+                              size="small" 
+                              label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} 
+                            />
+                          </Tooltip>
+                        ))}
+                        {!details?.stakeholders?.length && (
                           <Typography variant="body2" color="text.secondary">
-                            {index + 1}.
+                            No suppliers invited yet
                           </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 7, md: 4 }}>
-                          <Tooltip title={`Product: ${item.product?.name || item.product?.item_name || 'Item'}`}>
-                            <Typography variant="body2">
-                              {item.product?.name || item.product?.item_name || 'Item'}
-                            </Typography>
-                          </Tooltip>
-                        </Grid>
-                        <Grid size={{ xs: 3 }} textAlign="right">
-                          <Tooltip title={`Quantity: ${item.quantity}`}>
-                            <Typography variant="body2" color="text.secondary">
-                              {item.quantity}
-                            </Typography>
-                          </Tooltip>
-                        </Grid>
-                        <Grid size={{ xs: 2, md: 3 }} textAlign="right">
-                          <Tooltip title={`Unit: ${item.unit_symbol || item.measurement_unit?.symbol || ''}`}>
-                            <Typography variant="body2" color="text.secondary">
-                              {item.unit_symbol || item.measurement_unit?.symbol || ''}
-                            </Typography>
-                          </Tooltip>
-                        </Grid>
-                      </Grid>
-                    ))
-                  ) : (
-                    <Alert variant="outlined" severity="info">
-                      No items found
-                    </Alert>
-                  )}
+                        )}
+                      </Stack>
+                    </Grid>
+                    <Grid size={12}>
+                      <Tooltip title="List of RFQ items">
+                        <Typography variant="subtitle2" gutterBottom>
+                          Items
+                        </Typography>
+                      </Tooltip>
+                      {details?.items?.length ? (
+                        details.items.map((item: any, index: number) => (
+                          <Grid
+                            key={`${item.id || index}`}
+                            container
+                            spacing={1}
+                            alignItems="center"
+                            sx={{ borderBottom: 1, borderColor: 'divider', py: 0.5 }}
+                          >
+                            <Grid size={{ xs: 1 }}>
+                              <Typography variant="body2" color="text.secondary">
+                                {index + 1}.
+                              </Typography>
+                            </Grid>
+                            <Grid size={{ xs: 7, md: 4 }}>
+                              <Tooltip title={`Product: ${item.product?.name || item.product?.item_name || 'Item'}`}>
+                                <Typography variant="body2">
+                                  {item.product?.name || item.product?.item_name || 'Item'}
+                                </Typography>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 3 }} textAlign="right">
+                              <Tooltip title={`Quantity: ${item.quantity}`}>
+                                <Typography variant="body2" color="text.secondary">
+                                  {item.quantity}
+                                </Typography>
+                              </Tooltip>
+                            </Grid>
+                            <Grid size={{ xs: 2, md: 3 }} textAlign="right">
+                              <Tooltip title={`Unit: ${item.unit_symbol || item.measurement_unit?.symbol || ''}`}>
+                                <Typography variant="body2" color="text.secondary">
+                                  {item.unit_symbol || item.measurement_unit?.symbol || ''}
+                                </Typography>
+                              </Tooltip>
+                            </Grid>
+                          </Grid>
+                        ))
+                      ) : (
+                        <Alert variant="outlined" severity="info">
+                          No items found
+                        </Alert>
+                      )}
+                    </Grid>
+                  </TabPanel>
+
+                  <TabPanel value={tabValue} index={1}>
+                    <Grid size={12}>
+                      <RFQListResponseTab details={details} rfqId={rfq.id as any} />
+                    </Grid>
+                  </TabPanel>
                 </Grid>
+
               </>
             )}
           </Grid>

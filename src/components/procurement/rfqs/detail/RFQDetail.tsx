@@ -1,41 +1,58 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Alert,
+  Box,
   Button,
+  Card,
+  CardContent,
   Chip,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogContentText,
   DialogTitle,
   Divider,
   Grid,
   IconButton,
+  Paper,
   Radio,
   Stack,
   Table,
   TableBody,
   TableCell,
+  TableContainer,
   TableHead,
   TableRow,
   Tabs,
   Tab,
-  TextField,
   Tooltip,
   Typography,
   useMediaQuery,
+  LinearProgress,
 } from '@mui/material';
-import { DeleteOutlined, EditOutlined, ReplyOutlined, ArrowBackOutlined } from '@mui/icons-material';
+import { 
+  DeleteOutlined, 
+  EditOutlined, 
+  ReplyOutlined, 
+  ArrowBackOutlined,
+  CheckCircleOutline,
+  PendingOutlined,
+  CancelOutlined,
+  PeopleOutlined,
+  InventoryOutlined,
+  CalendarTodayOutlined,
+  AssessmentOutlined,
+  ReceiptOutlined,
+  SendOutlined,
+  AddOutlined,
+} from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
 import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useForm } from 'react-hook-form';
-import * as yup from 'yup';
-import { yupResolver } from '@hookform/resolvers/yup';
-
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
@@ -44,252 +61,56 @@ import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
 import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
-import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
-import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
-import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import rfqServices from '../rfq-services';
 import { RFQ, RFQComparison } from '../rfq-types';
 import RFQDialogForm from '../form/RFQDialogForm';
-import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import RFQResponsesForm from '../listItem/form/RFQResponsesForm';
+import RFQPurchaseOrderForm from './purchases/RFQPurchaseOrderForm';
+import RFQComparisonUI from './RFQComparisonUI';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 interface RFQDetailProps {
   rfqId?: string;
 }
 
-interface ResponseFormValues {
-  currency_id: number;
-  exchange_rate: number;
-  response_date: string;
-  validity_date: string;
-  remarks?: string;
-}
-
-const responseValidationSchema = yup.object({
-  currency_id: yup.number().required('Currency is required').typeError('Currency is required'),
-  exchange_rate: yup.number().required('Exchange rate is required').positive('Exchange rate is required').typeError('Exchange rate is required'),
-  response_date: yup.string().required('Response date is required'),
-  validity_date: yup.string().required('Validity date is required'),
-  remarks: yup.string().nullable(),
-});
-
-function RFQResponseDialog({
-  open,
-  rfq,
-  stakeholder,
-  onClose,
-  onSaved,
-}: {
-  open: boolean;
-  rfq: RFQ;
-  stakeholder: any;
-  onClose: () => void;
-  onSaved: () => void;
-}) {
-  const queryClient = useQueryClient();
-  const { enqueueSnackbar } = useSnackbar();
-  const { theme } = useJumboTheme();
-  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const [serverError, setServerError] = useState<string | null>(null);
-  const [items, setItems] = useState<any[]>(
-    (rfq.items || []).map((item: any) => ({
-      rfq_item_id: item.id,
-      quantity: item.quantity || 0,
-      rate: '',
-      vat_percentage: 0,
-      lead_time_days: '',
-      remarks: '',
-    }))
-  );
-
-  const { handleSubmit, setValue, watch, formState: { errors } } = useForm<ResponseFormValues>({
-    resolver: yupResolver(responseValidationSchema) as any,
-    defaultValues: {
-      currency_id: 1,
-      exchange_rate: 1,
-      response_date: dayjs().toISOString(),
-      validity_date: dayjs().add(30, 'day').toISOString(),
-      remarks: '',
-    },
-  });
-
-  const mutation = useMutation({
-    mutationFn: (payload: any) => rfqServices.addResponse(rfq.id, payload),
-    onSuccess: (data) => {
-      enqueueSnackbar(data?.message || 'Supplier response saved', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
-      queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfq.id] });
-      onSaved();
-    },
-    onError: (error: any) => {
-      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', { variant: 'error' });
-    },
-  });
-
-  const updateItem = (index: number, key: string, value: any) => {
-    setItems((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [key]: value };
-      return next;
-    });
-  };
-
-  const handleSave = handleSubmit((formData) => {
-    if (!items.length) {
-      enqueueSnackbar('Add at least one quote item', { variant: 'error' });
-      return;
-    }
-
-    const payload = {
-      stakeholder_id: stakeholder.id,
-      ...formData,
-      items: items.map((item) => ({
-        rfq_item_id: item.rfq_item_id,
-        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0,
-        rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
-        vat_percentage: Number.isFinite(Number(item.vat_percentage)) ? Number(item.vat_percentage) : 0,
-        lead_time_days: item.lead_time_days === '' ? null : Number(item.lead_time_days),
-        remarks: item.remarks,
-      })),
-    };
-
-    mutation.mutate(payload);
-  });
-
-  return (
-    <Dialog open={open} fullWidth maxWidth="xl" onClose={onClose}>
-      <DialogTitle textAlign="center">Record Response - {stakeholder?.name}</DialogTitle>
-      <DialogContent>
-        <Grid container columnSpacing={1} rowSpacing={1}>
-          {serverError && (
-            <Grid size={12}>
-              <Alert severity="error">{serverError}</Alert>
-            </Grid>
-          )}
-          <Grid size={{ xs: 12, md: 3 }}>
-            <CurrencySelector
-              defaultValue={watch('currency_id')}
-              onChange={(newValue) => {
-                setValue('currency_id', newValue?.id || 1, { shouldDirty: true, shouldValidate: true });
-              }}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              label="Exchange Rate"
-              fullWidth
-              size="small"
-              value={watch('exchange_rate') ?? ''}
-              InputProps={{ inputComponent: CommaSeparatedField as any }}
-              onChange={(e) => {
-                const value = e.target.value ? sanitizedNumber(e.target.value) : '';
-                setValue('exchange_rate', Number.isFinite(value) ? value : 0, { shouldDirty: true, shouldValidate: true });
-              }}
-              error={!!errors.exchange_rate}
-              helperText={errors.exchange_rate?.message}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              label="Response Date"
-              type="datetime-local"
-              fullWidth
-              size="small"
-              value={watch('response_date') ? dayjs(watch('response_date')).format('YYYY-MM-DDTHH:mm') : ''}
-              onChange={(e) => setValue('response_date', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
-              error={!!errors.response_date}
-              helperText={errors.response_date?.message}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              label="Validity Date"
-              type="datetime-local"
-              fullWidth
-              size="small"
-              value={watch('validity_date') ? dayjs(watch('validity_date')).format('YYYY-MM-DDTHH:mm') : ''}
-              onChange={(e) => setValue('validity_date', dayjs(e.target.value).toISOString(), { shouldDirty: true, shouldValidate: true })}
-              error={!!errors.validity_date}
-              helperText={errors.validity_date?.message}
-            />
-          </Grid>
-          <Grid size={12}>
-            <TextField
-              label="Remarks"
-              fullWidth
-              size="small"
-              value={watch('remarks') || ''}
-              onChange={(e) => setValue('remarks', e.target.value, { shouldDirty: true, shouldValidate: true })}
-            />
-          </Grid>
-          <Grid size={12}>
-            <Divider sx={{ my: 1 }} />
-          </Grid>
-          <Grid size={12}>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  <TableCell align="right">Requested Qty</TableCell>
-                  <TableCell align="right">Quoted Qty</TableCell>
-                  <TableCell align="right">Rate</TableCell>
-                  <TableCell align="right">VAT %</TableCell>
-                  <TableCell align="right">Lead Time (days)</TableCell>
-                  <TableCell>Remarks</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {items.map((item, index) => (
-                  <TableRow key={item.rfq_item_id || index}>
-                    <TableCell>{rfq.items?.[index]?.product?.item_name || rfq.items?.[index]?.product?.name || `Item ${index + 1}`}</TableCell>
-                    <TableCell align="right">{rfq.items?.[index]?.quantity}</TableCell>
-                    <TableCell align="right">
-                      <TextField size="small" value={item.quantity ?? ''} onChange={(e) => updateItem(index, 'quantity', e.target.value ? sanitizedNumber(e.target.value) : '')} InputProps={{ inputComponent: CommaSeparatedField as any }} />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField size="small" value={item.rate ?? ''} onChange={(e) => updateItem(index, 'rate', e.target.value ? sanitizedNumber(e.target.value) : '')} InputProps={{ inputComponent: CommaSeparatedField as any }} />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField size="small" value={item.vat_percentage ?? ''} onChange={(e) => updateItem(index, 'vat_percentage', e.target.value ? sanitizedNumber(e.target.value) : '')} InputProps={{ inputComponent: CommaSeparatedField as any }} />
-                    </TableCell>
-                    <TableCell align="right">
-                      <TextField size="small" value={item.lead_time_days ?? ''} onChange={(e) => updateItem(index, 'lead_time_days', e.target.value ? sanitizedNumber(e.target.value) : '')} InputProps={{ inputComponent: CommaSeparatedField as any }} />
-                    </TableCell>
-                    <TableCell>
-                      <TextField size="small" fullWidth value={item.remarks || ''} onChange={(e) => updateItem(index, 'remarks', e.target.value)} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </Grid>
-        </Grid>
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
-        <LoadingButton loading={mutation.isPending} variant="contained" onClick={handleSave}>Save Response</LoadingButton>
-      </DialogActions>
-    </Dialog>
-  );
-}
-
 function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
   const params = useParams();
+  const [mounted, setMounted] = useState(false);
   const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+
   
-  // Get rfqId from prop or from URL params
   const rfqId = rfqIdProp || (params?.id as string);
   const lang = (params?.lang as string) || 'en-US';
   
   const [activeTab, setActiveTab] = useState(0);
   const [openEdit, setOpenEdit] = useState(false);
-  const [responseDialog, setResponseDialog] = useState<{ open: boolean; stakeholder: any | null }>({ open: false, stakeholder: null });
+  const [openResponseForm, setOpenResponseForm] = useState(false);
+  const [selectedStakeholder, setSelectedStakeholder] = useState<any | null>(null);
   const [selectedQuoteByItem, setSelectedQuoteByItem] = useState<Record<number, any>>({});
+  const [openPurchaseOrderDialog, setOpenPurchaseOrderDialog] = useState(false);
+  const [selectedSupplierForPO, setSelectedSupplierForPO] = useState<any | null>(null);
+  const [poItems, setPoItems] = useState<any[]>([]);
+  const [pendingOrders, setPendingOrders] = useState<any[]>([]);
+  const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
+  
+  // Confirmation Dialog States
+  const [confirmDialog, setConfirmDialog] = useState({
+    open: false,
+    title: '',
+    message: '',
+    action: 'delete',
+    id: null as number | null,
+    type: '' as 'rfq' | 'response',
+  });
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const { data: rfq, isLoading } = useQuery<RFQ>({
     queryKey: ['rfq', rfqId],
@@ -308,65 +129,145 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       router.push(`/${lang}/procurement/rfqs`);
-    },
-  });
-
-  const awardMutation = useMutation({
-    mutationFn: async () => {
-      const grouped = Object.entries(selectedQuoteByItem).reduce((acc: any[], [itemId, quote]: any) => {
-        const comparisonItem = comparison?.items?.find((item) => String(item.id) === String(itemId));
-        if (!comparisonItem) return acc;
-
-        const key = quote.stakeholder.id;
-        const rfqResponse = rfq?.responses?.find(
-          (response: any) => Number(response?.stakeholder?.id) === Number(quote.stakeholder.id)
-        );
-        const existing = acc.find((group) => group.stakeholder_id === key);
-        const poItem = {
-          rfq_response_item_id: quote.id,
-          product_id: comparisonItem.product?.id,
-          measurement_unit_id: comparisonItem.measurement_unit?.id,
-          quantity: quote.quantity,
-          rate: quote.rate,
-          vat_percentage: quote.vat_percentage || 0,
-        };
-        if (existing) {
-          existing.items.push(poItem);
-        } else {
-          acc.push({
-            stakeholder_id: key,
-            currency_id: rfqResponse?.currency?.id || 1,
-            exchange_rate: rfqResponse?.exchange_rate || 1,
-            rfq_id: Number(rfqId),
-            order_date: dayjs().toISOString(),
-            items: [poItem],
-          });
-        }
-        return acc;
-      }, []);
-
-      for (const group of grouped) {
-        await purchaseServices.add(group);
-      }
-      return grouped;
-    },
-    onSuccess: () => {
-      enqueueSnackbar('Purchase orders created from selected RFQ quotes', { variant: 'success' });
-      queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
-      queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
+      setConfirmDialog({ ...confirmDialog, open: false });
     },
     onError: (error: any) => {
-      enqueueSnackbar(error?.response?.data?.message || 'Unable to award selected quotes', { variant: 'error' });
+      enqueueSnackbar(error?.response?.data?.message || 'Unable to delete RFQ', { variant: 'error' });
+      setConfirmDialog({ ...confirmDialog, open: false });
     },
   });
 
+  const deleteResponseMutation = useMutation({
+    mutationFn: rfqServices.deleteResponse,
+    onSuccess: () => {
+      enqueueSnackbar('Response deleted successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['rfq', rfqId] });
+      queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
+      setConfirmDialog({ ...confirmDialog, open: false });
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(error?.response?.data?.message || 'Unable to delete response', { variant: 'error' });
+      setConfirmDialog({ ...confirmDialog, open: false });
+    },
+  });
+
+  // Handle award from comparison UI
+  const handleAward = (selectedQuotes: Record<number, any>) => {
+    // Group selected quotes by supplier
+    const groupedBySupplier = Object.entries(selectedQuotes).reduce((acc: any[], [itemId, quote]: any) => {
+      const comparisonItem = comparison?.items?.find((item) => String(item.id) === String(itemId));
+      if (!comparisonItem) return acc;
+
+      const key = quote.stakeholder.id;
+      const existing = acc.find((group) => group.stakeholder_id === key);
+      const poItem = {
+        rfq_response_item_id: quote.id,
+        product: comparisonItem.product,
+        product_id: comparisonItem.product?.id,
+        measurement_unit_id: comparisonItem.measurement_unit?.id,
+        quantity: quote.quantity || comparisonItem.quantity || 0,
+        rate: quote.rate || 0,
+        vat_percentage: quote.vat_percentage || 0,
+      };
+      if (existing) {
+        existing.items.push(poItem);
+      } else {
+        acc.push({
+          stakeholder_id: key,
+          stakeholder: quote.stakeholder,
+          items: [poItem],
+          rfq_id: Number(rfqId),
+        });
+      }
+      return acc;
+    }, []);
+
+    if (groupedBySupplier.length === 0) {
+      enqueueSnackbar('No items selected for award', { variant: 'warning' });
+      return;
+    }
+
+    // Store all pending orders
+    setPendingOrders(groupedBySupplier);
+    setCurrentOrderIndex(0);
+    
+    // Open first PO dialog
+    openPurchaseOrderForGroup(groupedBySupplier[0]);
+  };
+
+  const openPurchaseOrderForGroup = (group: any) => {
+    setSelectedSupplierForPO(group);
+    setPoItems(group.items);
+    setOpenPurchaseOrderDialog(true);
+  };
+
+  const handlePurchaseOrderClose = (open: boolean) => {
+    setOpenPurchaseOrderDialog(open);
+    
+    // If dialog is closed and there are more orders pending
+    if (!open && pendingOrders.length > 0) {
+      const nextIndex = currentOrderIndex + 1;
+      if (nextIndex < pendingOrders.length) {
+        setCurrentOrderIndex(nextIndex);
+        openPurchaseOrderForGroup(pendingOrders[nextIndex]);
+      } else {
+        // All orders processed
+        setPendingOrders([]);
+        setCurrentOrderIndex(0);
+        // Clear selected quotes
+        setSelectedQuoteByItem({});
+        // Refresh data
+        queryClient.invalidateQueries({ queryKey: ['rfq', rfqId] });
+        queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
+      }
+    }
+  };
+
   const responseSuccess = () => {
-    setResponseDialog({ open: false, stakeholder: null });
+    setOpenResponseForm(false);
+    setSelectedStakeholder(null);
     queryClient.invalidateQueries({ queryKey: ['rfq', rfqId] });
     queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
   };
 
-  const selectedCount = Object.keys(selectedQuoteByItem).length;
+  const handleOpenResponseForm = (stakeholder: any) => {
+    setSelectedStakeholder(stakeholder);
+    setOpenResponseForm(true);
+  };
+
+  // Open confirmation dialog for delete
+  const openDeleteConfirmation = (type: 'rfq' | 'response', id: number, name?: string) => {
+    const config = {
+      rfq: {
+        title: 'Delete RFQ',
+        message: `Are you sure you want to delete RFQ "${rfq?.rfqNo}"? This action cannot be undone.`,
+      },
+      response: {
+        title: 'Delete Response',
+        message: `Are you sure you want to delete the response from "${name || 'this supplier'}"? This action cannot be undone.`,
+      },
+    };
+
+    setConfirmDialog({
+      open: true,
+      title: config[type].title,
+      message: config[type].message,
+      action: 'delete',
+      id: id,
+      type: type,
+    });
+  };
+
+  // Handle delete confirmation
+  const handleConfirmDelete = () => {
+    if (confirmDialog.type === 'rfq') {
+      deleteMutation.mutate({ id: confirmDialog.id });
+    } else if (confirmDialog.type === 'response') {
+      deleteResponseMutation.mutate({ id: confirmDialog.id });
+    }
+  };
+
+  if (!mounted) return null;
 
   if (!organizationHasSubscribed(MODULES.PROCUREMENT_AND_SUPPLY)) {
     return <UnsubscribedAccess modules={'Procurement & Supply'} />;
@@ -376,187 +277,451 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
     return <UnauthorizedAccess />;
   }
 
+  // Get status color
+  const getStatusColor = (status: string) => {
+    const statusMap: Record<string, any> = {
+      'draft': { color: 'default', icon: null },
+      'pending': { color: 'warning', icon: <PendingOutlined /> },
+      'sent': { color: 'info', icon: <SendOutlined /> },
+      'responded': { color: 'info', icon: <ReplyOutlined /> },
+      'awarded': { color: 'success', icon: <CheckCircleOutline /> },
+      'cancelled': { color: 'error', icon: <CancelOutlined /> },
+    };
+    return statusMap[status?.toLowerCase()] || { color: 'default', icon: null };
+  };
+
+  // Check if delete mutations are loading
+  const isDeleting = deleteMutation.isPending || deleteResponseMutation.isPending;
+
   return (
     <CurrencySelectProvider>
-      <Grid container spacing={1}>
-        <Grid size={12} display="flex" alignItems="center" justifyContent="space-between">
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Tooltip title="Back to RFQs">
-              <IconButton onClick={() => router.push(`/${lang}/procurement/rfqs`)}>
-                <ArrowBackOutlined />
-              </IconButton>
-            </Tooltip>
-            <Typography variant="h4">{rfq?.rfqNo || 'RFQ Details'}</Typography>
-          </Stack>
-          <Stack direction="row" spacing={1}>
-            {checkOrganizationPermission(PERMISSIONS.RFQS_EDIT) && (
-              <Button variant="outlined" startIcon={<EditOutlined />} onClick={() => setOpenEdit(true)}>
-                Edit
-              </Button>
-            )}
-            {checkOrganizationPermission(PERMISSIONS.RFQS_DELETE) && (
-              <Button color="error" variant="outlined" startIcon={<DeleteOutlined />} onClick={() => deleteMutation.mutate({ id: rfq?.id })}>
-                Delete
-              </Button>
-            )}
-          </Stack>
-        </Grid>
-
-        {isLoading && (
-          <Grid size={12}>
-            <Typography>Loading RFQ...</Typography>
-          </Grid>
-        )}
-
-        {rfq && (
-          <Grid size={12}>
-            <Stack direction="row" spacing={1} flexWrap="wrap" mb={1}>
-              <Chip label={rfq.status || 'draft'} />
-              <Chip label={`Items: ${rfq.items?.length || 0}`} />
-              <Chip label={`Responses: ${rfq.responses?.length || 0}`} />
-            </Stack>
-            <Typography variant="body2">Reference: {rfq.reference || '-'}</Typography>
-            <Typography variant="body2">RFQ Date: {readableDate(rfq.rfq_date)}</Typography>
-            <Typography variant="body2">Deadline: {readableDate(rfq.response_deadline)}</Typography>
-          </Grid>
-        )}
-
-        <Grid size={12}>
-          <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}>
-            <Tab label="Overview" />
-            <Tab label="Comparison" />
-          </Tabs>
-        </Grid>
-
-        {activeTab === 0 && rfq && (
-          <Grid size={12}>
-            <Grid container spacing={1}>
-              <Grid size={12}>
-                <Typography variant="h6" gutterBottom>Invited Suppliers</Typography>
-                <Stack direction="row" spacing={1} flexWrap="wrap">
-                  {(rfq.stakeholders || []).map((stakeholder) => (
-                    <Chip
-                      key={stakeholder.id}
-                      label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`}
-                      onClick={stakeholder.status === 'pending' ? () => setResponseDialog({ open: true, stakeholder }) : undefined}
-                      icon={stakeholder.status === 'pending' ? <ReplyOutlined /> : undefined}
+      <LedgerSelectProvider>
+        <Box sx={{ p: { xs: 1, md: 2 } }}>
+          {/* Header */}
+          <Paper elevation={0} sx={{ p: 2, mb: 2, bgcolor: 'background.default' }}>
+            <Grid container alignItems="center" justifyContent="space-between">
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack direction="row" spacing={1} alignItems="center">
+                  <Tooltip title="Back to RFQs">
+                    <IconButton onClick={() => router.push(`/${lang}/procurement/rfqs`)}>
+                      <ArrowBackOutlined />
+                    </IconButton>
+                  </Tooltip>
+                  <Typography variant="h4" fontWeight="bold">
+                    {rfq?.rfqNo || 'RFQ Details'}
+                  </Typography>
+                  {rfq && (
+                    <Chip 
+                      label={rfq.status || 'Draft'} 
+                      color={getStatusColor(rfq?.status as string).color}
+                      icon={getStatusColor(rfq?.status as string).icon}
+                      size="medium"
                     />
-                  ))}
-                  {!rfq.stakeholders?.length && <Typography color="text.secondary">No suppliers invited yet</Typography>}
+                  )}
                 </Stack>
               </Grid>
-
-              <Grid size={12}>
-                <Typography variant="h6" gutterBottom>Items</Typography>
-                {rfq.items?.map((item: any, index: number) => (
-                  <Typography key={`${item.id || index}`} variant="body2">
-                    {index + 1}. {item.product?.item_name || item.product?.name || 'Item'} - {item.quantity} {item.unit_symbol || item.measurement_unit?.symbol || ''}
-                  </Typography>
-                ))}
-              </Grid>
-
-              <Grid size={12}>
-                <Typography variant="h6" gutterBottom>Responses</Typography>
-                {rfq.responses?.map((response: any) => (
-                  <Grid container key={response.id} alignItems="center" spacing={1} mb={1}>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Typography>{response.stakeholder?.name}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {response.currency?.name} · {response.exchange_rate}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Typography variant="body2">Response: {readableDate(response.response_date)}</Typography>
-                      <Typography variant="body2">Validity: {readableDate(response.validity_date)}</Typography>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 4 }} textAlign="right">
-                      <Button size="small" color="error" onClick={() => rfqServices.deleteResponse({ id: response.id }).then(() => responseSuccess())}>
-                        Delete
-                      </Button>
-                    </Grid>
-                  </Grid>
-                ))}
-                {!rfq.responses?.length && <Typography color="text.secondary">No responses yet</Typography>}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
+                  {checkOrganizationPermission(PERMISSIONS.RFQS_EDIT) && (
+                    <Button 
+                      variant="outlined" 
+                      startIcon={<EditOutlined />} 
+                      onClick={() => setOpenEdit(true)}
+                      size="small"
+                    >
+                      Edit
+                    </Button>
+                  )}
+                  {checkOrganizationPermission(PERMISSIONS.RFQS_DELETE) && (
+                    <Button 
+                      color="error" 
+                      variant="outlined" 
+                      startIcon={<DeleteOutlined />} 
+                      onClick={() => rfq && openDeleteConfirmation('rfq', rfq.id as number)}
+                      size="small"
+                      disabled={isDeleting}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </Stack>
               </Grid>
             </Grid>
-          </Grid>
-        )}
+          </Paper>
 
-        {activeTab === 1 && comparison && (
-          <Grid size={12}>
-            <Alert severity="info" sx={{ mb: 1 }}>
-              Selected quotes: {selectedCount}. Group by supplier and create purchase orders when ready.
-            </Alert>
-            <Divider sx={{ mb: 1 }} />
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Item</TableCell>
-                  {Array.from(new Set((comparison.items || []).flatMap((item) => item.quotes.map((quote) => quote.stakeholder.name)))).map((supplier) => (
-                    <TableCell key={supplier}>{supplier}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(comparison.items || []).map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>
-                      <Typography variant="body2">{item.product?.item_name || item.product?.name || 'Item'}</Typography>
-                      <Typography variant="caption" color="text.secondary">
-                        {item.quantity} {item.measurement_unit?.symbol || ''}
+          {/* Summary Cards */}
+          {rfq && !isLoading && (
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <InventoryOutlined color="primary" />
+                      <Typography variant="body2" color="text.secondary">Items</Typography>
+                    </Stack>
+                    <Typography variant="h4" paddingLeft={5}>{rfq.items?.length || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <PeopleOutlined color="primary" />
+                      <Typography variant="body2" color="text.secondary">Suppliers</Typography>
+                    </Stack>
+                    <Typography variant="h4" paddingLeft={5}>{rfq.stakeholders?.length || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <ReplyOutlined color="primary" />
+                      <Typography variant="body2" color="text.secondary">Responses</Typography>
+                    </Stack>
+                    <Typography variant="h4" paddingLeft={5}>{rfq.responses?.length || 0}</Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <CalendarTodayOutlined color="primary" />
+                      <Typography variant="body2" color="text.secondary">Deadline</Typography>
+                    </Stack>
+                    <Typography variant="body1" fontWeight="bold">
+                      {rfq.response_deadline ? readableDate(rfq.response_deadline) : 'N/A'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+            </Grid>
+          )}
+
+          {isLoading && (
+            <Grid container spacing={2} sx={{ mb: 2 }}>
+              {[1, 2, 3, 4].map((i) => (
+                <Grid key={i} size={{ xs: 12, sm: 6, md: 3 }}>
+                  <Card>
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">Loading...</Typography>
+                    </CardContent>
+                  </Card>
+                </Grid>
+              ))}
+            </Grid>
+          )}
+
+          {/* Tabs */}
+          <Paper sx={{ mb: 2 }}>
+            <Tabs value={activeTab} onChange={(_, value) => setActiveTab(value)}>
+              <Tab label="Overview" />
+              <Tab label="Comparison" />
+            </Tabs>
+          </Paper>
+
+          {/* Overview Tab */}
+          {activeTab === 0 && rfq && (
+            <Grid container spacing={2}>
+              {/* RFQ Date Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                      <CalendarTodayOutlined color="primary" fontSize="small" />
+                      <Typography variant="subtitle2" color="text.secondary">RFQ Date</Typography>
+                    </Stack>
+                    <Typography variant="body1">
+                      {rfq.rfq_date ? readableDate(rfq.rfq_date) : 'N/A'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Reference: {rfq.reference || 'N/A'}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Response Deadline Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Card>
+                  <CardContent>
+                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1 }}>
+                      <CalendarTodayOutlined color="error" fontSize="small" />
+                      <Typography variant="subtitle2" color="text.secondary">Response Deadline</Typography>
+                    </Stack>
+                    <Typography variant="body1" fontWeight="bold" color={dayjs(rfq.response_deadline).isBefore(dayjs()) ? 'error' : 'inherit'}>
+                      {rfq.response_deadline ? readableDate(rfq.response_deadline) : 'N/A'}
+                    </Typography>
+                    {rfq.response_deadline && (
+                      <Typography variant="caption" color={dayjs(rfq.response_deadline).isBefore(dayjs()) ? 'error' : 'text.secondary'}>
+                        {dayjs(rfq.response_deadline).isBefore(dayjs()) 
+                          ? '⚠️ Deadline has passed' 
+                          : `📅 ${Math.ceil(dayjs(rfq.response_deadline).diff(dayjs(), 'days'))} days remaining`}
                       </Typography>
-                    </TableCell>
-                    {Array.from(new Set((comparison.items || []).flatMap((row) => row.quotes.map((quote) => quote.stakeholder.name)))).map((supplier) => {
-                      const quote = item.quotes.find((quote) => quote.stakeholder.name === supplier);
-                      if (!quote) {
-                        return <TableCell key={`${item.id}-${supplier}`}>-</TableCell>;
-                      }
+                    )}
+                  </CardContent>
+                </Card>
+              </Grid>
+
+              {/* Invited Suppliers */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="h6" gutterBottom>
+                    <PeopleOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Invited Suppliers ({rfq.stakeholders?.length || 0})
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  <Stack spacing={1} sx={{ flex: 1 }}>
+                    {(rfq.stakeholders || []).map((stakeholder) => {
+                      const hasResponded = rfq.responses?.some(
+                        (r: any) => Number(r?.stakeholder?.id) === Number(stakeholder.id)
+                      );
                       return (
-                        <TableCell key={`${item.id}-${supplier}`}>
+                        <Paper 
+                          key={stakeholder.id} 
+                          variant="outlined" 
+                          sx={{ 
+                            p: 1.5, 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            alignItems: 'center',
+                            cursor: hasResponded ? 'default' : 'pointer',
+                            '&:hover': hasResponded ? {} : { bgcolor: 'action.hover' }
+                          }}
+                          onClick={!hasResponded ? () => handleOpenResponseForm(stakeholder) : undefined}
+                        >
                           <Stack direction="row" alignItems="center" spacing={1}>
-                            <Radio
-                              checked={selectedQuoteByItem[item.id]?.id === quote.id}
-                              onChange={() => setSelectedQuoteByItem((prev) => ({ ...prev, [item.id]: quote }))}
-                            />
-                            <Typography variant="body2">{quote.amount?.toLocaleString()}</Typography>
+                            <Typography variant="body2">{stakeholder.name}</Typography>
+                            {hasResponded ? (
+                              <Chip label="Responded" color="success" size="small" icon={<CheckCircleOutline />} />
+                            ) : (
+                              <Chip label="Pending" color="warning" size="small" icon={<PendingOutlined />} />
+                            )}
                           </Stack>
-                        </TableCell>
+                          {!hasResponded && (
+                            <Button size="small" startIcon={<ReplyOutlined />}>
+                              Respond
+                            </Button>
+                          )}
+                        </Paper>
                       );
                     })}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-            <Stack direction="row" justifyContent="flex-end" mt={2}>
-              <LoadingButton variant="contained" loading={awardMutation.isPending} onClick={() => awardMutation.mutate()}>
-                Award Selected
-              </LoadingButton>
-            </Stack>
-          </Grid>
-        )}
-      </Grid>
+                    {!rfq.stakeholders?.length && (
+                      <Typography color="text.secondary" textAlign="center" py={2}>
+                        No suppliers invited yet
+                      </Typography>
+                    )}
+                  </Stack>
+                </Paper>
+              </Grid>
 
-      {rfq && (
+              {/* Items Card */}
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper sx={{ p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                  <Typography variant="h6" gutterBottom>
+                    <InventoryOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Items ({rfq.items?.length || 0})
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  <TableContainer sx={{ flex: 1 }}>
+                    <Table size="small" stickyHeader>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ width: '15%' }}>S/N</TableCell>
+                          <TableCell sx={{ width: '45%' }}>Item</TableCell>
+                          <TableCell sx={{ width: '25%' }} align="right">Quantity</TableCell>
+                          <TableCell sx={{ width: '15%' }}>Unit</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {rfq.items?.map((item: any, index: number) => (
+                          <TableRow key={`${item.id || index}`}>
+                            <TableCell>{index + 1}</TableCell>
+                            <TableCell>
+                              <Typography variant="body2">
+                                {item.product?.item_name || item.product?.name || 'Item'}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align="right">{item.quantity}</TableCell>
+                            <TableCell>{item.unit_symbol || item.measurement_unit?.symbol || '-'}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                  {!rfq.items?.length && (
+                    <Typography color="text.secondary" textAlign="center" py={2}>
+                      No items added yet
+                    </Typography>
+                  )}
+                </Paper>
+              </Grid>
+
+              {/* Responses */}
+              <Grid size={12}>
+                <Paper sx={{ p: 2 }}>
+                  <Typography variant="h6" gutterBottom>
+                    <ReplyOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                    Responses ({rfq.responses?.length || 0})
+                  </Typography>
+                  <Divider sx={{ mb: 2 }} />
+                  {rfq.responses?.map((response: any) => (
+                    <Paper key={response.id} variant="outlined" sx={{ p: 2, mb: 1 }}>
+                      <Grid container alignItems="center" spacing={2}>
+                        <Grid size={{ xs: 12, md: 6 }}>
+                          <Typography variant="body1">
+                            {response.stakeholder?.name}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {response.currency?.name} · Rate: {response.exchange_rate}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }}>
+                          <Typography variant="body2">
+                            <CalendarTodayOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                            Response: {readableDate(response.response_date)}
+                          </Typography>
+                          <Typography variant="body2">
+                            <CalendarTodayOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
+                            Validity: {readableDate(response.validity_date)}
+                          </Typography>
+                        </Grid>
+                        <Grid size={{ xs: 12, md: 3 }} textAlign="right">
+                          <Tooltip title="Delete Response">
+                            <IconButton 
+                              size="small" 
+                              color="error"
+                              onClick={() => openDeleteConfirmation('response', response.id, response.stakeholder?.name)}
+                              disabled={isDeleting}
+                            >
+                              <DeleteOutlined fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+                      </Grid>
+                    </Paper>
+                  ))}
+                  {!rfq.responses?.length && (
+                    <Typography color="text.secondary" textAlign="center" py={2}>
+                      No responses yet
+                    </Typography>
+                  )}
+                </Paper>
+              </Grid>
+            </Grid>
+          )}
+
+          {/* Comparison Tab */}
+          {activeTab === 1 && comparison && (
+            <RFQComparisonUI
+              comparison={comparison as any}
+              isAwarding={false}
+              onAward={handleAward}
+            />
+          )}
+        </Box>
+
+        {/* Edit Dialog */}
+        {rfq && (
+          <Dialog
+            fullWidth
+            maxWidth="lg"
+            fullScreen={belowLargeScreen}
+            scroll={belowLargeScreen ? 'body' : 'paper'}
+            open={openEdit}
+            onClose={() => setOpenEdit(false)}
+          >
+            <RFQDialogForm toggleOpen={setOpenEdit} rfq={rfq} />
+          </Dialog>
+        )}
+
+        {/* RFQ Response Form Dialog */}
         <Dialog
           fullWidth
-          maxWidth="xl"
+          maxWidth="lg"
           fullScreen={belowLargeScreen}
           scroll={belowLargeScreen ? 'body' : 'paper'}
-          open={openEdit}
+          open={openResponseForm}
+          onClose={() => setOpenResponseForm(false)}
         >
-          <RFQDialogForm toggleOpen={setOpenEdit} rfq={rfq} />
+          <RFQResponsesForm
+            toggleOpen={setOpenResponseForm}
+            rfqDetails={rfq}
+            rfqId={rfqId as unknown as number}
+            preselectedStakeholder={selectedStakeholder}
+            onSuccess={responseSuccess}
+          />
         </Dialog>
-      )}
 
-      {responseDialog.open && rfq && responseDialog.stakeholder && (
-        <RFQResponseDialog
-          open={responseDialog.open}
-          rfq={rfq}
-          stakeholder={responseDialog.stakeholder}
-          onClose={() => setResponseDialog({ open: false, stakeholder: null })}
-          onSaved={responseSuccess}
-        />
-      )}
+        {/* Purchase Order Dialog */}
+        <Dialog
+          fullWidth
+          maxWidth="lg"
+          fullScreen={belowLargeScreen}
+          scroll={belowLargeScreen ? 'body' : 'paper'}
+          open={openPurchaseOrderDialog}
+          onClose={() => handlePurchaseOrderClose(false)}
+        >
+          <RFQPurchaseOrderForm
+            toggleOpen={handlePurchaseOrderClose}
+            order={{
+              stakeholder_id: selectedSupplierForPO?.stakeholder_id,
+              stakeholder: selectedSupplierForPO?.stakeholder,
+              items: poItems,
+              rfq_id: Number(rfqId),
+              order_date: dayjs().toISOString(),
+              currency_id: rfq?.responses?.find(
+                (r: any) => Number(r.stakeholder?.id) === Number(selectedSupplierForPO?.stakeholder_id)
+              )?.currency?.id || 1,
+              exchange_rate: rfq?.responses?.find(
+                (r: any) => Number(r.stakeholder?.id) === Number(selectedSupplierForPO?.stakeholder_id)
+              )?.exchange_rate || 1,
+            }}
+            rfqDetails={rfq}
+            rfqId={Number(rfqId)}
+          />
+        </Dialog>
+
+        {/* Confirmation Dialog */}
+        <Dialog
+          open={confirmDialog.open}
+          onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+          aria-labelledby="confirmation-dialog-title"
+          aria-describedby="confirmation-dialog-description"
+        >
+          <DialogTitle id="confirmation-dialog-title" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <DeleteOutlined color="error" />
+            {confirmDialog.title}
+          </DialogTitle>
+          <DialogContent>
+            <DialogContentText id="confirmation-dialog-description">
+              {confirmDialog.message}
+            </DialogContentText>
+          </DialogContent>
+          <DialogActions sx={{ p: 2, pt: 0 }}>
+            <Button 
+              onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}
+              variant="outlined"
+              size="small"
+            >
+              Cancel
+            </Button>
+            <LoadingButton 
+              onClick={handleConfirmDelete}
+              color="error"
+              variant="contained"
+              size="small"
+              loading={isDeleting}
+              startIcon={<DeleteOutlined />}
+            >
+              Delete
+            </LoadingButton>
+          </DialogActions>
+        </Dialog>
+      </LedgerSelectProvider>
     </CurrencySelectProvider>
   );
 }
