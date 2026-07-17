@@ -3,6 +3,7 @@ import SaleInvoiceAdjustmentItemAction from '@/components/pos/counter/salesListI
 import JumboChipsGroup from '@jumbo/components/JumboChipsGroup/JumboChipsGroup';
 import {
   Box,
+  Chip,
   Grid,
   ListItemText,
   Stack,
@@ -44,7 +45,7 @@ function TransactionListItem({
   return (
     <Grid
       container
-      columnSpacing={1}
+      columnSpacing={2}
       sx={{
         cursor: 'pointer',
         borderTop: 1,
@@ -130,7 +131,11 @@ function TransactionListItem({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 9, lg: 3 }}>
+      <Grid
+        size={{ xs: 12, md: 9, lg: 3 }}
+        display={'flex'}
+        alignItems={'center'}
+      >
         <ListItemText
           secondary={
             <Tooltip title={'Narration'}>
@@ -140,6 +145,18 @@ function TransactionListItem({
             </Tooltip>
           }
         />
+        {transaction.attachments_count !== undefined &&
+          transaction.attachments_count > 0 && (
+            <Tooltip title='Attachments Count'>
+              <Chip
+                label={transaction.attachments_count}
+                color='primary'
+                size='small'
+                variant='filled'
+                sx={{ mr: 2 }}
+              />
+            </Tooltip>
+          )}
       </Grid>
 
       <Grid

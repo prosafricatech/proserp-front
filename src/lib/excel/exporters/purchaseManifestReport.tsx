@@ -36,10 +36,11 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     const COL_VENDOR = 12;
     const COL_QTY_ORDERED = 13;
     const COL_QTY_RECEIVED = 14;
-    const COL_RATE = 15;
-    const COL_ORDERED_AMOUNT = 16;
-    const COL_RECEIVED_AMOUNT = 17;
-    const COL_PENDING_AMOUNT = 18;
+    const COL_QTY_PENDING = 15;
+    const COL_RATE = 16;
+    const COL_ORDERED_AMOUNT = 17;
+    const COL_RECEIVED_AMOUNT = 18;
+    const COL_PENDING_AMOUNT = 19;
     const TOTAL_COLS = COL_PENDING_AMOUNT;
 
     // ---- Per-currency summary totals ----
@@ -79,6 +80,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     ws.getColumn(getExcelColumnName(COL_VENDOR)).width = 26;
     ws.getColumn(getExcelColumnName(COL_QTY_ORDERED)).width = 14;
     ws.getColumn(getExcelColumnName(COL_QTY_RECEIVED)).width = 14;
+    ws.getColumn(getExcelColumnName(COL_QTY_PENDING)).width = 14;
     ws.getColumn(getExcelColumnName(COL_RATE)).width = 16;
     ws.getColumn(getExcelColumnName(COL_ORDERED_AMOUNT)).width = 20;
     ws.getColumn(getExcelColumnName(COL_RECEIVED_AMOUNT)).width = 20;
@@ -184,6 +186,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
       COL_VENDOR,
       COL_QTY_ORDERED,
       COL_QTY_RECEIVED,
+      COL_QTY_PENDING,
       COL_RATE,
     ].forEach((col) => {
       const cell = ws.getCell(`${getExcelColumnName(col)}${currentRow}`);
@@ -218,6 +221,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     setHdr(COL_VENDOR, 'Supplier / Vendor');
     setHdr(COL_QTY_ORDERED, 'Qty Ordered', true);
     setHdr(COL_QTY_RECEIVED, 'Qty Received', true);
+    setHdr(COL_QTY_PENDING, 'Qty Pending', true);
     setHdr(COL_RATE, 'Rate', true);
     setHdr(COL_ORDERED_AMOUNT, 'Ordered Amount', true);
     setHdr(COL_RECEIVED_AMOUNT, 'Received Amount', true);
@@ -278,6 +282,13 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
       setTxt(COL_VENDOR, item.vendor?.name || '-');
       setTxt(COL_QTY_ORDERED, formatQty(item.quantity_ordered, unitSymbol));
       setTxt(COL_QTY_RECEIVED, formatQty(item.quantity_received, unitSymbol));
+      setTxt(
+        COL_QTY_PENDING,
+        formatQty(
+          (item.quantity_ordered || 0) - (item.quantity_received || 0),
+          unitSymbol
+        )
+      );
       setNum(COL_RATE, item.rate || 0);
       setNum(COL_ORDERED_AMOUNT, orderedAmt, currencyFmt);
       setNum(COL_RECEIVED_AMOUNT, receivedAmt, currencyFmt);

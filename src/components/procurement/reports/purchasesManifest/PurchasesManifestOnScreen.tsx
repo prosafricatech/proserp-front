@@ -316,6 +316,17 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                   >
                     Qty Received
                   </TableCell>
+
+                  <TableCell
+                    sx={{
+                      backgroundColor: mainColor,
+                      color: contrastText,
+                      fontSize: '0.875rem',
+                    }}
+                    align='right'
+                  >
+                    Qty Pending
+                  </TableCell>
                   <TableCell
                     sx={{
                       backgroundColor: mainColor,
@@ -360,6 +371,13 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
               </TableHead>
               <TableBody>
                 {reportData?.items?.map((item, index) => {
+                  const qtyPending =
+                    (item.quantity_ordered || 0) -
+                      (item.quantity_received || 0) >=
+                    0
+                      ? (item.quantity_ordered || 0) -
+                        (item.quantity_received || 0)
+                      : 0;
                   const itemAmount =
                     (item.quantity_ordered || 0) * (item.rate || 0);
                   const receivedAmt =
@@ -387,7 +405,7 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                           {item.orderNo}
                         </Typography>
                       </TableCell>
-                      <TableCell>
+                      <TableCell sx={{ textWrap: 'nowrap' }}>
                         <Typography variant='body2'>
                           Ordered: {readableDate(item.order_date)}
                         </Typography>
@@ -430,11 +448,23 @@ const PurchasesManifestOnScreen: React.FC<PurchasesManifestOnScreenProps> = ({
                           {item.vendor?.name}
                         </Typography>
                       </TableCell>
-                      <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                      <TableCell
+                        align='right'
+                        sx={{ fontFamily: 'monospace', textWrap: 'nowrap' }}
+                      >
                         {`${item.quantity_ordered?.toLocaleString()} ${item.measurement_unit?.symbol || ''}`}
                       </TableCell>
-                      <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
+                      <TableCell
+                        align='right'
+                        sx={{ fontFamily: 'monospace', textWrap: 'nowrap' }}
+                      >
                         {`${item.quantity_received?.toLocaleString()} ${item.measurement_unit?.symbol || ''}`}
+                      </TableCell>
+                      <TableCell
+                        align='right'
+                        sx={{ fontFamily: 'monospace', textWrap: 'nowrap' }}
+                      >
+                        {`${qtyPending?.toLocaleString()} ${item.measurement_unit?.symbol || ''}`}
                       </TableCell>
                       <TableCell align='right' sx={{ fontFamily: 'monospace' }}>
                         {formatNumber(item.rate)}

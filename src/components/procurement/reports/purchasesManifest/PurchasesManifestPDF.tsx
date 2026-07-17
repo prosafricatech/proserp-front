@@ -407,6 +407,17 @@ const PurchasesManifestPDF = ({
                 ...styles.headerCell,
                 color: contrastText,
                 borderColor: mainColor,
+                flex: qtyReceivedFlex,
+                textAlign: 'right',
+              }}
+            >
+              Qty Pending
+            </Text>
+            <Text
+              style={{
+                ...styles.headerCell,
+                color: contrastText,
+                borderColor: mainColor,
                 flex: rateFlex,
                 textAlign: 'right',
               }}
@@ -452,6 +463,10 @@ const PurchasesManifestPDF = ({
           {items.map((item, index) => {
             const isEven = index % 2 === 0;
             const backgroundColor = isEven ? '#FFFFFF' : lightColor;
+            const qtyPending =
+              (item.quantity_ordered || 0) - (item.quantity_received || 0) >= 0
+                ? (item.quantity_ordered || 0) - (item.quantity_received || 0)
+                : 0;
             const itemAmount = (item.quantity_ordered || 0) * (item.rate || 0);
             const receivedAmt =
               (item.quantity_received || 0) * (item.rate || 0);
@@ -493,11 +508,6 @@ const PurchasesManifestPDF = ({
 
                 <View style={{ ...styles.cell, flex: productFlex }}>
                   <Text>{item.product?.name || '-'}</Text>
-                  {/* {item.product?.type && (
-                    <Text style={styles.cellSecondary}>
-                      Type: {item.product.type}
-                    </Text>
-                  )} */}
                 </View>
 
                 <Text
@@ -533,6 +543,16 @@ const PurchasesManifestPDF = ({
                   }}
                 >
                   {`${(item.quantity_received || 0).toLocaleString()} ${item.measurement_unit?.symbol || ''}`}
+                </Text>
+
+                <Text
+                  style={{
+                    ...styles.cell,
+                    flex: qtyReceivedFlex,
+                    textAlign: 'right',
+                  }}
+                >
+                  {`${(qtyPending || 0).toLocaleString()} ${item.measurement_unit?.symbol || ''}`}
                 </Text>
 
                 <Text
