@@ -2,8 +2,10 @@
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
+import { LinkOffOutlined } from '@mui/icons-material';
 import {
   Avatar,
+  Box,
   Card,
   Skeleton,
   Stack,
@@ -12,8 +14,10 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
+import axios from 'axios';
 import { useEffect, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import MyHrPayslips from './payslipsTab/MyHrPayslips';
 import MyHrProfile from './profileTab/MyHrProfile';
 type TabKey =
   | 'profile'
@@ -39,6 +43,8 @@ const MyHr = () => {
   const user = authUser?.user;
   const [activeTab, setActiveTab] = useState<TabKey>('profile');
   const [isClient, setIsClient] = useState(false);
+  const [profileLoading, setProfileLoading] = useState(false);
+  const [errStatus, setErrStatus] = useState<number | null | undefined>(null);
 
   useEffect(() => {
     setIsClient(true);
@@ -62,7 +68,6 @@ const MyHr = () => {
 
   // Only render tab content on the client
   const renderTabContent = useMemo(() => {
-    // On the server, or before client hydration, show skeletons
     if (!isClient) {
       return (
         <Stack spacing={2} sx={{ width: '100%' }}>
@@ -98,9 +103,9 @@ const MyHr = () => {
 
     switch (activeTab) {
       case 'profile':
-        return <MyHrProfile isLoading={isLoading} />;
+        return <MyHrProfile profile={profile} isLoading={profileLoading} />;
       case 'payslips':
-        return <div>Payslips Content</div>;
+        return <MyHrPayslips />;
       case 'leave':
         return <div>Leave Content</div>;
       case 'contracts':
@@ -114,11 +119,19 @@ const MyHr = () => {
       default:
         return null;
     }
-  }, [activeTab, authUser, isClient]);
+  }, [activeTab, authUser, isClient, isLoading]);
 
   useEffect(() => {
-    console.log('profileError: ', profileError);
-  }, [profileError]);
+    if (isLoading) {
+      setProfileLoading(true);
+    }
+    if (isError || profileError || !isLoading) {
+      setProfileLoading(false);
+    }
+    if (axios.isAxiosError(profileError)) {
+      setErrStatus(profileError?.status);
+    }
+  }, [profileError, isLoading]);
 
   return (
     <JumboContentLayout
@@ -148,27 +161,47 @@ const MyHr = () => {
         </Stack>
       }
     >
-      <Card sx={{ height: '100%', p: 1 }}>
-        <Stack spacing={1}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant='scrollable'
-            scrollButtons='auto'
-            allowScrollButtonsMobile
+      {errStatus && errStatus === 404 ? (
+        <Card sx={{ height: '100%', p: 1 }}>
+          <Box
+            width={'100%'}
+            height={'100%'}
+            display={'flex'}
+            flexDirection={'column'}
+            justifyContent={'center'}
+            alignItems={'center'}
           >
-            <Tab label='Profile' value='profile' />
-            <Tab label='Payslips' value='payslips' />
-            <Tab label='Leave' value='leave' />
-            <Tab label='contracts' value='contracts' />
-            <Tab label='Next of Kin' value='nextOfKins' />
-            <Tab label='Account Statement' value='accountStatement' />
-            <Tab label='Imprest Accounts' value='imprestAccounts' />
-          </Tabs>
+            <LinkOffOutlined
+              sx={{ width: 50, height: 50, textAlign: 'center' }}
+            />
+            <Typography textAlign={'center'} fontSize={15}>
+              Your account is not linked to an employee record. contact HR.
+            </Typography>
+          </Box>
+        </Card>
+      ) : (
+        <Card sx={{ height: '100%', p: 1 }}>
+          <Stack spacing={1}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant='scrollable'
+              scrollButtons='auto'
+              allowScrollButtonsMobile
+            >
+              <Tab label='Profile' value='profile' />
+              <Tab label='Payslips' value='payslips' />
+              <Tab label='Leave' value='leave' />
+              <Tab label='contracts' value='contracts' />
+              <Tab label='Next of Kin' value='nextOfKins' />
+              <Tab label='Account Statement' value='accountStatement' />
+              <Tab label='Imprest Accounts' value='imprestAccounts' />
+            </Tabs>
 
-          {renderTabContent}
-        </Stack>
-      </Card>
+            {renderTabContent}
+          </Stack>
+        </Card>
+      )}
     </JumboContentLayout>
   );
 };

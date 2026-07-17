@@ -813,8 +813,24 @@ humanResourcesServices.showPayslip = async (id) => {
 // ============================================
 // MY HR
 // ============================================
+
+// --- Profile tab ---
 humanResourcesServices.myHrProfile = async () => {
     const { data } = await axios.get(`/api/humanResources/myHr/profile`);
+    return data;
+};
+
+// --- Payslips tab ---
+
+humanResourcesServices.myHrPayslipsList = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/payslips', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.myHrPayslip = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/payslips/${id}`);
     return data;
 };
 

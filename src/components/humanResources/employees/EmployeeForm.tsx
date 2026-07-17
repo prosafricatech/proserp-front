@@ -263,7 +263,7 @@ const EmployeeForm = ({
       .typeError('Basic salary must be a number'),
     contract_start_date: yup.string().nullable(),
     reason: yup.string().nullable().optional(),
-    user_id: yup.number().nullable().optional(),
+    user_id: yup.number().nullable(),
   });
 
   // Form
@@ -300,7 +300,7 @@ const EmployeeForm = ({
       basic_salary: null,
       contract_start_date: null,
       reason: '',
-      user_id: undefined,
+      user_id: null,
     },
   });
 
@@ -352,7 +352,7 @@ const EmployeeForm = ({
       basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
-      user_id: employee.user_id ?? undefined,
+      user_id: employee.user_id ?? null,
     });
   }, [employee, reset]);
 
@@ -846,6 +846,9 @@ const EmployeeForm = ({
                       }
                       if (v && !Array.isArray(v)) {
                         setValue('user_id', v.id);
+                      }
+                      if (!v || v === null) {
+                        setValue('user_id', null);
                       }
                     }}
                   />
