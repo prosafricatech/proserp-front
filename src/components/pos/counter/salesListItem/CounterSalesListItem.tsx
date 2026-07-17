@@ -1,11 +1,12 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { VerifiedRounded } from '@mui/icons-material';
+import { Attachment, VerifiedRounded } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Badge,
   Chip,
   Divider,
   Grid,
@@ -124,13 +125,9 @@ const CounterSalesListItem: React.FC<CounterSalesListItemProps> = ({
             {sale.attachments_count !== undefined &&
               sale.attachments_count > 0 && (
                 <Tooltip title='Attachments Count'>
-                  <Chip
-                    label={sale.attachments_count}
-                    color='primary'
-                    size='small'
-                    variant='filled'
-                    sx={{ mr: 2 }}
-                  />
+                  <Badge badgeContent={sale.attachments_count} color='info'>
+                    <Attachment fontSize='small' />
+                  </Badge>
                 </Tooltip>
               )}
           </Grid>

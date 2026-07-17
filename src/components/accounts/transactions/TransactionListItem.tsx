@@ -1,9 +1,10 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import SaleInvoiceAdjustmentItemAction from '@/components/pos/counter/salesListItem/invoice/saleAdjustment/SaleInvoiceAdjustmentItemAction';
 import JumboChipsGroup from '@jumbo/components/JumboChipsGroup/JumboChipsGroup';
+import { Attachment } from '@mui/icons-material';
 import {
+  Badge,
   Box,
-  Chip,
   Grid,
   ListItemText,
   Stack,
@@ -116,7 +117,7 @@ function TransactionListItem({
         />
       </Grid>
 
-      <Grid size={{ xs: 12, md: 6, lg: 3 }}>
+      <Grid size={{ xs: 12, md: 6, lg: 2.5 }}>
         <ListItemText
           primary={
             <JumboChipsGroup
@@ -132,7 +133,7 @@ function TransactionListItem({
       </Grid>
 
       <Grid
-        size={{ xs: 12, md: 9, lg: 3 }}
+        size={{ xs: 6, md: 6, lg: 3 }}
         display={'flex'}
         alignItems={'center'}
       >
@@ -145,22 +146,21 @@ function TransactionListItem({
             </Tooltip>
           }
         />
+      </Grid>
+
+      <Grid size={{ xs: 1, md: 1, lg: 0.5 }}>
         {transaction.attachments_count !== undefined &&
           transaction.attachments_count > 0 && (
             <Tooltip title='Attachments Count'>
-              <Chip
-                label={transaction.attachments_count}
-                color='primary'
-                size='small'
-                variant='filled'
-                sx={{ mr: 2 }}
-              />
+              <Badge badgeContent={transaction.attachments_count} color='info'>
+                <Attachment fontSize='small' />
+              </Badge>
             </Tooltip>
           )}
       </Grid>
 
       <Grid
-        size={{ xs: 12, md: 2, lg: 1.5 }}
+        size={{ xs: 5, md: 4, lg: 1.5 }}
         sx={{
           display: 'flex',
           flexDirection: 'row',

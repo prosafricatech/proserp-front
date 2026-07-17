@@ -1,5 +1,6 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
+import { Attachment } from '@mui/icons-material';
+import { Badge, Chip, Divider, Grid, Tooltip, Typography } from '@mui/material';
 import React, { useState } from 'react';
 import ProformaItemAction from './ProformaItemAction';
 import { Proforma } from './ProformaType';
@@ -85,13 +86,9 @@ const ProformaListItem: React.FC<ProformaListItemProps> = ({ proforma }) => {
           {proforma.attachments_count !== undefined &&
             proforma.attachments_count > 0 && (
               <Tooltip title='Attachments Count'>
-                <Chip
-                  label={proforma.attachments_count}
-                  color='primary'
-                  size='small'
-                  variant='filled'
-                  sx={{ mr: 2 }}
-                />
+                <Badge badgeContent={proforma.attachments_count} color='info'>
+                  <Attachment fontSize='small' />
+                </Badge>
               </Tooltip>
             )}
           <Tooltip title='Amount'>
