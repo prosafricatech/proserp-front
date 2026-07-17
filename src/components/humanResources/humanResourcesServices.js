@@ -811,6 +811,14 @@ humanResourcesServices.showPayslip = async (id) => {
 }
 
 // ============================================
+// MY HR
+// ============================================
+humanResourcesServices.myHrProfile = async () => {
+    const { data } = await axios.get(`/api/humanResources/myHr/profile`);
+    return data;
+};
+
+// ============================================
 // EXPORT
 // ============================================
 humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {
