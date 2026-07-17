@@ -319,14 +319,6 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({
                       <Typography variant="body2" fontWeight="medium" color="text.primary">
                         {item.product?.item_name || item.product?.name || 'Item'}
                       </Typography>
-                      {hasSelected && (
-                        <Chip
-                          label="Selected"
-                          size="small"
-                          color="primary"
-                          sx={{ height: 16, fontSize: '0.5rem' }}
-                        />
-                      )}
                     </Stack>
                   </Grid>
 
