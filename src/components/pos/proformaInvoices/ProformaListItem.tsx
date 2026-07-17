@@ -103,6 +103,7 @@ const ProformaListItem: React.FC<ProformaListItemProps> = ({ proforma }) => {
               </Tooltip>
             )}
         </Grid>
+
         <Grid size={{ xs: 12, md: 1, lg: 1 }} textAlign={'end'}>
           <ProformaItemAction proforma={proforma} />
         </Grid>

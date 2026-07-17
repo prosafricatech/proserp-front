@@ -135,6 +135,7 @@ const CounterSalesListItem: React.FC<CounterSalesListItemProps> = ({
                 <VerifiedRounded fontSize='small' color='success' />
               </Tooltip>
             )}
+
             <Tooltip title='Amount'>
               <Typography>
                 {(sale.amount + sale.vat_amount).toLocaleString('en-US', {

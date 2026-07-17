@@ -165,6 +165,7 @@ const PurchaseOrderListItem = ({ order }) => {
                   </Tooltip>
                 )}
               </Grid>
+
               <Grid
                 size={{ xs: 11, md: 4 }}
                 display={'flex'}

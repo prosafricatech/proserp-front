@@ -175,7 +175,6 @@ function TransactionListItem({
           </Box>
         </Tooltip>
       </Grid>
-
       <Grid size={{ xs: 2, md: 1, lg: 0.5 }}>
         {transaction.attachments_count !== undefined &&
           transaction.attachments_count > 0 && (
@@ -186,7 +185,6 @@ function TransactionListItem({
             </Tooltip>
           )}
       </Grid>
-
       <Grid size={{ xs: 1, md: 1, lg: 0.5 }}>
         <Box display={'flex'} flexDirection={'row'} justifyContent={'flex-end'}>
           <SecondaryAction />
