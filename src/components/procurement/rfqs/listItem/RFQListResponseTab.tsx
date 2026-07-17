@@ -132,7 +132,6 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({
                       <TableCell sx={{ width: '20%' }}>Supplier</TableCell>
                       <TableCell sx={{ width: '15%' }}>Response Date</TableCell>
                       <TableCell sx={{ width: '15%' }}>Validity Date</TableCell>
-                      <TableCell sx={{ width: '10%' }} align="center">Actions</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -153,20 +152,6 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({
                           {response.validity_date 
                             ? readableDate(response.validity_date, false)
                             : ''}
-                        </TableCell>
-                        <TableCell align="center">
-                          <Box display="flex" justifyContent="center" gap={0.5}>
-                            <Tooltip title="Edit">
-                              <IconButton size="small" color="primary">
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="Delete">
-                              <IconButton size="small" color="error">
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Box>
                         </TableCell>
                       </TableRow>
                     ))}
