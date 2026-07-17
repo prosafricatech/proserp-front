@@ -276,6 +276,12 @@ export async function getMenus(locale: string) {
           icon: icon('purchases'),
         },
         {
+          uri: `/${locale}/procurement/rfqs`,
+          label: 'RFQs',
+          type: 'nav-item',
+          icon: icon('requisitions'),
+        },
+        {
           uri: `/${locale}/procurement/consumptions`,
           label: sidebar.menuItem.consumptions,
           type: 'nav-item',

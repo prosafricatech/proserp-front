@@ -1,6 +1,6 @@
-import { CostCenter } from "@/components/masters/costCenters/CostCenterType";
-import { Currency } from "@/components/masters/Currencies/CurrencyType";
-import { User } from "@/types/auth-types";
+import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { User } from '@/types/auth-types';
 
 interface Role {
   id: number;
@@ -67,28 +67,29 @@ export interface BaseApprovalRequisition {
   approval_date: string;
   creator: User;
   currency: Currency;
-  process_type: "PURCHASE" | "MATERIAL" | "PAYMENT" | "IMPREST";
+  process_type: 'PURCHASE' | 'MATERIAL' | 'PAYMENT' | 'IMPREST';
   remarks: string | null;
   status_label?: string;
   requisition: RequisitionSummary;
   next_approval_level?: ApprovalChainLevel | null;
   leave_items?: RequisitionSummary['leave_items'];
+  can_retire?: boolean;
 }
 
 export interface PaymentApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "PAYMENT" | "IMPREST";
+  process_type: 'PAYMENT' | 'IMPREST';
   is_fully_paid: boolean;
   payments_count: number;
 }
 
 export interface PurchaseApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "PURCHASE";
+  process_type: 'PURCHASE';
   is_fully_ordered: boolean;
   purchase_orders_count: number;
 }
 
 export interface MaterialApprovalRequisition extends BaseApprovalRequisition {
-  process_type: "MATERIAL";
+  process_type: 'MATERIAL';
   is_fully_ordered: boolean;
   is_fully_paid: boolean;
   is_fully_issued: boolean;
@@ -112,7 +113,9 @@ export type RequisitionAmount = {
   vat_amount: number;
 };
 
-export const getRequisitionAmount = (req: ApprovalRequisition): RequisitionAmount => ({
+export const getRequisitionAmount = (
+  req: ApprovalRequisition
+): RequisitionAmount => ({
   amount: req.amount,
-  vat_amount: req.requisition.vat_amount
+  vat_amount: req.requisition.vat_amount,
 });

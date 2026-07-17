@@ -213,7 +213,8 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
       currency_id: payment?.currency?.id || 1,
       exchange_rate: payment?.exchange_rate || 1,
       cost_centers:
-        payment?.cost_centers || (costCenters.length === 1 ? costCenters : []),
+        payment?.cost_centers ||
+        (costCenters?.length === 1 ? costCenters : []),
       transactionDate:
         payment && !isDuplicate
           ? payment?.transactionDate
@@ -455,10 +456,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
               <CostCenterSelector
                 label='Cost Centers'
                 frontError={errors.cost_centers}
-                defaultValue={
-                  (payment && payment.cost_centers) ||
-                  (costCenters.length === 1 ? costCenters : [])
-                }
+                defaultValue={watch('cost_centers') || []}
                 onChange={(newValue) => {
                   const valueArray = Array.isArray(newValue)
                     ? newValue

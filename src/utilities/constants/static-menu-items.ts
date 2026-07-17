@@ -31,6 +31,7 @@ export const staticMenuItems = [
   { label: 'Cost Centers', uri: '/en-US/cost_centers' },
   { label: 'Approved Purchases', uri: '/en-US/procurement/approvedPurchases' },
   { label: 'Purchases', uri: '/en-US/procurement/purchases' },
+  { label: 'RFQs', uri: '/en-US/procurement/rfqs' },
   { label: 'Consumptions', uri: '/en-US/procurement/consumptions' },
   { label: 'Procurement Reports', uri: '/en-US/procurement/reports' },
   { label: 'Product Categories', uri: '/en-US/procurement/product_categories' },

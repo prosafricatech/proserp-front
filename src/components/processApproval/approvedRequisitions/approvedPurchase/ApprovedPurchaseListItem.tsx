@@ -1,20 +1,28 @@
-import React from 'react';
-import requisitionsServices from '../../requisitionsServices';
-import { Chip, Grid, LinearProgress, Tooltip, Typography, Alert, Box } from '@mui/material';
-import ApprovedPurchaseItemAction from './ApprovedPurchaseItemAction';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { PurchaseApprovalRequisition } from '../ApprovalRequisitionType';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import {
+  Alert,
+  Box,
+  Chip,
+  Grid,
+  LinearProgress,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import React from 'react';
+import requisitionsServices from '../../requisitionsServices';
+import { PurchaseApprovalRequisition } from '../ApprovalRequisitionType';
+import ApprovedPurchaseItemAction from './ApprovedPurchaseItemAction';
 
 interface Order {
   id: number;
   orderNo: string;
   order_date: string;
-  stakeholder: Stakeholder
+  stakeholder: Stakeholder;
   status: string;
   amount: number;
   vat_amount: number;
@@ -27,7 +35,10 @@ interface ApprovedPurchaseListItemProps {
   isExpanded: boolean;
 }
 
-function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedPurchaseListItemProps) {
+function ApprovedPurchaseListItem({
+  approvedRequisition,
+  isExpanded,
+}: ApprovedPurchaseListItemProps) {
   const { checkOrganizationPermission } = useJumboAuth();
 
   const {
@@ -36,8 +47,11 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
     error,
   } = useQuery({
     queryKey: ['approvedPurchaseOrders', { id: approvedRequisition.id }],
-    queryFn: async () => await requisitionsServices.getApprovedPurchaseOrders(approvedRequisition.id),
-    enabled: isExpanded,
+    queryFn: async () =>
+      await requisitionsServices.getApprovedPurchaseOrders(
+        approvedRequisition.id
+      ),
+    enabled: !!isExpanded,
   });
 
   if (isFetching) {
@@ -46,7 +60,7 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
 
   if (error) {
     return (
-      <Alert variant="outlined" severity="error">
+      <Alert variant='outlined' severity='error'>
         Error loading orders: {error.message}
       </Alert>
     );
@@ -54,7 +68,7 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
 
   if (!approvedPurchaseOrders || approvedPurchaseOrders.length === 0) {
     return (
-      <Alert variant="outlined" severity="info">
+      <Alert variant='outlined' severity='info'>
         No orders present.
       </Alert>
     );
@@ -77,7 +91,7 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
 
   return (
     <>
-      <Typography variant="subtitle1" gutterBottom>
+      <Typography variant='subtitle1' gutterBottom>
         Orders
       </Typography>
       {approvedPurchaseOrders.map((order: Order) => (
@@ -96,38 +110,40 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
           }}
         >
           <Grid size={{ xs: 6, md: 2.5 }}>
-            <Tooltip title="Order No.">
+            <Tooltip title='Order No.'>
               <Typography>{order.orderNo}</Typography>
             </Tooltip>
-            <Tooltip title="Date">
-              <Typography variant="caption">{readableDate(order.order_date)}</Typography>
+            <Tooltip title='Date'>
+              <Typography variant='caption'>
+                {readableDate(order.order_date)}
+              </Typography>
             </Tooltip>
           </Grid>
 
           <Grid size={{ xs: 6, md: 4 }}>
-            <Tooltip title="Supplier">
+            <Tooltip title='Supplier'>
               <Typography>{order.stakeholder.name}</Typography>
             </Tooltip>
           </Grid>
 
-          <Grid 
+          <Grid
             size={{ xs: 12, md: 4.5 }}
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between'
+              justifyContent: 'space-between',
             }}
           >
-            <Tooltip title="Status">
+            <Tooltip title='Status'>
               <Chip
-                size="small"
+                size='small'
                 label={order.status}
                 color={getStatusColor(order.status)}
               />
             </Tooltip>
 
             {checkOrganizationPermission(PERMISSIONS.PURCHASES_CREATE) && (
-              <Tooltip title="Amount">
+              <Tooltip title='Amount'>
                 <Typography>
                   {(order.amount + order.vat_amount).toLocaleString('en-US', {
                     style: 'currency',
@@ -139,9 +155,9 @@ function ApprovedPurchaseListItem({ approvedRequisition, isExpanded }: ApprovedP
           </Grid>
 
           <Grid size={{ xs: 12, md: 1 }} sx={{ textAlign: 'end' }}>
-            <Box display="flex" flexDirection="row" justifyContent="flex-end">
-              <ApprovedPurchaseItemAction 
-                order={order} 
+            <Box display='flex' flexDirection='row' justifyContent='flex-end'>
+              <ApprovedPurchaseItemAction
+                order={order}
                 approvedRequisition={approvedRequisition}
               />
             </Box>

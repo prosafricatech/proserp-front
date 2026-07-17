@@ -99,7 +99,14 @@ const DeliverableGroupForm = ({ setOpenDialog, deliverableGroup = null, parentGr
       .number()
       .nullable()
       .notRequired()
-      .min(1, "Weight Percentage must be greater than 0")
+      .test("greater-than-zero", "Weight Percentage must be greater than 0", function (value) {
+        // Allow null/undefined/empty values
+        if (value === null || value === undefined || value === '') {
+          return true;
+        }
+        // Only reject if value is exactly 0
+        return value > 0;
+      })
       .max(100, "Weight Percentage must be less than or equal to 100")
       .test("check-total", function (value) {
         const context = this.options.context || {};
@@ -112,6 +119,11 @@ const DeliverableGroupForm = ({ setOpenDialog, deliverableGroup = null, parentGr
             total + (deliverableGroup && grp.position_index === deliverableGroup.position_index ? 0 : grp.weighted_percentage),
           0
         );
+
+        // If value is null/undefined, skip this check
+        if (value === null || value === undefined || value === '') {
+          return true;
+        }
 
         if (totalWeightPercentages + value > 100) {
           return this.createError({

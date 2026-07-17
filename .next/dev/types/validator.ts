@@ -533,6 +533,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/[lang]/(common)/procurement/rfqs/[id]/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/[lang]/procurement/rfqs/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/[lang]/(common)/procurement/rfqs/[id]/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/[lang]/(common)/procurement/rfqs/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/[lang]/procurement/rfqs">> = Specific
+  const handler = {} as typeof import("../../../src/app/[lang]/(common)/procurement/rfqs/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/[lang]/(common)/procurement/stores/[id]/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/procurement/stores/[id]">> = Specific
@@ -1365,6 +1383,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/projectLiabilitiesReport">> = Specific
   const handler = {} as typeof import("../../../src/app/api/exports/excel/projectLiabilitiesReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/exports/excel/purchaseManifestReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/exports/excel/purchaseManifestReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/exports/excel/purchaseManifestReport/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
@@ -2450,6 +2477,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/humanResources/leaveRequestApprovals/[id]/reject/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/leaveRequestApprovals/[id]/reject">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/leaveRequestApprovals/[id]/reject/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/humanResources/leaveRequestApprovals/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/leaveRequestApprovals">> = Specific
@@ -2774,10 +2810,28 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/humanResources/payrollRunApprovals/[id]/approve/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payrollRunApprovals/[id]/approve">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/payrollRunApprovals/[id]/approve/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/humanResources/payrollRunApprovals/[id]/delete/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payrollRunApprovals/[id]/delete">> = Specific
   const handler = {} as typeof import("../../../src/app/api/humanResources/payrollRunApprovals/[id]/delete/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/humanResources/payrollRunApprovals/[id]/reject/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/payrollRunApprovals/[id]/reject">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/payrollRunApprovals/[id]/reject/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
@@ -5780,6 +5834,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/purchaseOrders/purchaseManifestReport/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/purchaseOrders/purchaseManifestReport">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/purchaseOrders/purchaseManifestReport/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/purchaseOrders/purchaseValues/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/purchaseOrders/purchaseValues">> = Specific
@@ -5793,6 +5856,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/purchaseOrders">> = Specific
   const handler = {} as typeof import("../../../src/app/api/purchaseOrders/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/rfq-responses/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfq-responses/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/rfq-responses/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/rfqs/[id]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/rfqs/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/rfqs/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/rfqs/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

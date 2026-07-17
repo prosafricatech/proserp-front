@@ -10,6 +10,7 @@ import DeliverablesListItem from './DeliverablesListItem';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import DeliverableGroupItemAction from './DeliverableGroupItemAction';
 import DeliverableGroupActionTail from './DeliverableGroupActionTail';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 
 function getNestedKey(parentKey, index) {
   return parentKey ? `${parentKey}.${index}` : `${index}`;
@@ -50,6 +51,9 @@ const DeliverableGroupsAccordion = memo(function DeliverableGroupsAccordion({
   const [childExpanded, setChildExpanded] = useState({});
   const [openDialog, setOpenDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const { currencies } = useCurrencySelect();
+  const baseCurrency = currencies?.find(c => c.is_base === 1);
+  const currencyCode = baseCurrency?.code;
 
   const normalizedQuery = useMemo(
     () => searchQuery.trim().toLowerCase(),
@@ -127,7 +131,7 @@ const DeliverableGroupsAccordion = memo(function DeliverableGroupsAccordion({
         }}
       >
         <Grid container paddingLeft={1} paddingRight={1} width={'100%'} columnSpacing={1} rowSpacing={1} alignItems={'center'}>
-          <Grid size={{xs: 8, md: 5.5}}>
+          <Grid size={{xs: 8, md: group.description ? 2 : 5.5}}>
             <ListItemText
               primary={
                 <Tooltip title={'Group Name'}>
@@ -142,7 +146,7 @@ const DeliverableGroupsAccordion = memo(function DeliverableGroupsAccordion({
             />
           </Grid>
           {group.description &&
-            <Grid size={{xs: 8, md: 5.5}}>
+            <Grid size={{xs: 8, md: 3.5}}>
               <ListItemText
                 secondary={
                   <Tooltip title={'Description'}>
@@ -152,7 +156,17 @@ const DeliverableGroupsAccordion = memo(function DeliverableGroupsAccordion({
               />
             </Grid>
           }
-          <Grid size={{xs: 4, md: group.description ? 1 : 6.5}} textAlign={'end'}>
+          <Grid size={{ xs: 12, md: 5.5 }} textAlign={'end'}>
+            <Tooltip title={'Amount'}>
+              <Typography component="span">
+                {group?.contract_sum?.toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: currencyCode,
+                })}
+              </Typography>
+            </Tooltip>
+          </Grid>
+          <Grid size={{xs: 4, md: 1}} textAlign={'end'}>
             <DeliverableGroupItemAction group={group} />
           </Grid>
         </Grid>
