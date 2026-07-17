@@ -83,14 +83,6 @@ const ProformaListItem: React.FC<ProformaListItemProps> = ({ proforma }) => {
             />
           </Tooltip>
 
-          {proforma.attachments_count !== undefined &&
-            proforma.attachments_count > 0 && (
-              <Tooltip title='Attachments Count'>
-                <Badge badgeContent={proforma.attachments_count} color='info'>
-                  <Attachment fontSize='small' />
-                </Badge>
-              </Tooltip>
-            )}
           <Tooltip title='Amount'>
             <Typography>
               {(
@@ -101,6 +93,15 @@ const ProformaListItem: React.FC<ProformaListItemProps> = ({ proforma }) => {
               })}
             </Typography>
           </Tooltip>
+
+          {proforma.attachments_count !== undefined &&
+            proforma.attachments_count > 0 && (
+              <Tooltip title='Attachments Count'>
+                <Badge badgeContent={proforma.attachments_count} color='info'>
+                  <Attachment fontSize='small' />
+                </Badge>
+              </Tooltip>
+            )}
         </Grid>
         <Grid size={{ xs: 12, md: 1, lg: 1 }} textAlign={'end'}>
           <ProformaItemAction proforma={proforma} />
