@@ -346,6 +346,11 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
               setStakeholderQuickAddDisplay={setStakeholderQuickAddDisplay}
               organization={organization}
               setCheckedForInstantSale={setCheckedForInstantSale}
+              setValue={setValue}
+              watch={watch}
+              errors={errors}
+              clearErrors={clearErrors}
+              register={register}
             />
           </Grid>
 
@@ -353,6 +358,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
             <ProductsSaleSummary
               items={items}
               watch={watch}
+              setValue={setValue}
               checkedForSuggestPrice={checkedForSuggestPrice}
               setCheckedForSuggestPrice={setCheckedForSuggestPrice}
               checkedForInstantSale={checkedForInstantSale}
@@ -360,7 +366,6 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
               sale={sale}
               vat_percentage={vat_percentage}
               organization={organization}
-              setValue={setValue}
             />
           </Grid>
 
@@ -387,7 +392,6 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
           )}
         </Grid>
       </DialogTitle>
-
       {!majorInfoOnly && (
         <DialogContent>
           {errors?.items?.message && items.length < 1 && (
