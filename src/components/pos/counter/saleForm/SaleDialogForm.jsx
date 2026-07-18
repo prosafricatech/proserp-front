@@ -145,6 +145,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
     defaultValues: {
       transaction_date: transaction_date.toISOString(),
       currency_id: sale?.currency_id ? sale.currency_id : 1,
+      sales_person: sale?.sales_person,
       currency: sale?.currency
         ? sale.currency
         : currencies?.find((c) => c.is_base === 1),
@@ -278,7 +279,6 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
   }, [updateSale, addSale]);
 
   useEffect(() => {
-    console.log(sale);
     if (!!sale?.sale_items) {
       setItems(
         sale.sale_items.map((item) => {
