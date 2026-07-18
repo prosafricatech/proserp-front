@@ -747,14 +747,17 @@ declare global {
   }
 }
  * ```tsx
-   * export default function Layout(props: LayoutProps<'/dashboard'>) {
-   *   return <div>{props.children}</div>
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
+   *   return Response.json({ id })
    * }
    * ```
    */
-  type LayoutProps<LayoutRoute extends LayoutRoutes> = {
-    params: Promise<ParamMap[LayoutRoute]>
-    children: React.ReactNode
+  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}
+ct.ReactNode
   } & {
     [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
   }
@@ -770,10 +773,6 @@ declare global {
    * ```
    */
   interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
-    params: Promise<ParamMap[AppRouteHandlerRoute]>
-  }
-}
-ppRouteHandlerRoutes> {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
