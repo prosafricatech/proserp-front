@@ -15,7 +15,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import MyHrPayslips from './payslipsTab/MyHrPayslips';
 import MyHrProfile from './profileTab/MyHrProfile';
@@ -67,7 +67,7 @@ const MyHr = () => {
   });
 
   // Only render tab content on the client
-  const renderTabContent = useMemo(() => {
+  const renderTabContent = () => {
     if (!isClient) {
       return (
         <Stack spacing={2} sx={{ width: '100%' }}>
@@ -119,7 +119,8 @@ const MyHr = () => {
       default:
         return null;
     }
-  }, [activeTab, authUser, isClient, isLoading]);
+  };
+  // }, [activeTab, authUser, isClient, isLoading]);
 
   useEffect(() => {
     if (isLoading) {
@@ -198,7 +199,7 @@ const MyHr = () => {
               <Tab label='Imprest Accounts' value='imprestAccounts' />
             </Tabs>
 
-            {renderTabContent}
+            {renderTabContent()}
           </Stack>
         </Card>
       )}
