@@ -1,5 +1,5 @@
-import { Stakeholder } from "@/components/masters/stakeholders/StakeholderType";
-import { Currency } from "../../masters/Currencies/CurrencyType";
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
+import { Currency } from '../../masters/Currencies/CurrencyType';
 
 interface DebitLedger {
   id: number;
@@ -24,10 +24,10 @@ export interface SalesOrder {
   is_invoiceable: boolean;
   is_invoiced: boolean;
   creator?: {
-    name: string
+    name: string;
   };
   sales_outlet?: {
-    name: string
+    name: string;
   };
   sale_items?: Array<{
     id: number;
@@ -63,8 +63,15 @@ export interface SalesOrder {
   remarks: string | null;
   sales_person: string;
   stakeholder: Stakeholder;
-  status: 'Complete' | 'Fulfilled' | 'Partially Fulfilled' | 'Over Fulfilled' | 'Pending' | 'Ordered';
+  status:
+    | 'Complete'
+    | 'Fulfilled'
+    | 'Partially Fulfilled'
+    | 'Over Fulfilled'
+    | 'Pending'
+    | 'Ordered';
   vat_amount: number;
   vat_percentage: number;
   vfd_receipt: null;
+  attachments_count?: number;
 }

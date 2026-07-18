@@ -4,8 +4,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import PDFContent from '@/components/pdf/PDFContent';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
 import {
@@ -16,7 +15,6 @@ import {
   PaidOutlined,
   TimelineOutlined,
 } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Box,
@@ -29,7 +27,6 @@ import {
   Dialog,
   DialogActions,
   DialogContent,
-  DialogTitle,
   Divider,
   FormControl,
   Grid,
@@ -86,7 +83,6 @@ const DashboardDocumentDialog = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const smallScreen = useMediaQuery(theme.breakpoints.down('md'));
-  const [selectedTab, setSelectedTab] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
   const [rangeValue, setRangeValue] = useState('day');
 
@@ -132,17 +128,16 @@ const DashboardDocumentDialog = ({
       },
     });
 
-  const handleTabChange = (_event, newValue) => {
-    setSelectedTab(newValue);
-  };
-
   const isInventoryDocument = documentType === 'inventory';
   const showTabs = belowLargeScreen || isInventoryDocument;
 
-  const showExcelAction =
-    ((documentType === 'liabilities' || documentType === 'inventory') &&
-      selectedTab === 1) ||
-    !showTabs;
+  const [showState, setShowState] = useState(() => {
+    if (isInventoryDocument) {
+      return 'trend';
+    } else {
+      return 'onscreen';
+    }
+  });
 
   const handlExcelExport = async (exportedData) => {
     setIsExporting(true);
@@ -174,165 +169,135 @@ const DashboardDocumentDialog = ({
 
   return (
     <>
-      <DialogTitle>
-        <Box
-          marginLeft={2}
-          marginRight={2}
-          display={'flex'}
-          alignContent={'center'}
-          justifyContent={'end'}
-          width={'100%'}
-        >
-          {showExcelAction && (
-            <LoadingButton
-              size='small'
-              onClick={() => handlExcelExport(exportedData)}
-              loading={isExporting}
-              sx={{
-                width: 'fit-content',
-                height: 'fit-content',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-                mx: 4,
-              }}
-              color='success'
-              variant='contained'
-            >
-              <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-            </LoadingButton>
-          )}
-        </Box>
-      </DialogTitle>
       <DialogContent>
-        {showTabs ? (
-          <Box>
-            <Grid
-              container
-              alignItems={smallScreen ? 'start' : 'center'}
-              justifyContent='space-between'
-            >
-              <Grid container size={{ xs: 11 }}>
-                <Grid size={8}>
-                  <Tabs value={selectedTab} onChange={handleTabChange}>
-                    {isInventoryDocument ? (
-                      <Tab label='Trend' />
-                    ) : (
-                      <Tab label='On Screen' />
-                    )}
-                    <Tab label='PDF' />
-                    {belowLargeScreen && isInventoryDocument && (
-                      <Tab label='On Screen' />
-                    )}
-                  </Tabs>
-                </Grid>
-                <Grid size={4} display={'flex'} justifyContent={'end'}>
-                  {selectedTab === 0 && isInventoryDocument && !smallScreen && (
-                    <ButtonGroup
-                      variant='outlined'
-                      size='small'
-                      disableElevation
-                    >
-                      <Tooltip title='Daily Trend'>
-                        <Button
-                          variant={
-                            rangeValue === 'day' ? 'contained' : 'outlined'
-                          }
-                          onClick={() => setRangeValue('day')}
-                        >
-                          Daily
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title='Weekly Trend'>
-                        <Button
-                          variant={
-                            rangeValue === 'week' ? 'contained' : 'outlined'
-                          }
-                          onClick={() => setRangeValue('week')}
-                        >
-                          Weekly
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title='Monthly Trend'>
-                        <Button
-                          variant={
-                            rangeValue === 'month' ? 'contained' : 'outlined'
-                          }
-                          onClick={() => setRangeValue('month')}
-                        >
-                          Monthly
-                        </Button>
-                      </Tooltip>
-                      <Tooltip title='Yearly Trend'>
-                        <Button
-                          variant={
-                            rangeValue === 'year' ? 'contained' : 'outlined'
-                          }
-                          onClick={() => setRangeValue('year')}
-                        >
-                          Yearly
-                        </Button>
-                      </Tooltip>
-                    </ButtonGroup>
-                  )}
-                </Grid>
-                {smallScreen && (
-                  <Grid size={12} my={2}>
-                    <Div sx={{ mt: 1 }}>
-                      <FormControl fullWidth size='small'>
-                        <InputLabel id='inventory-value-trend-group-by-input-label'>
-                          Interval
-                        </InputLabel>
-                        <Select
-                          labelId='inventory-value-trend-group-by-label'
-                          id='inventory-value-trend-group-by'
-                          value={rangeValue}
-                          label='Interval'
-                          onChange={(e) => setRangeValue(e.target.value)}
-                        >
-                          <MenuItem value='day'>Daily</MenuItem>
-                          <MenuItem value='week'>Weekly</MenuItem>
-                          <MenuItem value='month'>Monthly</MenuItem>
-                          <MenuItem value='year'>Yearly</MenuItem>
-                        </Select>
-                      </FormControl>
-                    </Div>
-                  </Grid>
+        <Box>
+          <Grid
+            container
+            alignItems={smallScreen ? 'start' : 'center'}
+            justifyContent='space-between'
+          >
+            <Grid container size={{ xs: 11 }}>
+              <Grid size={8}>
+                <FileExportGrid
+                  exportExcel
+                  handlExcelExport={() => handlExcelExport(exportedData)}
+                  exportingExcel={isExporting}
+                  exportPdf
+                  handlePdf={() => {
+                    setShowState((prev) => {
+                      if (prev === 'onscreen') {
+                        return 'pdf';
+                      } else {
+                        return 'onscreen';
+                      }
+                    });
+                  }}
+                  startComponent={
+                    isInventoryDocument ? (
+                      <Button
+                        variant={showState === 'trend' ? 'contained' : 'text'}
+                        onClick={() => setShowState('trend')}
+                      >
+                        Trend
+                      </Button>
+                    ) : null
+                  }
+                />
+              </Grid>
+              <Grid size={4} display={'flex'} justifyContent={'end'}>
+                {showState === 'trend' && isInventoryDocument && (
+                  <ButtonGroup variant='outlined' size='small' disableElevation>
+                    <Tooltip title='Daily Trend'>
+                      <Button
+                        variant={
+                          rangeValue === 'day' ? 'contained' : 'outlined'
+                        }
+                        onClick={() => setRangeValue('day')}
+                      >
+                        Daily
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title='Weekly Trend'>
+                      <Button
+                        variant={
+                          rangeValue === 'week' ? 'contained' : 'outlined'
+                        }
+                        onClick={() => setRangeValue('week')}
+                      >
+                        Weekly
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title='Monthly Trend'>
+                      <Button
+                        variant={
+                          rangeValue === 'month' ? 'contained' : 'outlined'
+                        }
+                        onClick={() => setRangeValue('month')}
+                      >
+                        Monthly
+                      </Button>
+                    </Tooltip>
+                    <Tooltip title='Yearly Trend'>
+                      <Button
+                        variant={
+                          rangeValue === 'year' ? 'contained' : 'outlined'
+                        }
+                        onClick={() => setRangeValue('year')}
+                      >
+                        Yearly
+                      </Button>
+                    </Tooltip>
+                  </ButtonGroup>
                 )}
               </Grid>
-              {belowLargeScreen && (
-                <Grid size={{ xs: 1 }} textAlign='right'>
-                  <Tooltip title='Close'>
-                    <IconButton
-                      size='small'
-                      color='primary'
-                      onClick={() => setOpenDocumentDialog(false)}
-                    >
-                      <HighlightOff color='primary' />
-                    </IconButton>
-                  </Tooltip>
+              {smallScreen && (
+                <Grid size={12} my={2}>
+                  <Div sx={{ mt: 1 }}>
+                    <FormControl fullWidth size='small'>
+                      <InputLabel id='inventory-value-trend-group-by-input-label'>
+                        Interval
+                      </InputLabel>
+                      <Select
+                        labelId='inventory-value-trend-group-by-label'
+                        id='inventory-value-trend-group-by'
+                        value={rangeValue}
+                        label='Interval'
+                        onChange={(e) => setRangeValue(e.target.value)}
+                      >
+                        <MenuItem value='day'>Daily</MenuItem>
+                        <MenuItem value='week'>Weekly</MenuItem>
+                        <MenuItem value='month'>Monthly</MenuItem>
+                        <MenuItem value='year'>Yearly</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Div>
                 </Grid>
               )}
             </Grid>
-            <Box>
-              {selectedTab === 0 &&
-                (isInventoryDocument ? (
-                  <ProjectInventoryValueTrend data={newInventoryValues} />
-                ) : (
-                  onScreenContent
-                ))}
-              {selectedTab === 1 && (
-                <PDFContent document={document} fileName={fileName} />
-              )}
-              {selectedTab === 2 &&
-                belowLargeScreen &&
-                isInventoryDocument &&
-                onScreenContent}
-            </Box>
+            {belowLargeScreen && (
+              <Grid size={{ xs: 1 }} textAlign='right'>
+                <Tooltip title='Close'>
+                  <IconButton
+                    size='small'
+                    color='primary'
+                    onClick={() => setOpenDocumentDialog(false)}
+                  >
+                    <HighlightOff color='primary' />
+                  </IconButton>
+                </Tooltip>
+              </Grid>
+            )}
+          </Grid>
+          <Box>
+            {showState === 'trend' && isInventoryDocument && (
+              <ProjectInventoryValueTrend data={newInventoryValues} />
+            )}
+            {showState === 'onscreen' && onScreenContent}
+            {showState === 'pdf' && (
+              <PDFContent document={document} fileName={fileName} />
+            )}
           </Box>
-        ) : (
-          <PDFContent document={document} fileName={fileName} />
-        )}
+        </Box>
       </DialogContent>
       <DialogActions>
         <Box
@@ -382,7 +347,7 @@ function ProjectDashboard() {
   cost_center_id.push(project?.cost_center?.id);
 
   const [liabilitiesPayload, setLiabilitiesPayload] = useState({
-    from: project.commencement_date
+    from: project?.commencement_date
       ? dayjs(project.commencement_date).toISOString()
       : dayjs(organization?.recording_start_date).toISOString(),
     to: dayjs().toISOString(),
@@ -458,7 +423,7 @@ function ProjectDashboard() {
 
   // inventory values
   const inventoryValuesParam = {
-    from: project.commencement_date
+    from: project?.commencement_date
       ? dayjs(project.commencement_date).toISOString()
       : dayjs(organization?.recording_start_date).toISOString(),
     to: dayjs().toISOString(),

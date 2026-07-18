@@ -1,36 +1,39 @@
+import { yupResolver } from '@hookform/resolvers/yup';
+import { HighlightOff } from '@mui/icons-material';
+import { LoadingButton } from '@mui/lab';
 import {
   Button,
+  Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Grid,
+  IconButton,
   LinearProgress,
   Tab,
   Tabs,
-  Typography
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useRef,
-  useState
-} from 'react';
-import { useProjectProfile } from '../ProjectProfileProvider';
-import * as yup from 'yup';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import * as yup from 'yup';
+import projectsServices from '../../project-services';
+import { useProjectProfile } from '../ProjectProfileProvider';
 import DescriptionTab from './tab/DescriptionTab';
 import TaskProgress from './tab/taskProgress/TaskProgress';
 import TaskProgressRow from './tab/taskProgress/TaskProgressRow';
-import { LoadingButton } from '@mui/lab';
-import { useForm } from 'react-hook-form';
-import { yupResolver } from '@hookform/resolvers/yup';
-import projectsServices from '../../project-services';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const UpdateFormContext = createContext();
 export const useUpdateFormContext = () => useContext(UpdateFormContext);
 
-function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) {
+function UpdatesForm({
+  setOpenDialog,
+  update,
+  setIsUpdateFormOpen = () => {},
+}) {
   const { project } = useProjectProfile();
   const queryClient = useQueryClient();
 
@@ -44,6 +47,8 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     }
   };
 
+  const [showWarning, setShowWarning] = useState(false);
+  const [isFormDirty, setIsFormDirty] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [descriptionContent, setDescriptionContent] = useState(
     update ? parseDescription(update.description) : null
@@ -51,7 +56,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
 
   const [taskProgressItems, setTaskProgressItems] = useState(
     update?.task_executions
-      ? update.task_executions.map(te => ({
+      ? update.task_executions.map((te) => ({
           ...te,
           project_task_id: te.task?.id,
         }))
@@ -64,12 +69,12 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
 
   const addMutation = useMutation({
     mutationFn: projectsServices.addProjectUpdates,
-    onSuccess: data => {
+    onSuccess: (data) => {
       if (data?.id) {
         formIdRef.current = data.id;
       }
       queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
-    }
+    },
   });
 
   const updateMutation = useMutation({
@@ -77,11 +82,11 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['projectUpdates'] });
       queryClient.invalidateQueries({ queryKey: ['editProjectUpdate'] });
-    }
+    },
   });
 
   const validationSchema = yup.object({
-    update_date: yup.date().required('Update date is required')
+    update_date: yup.date().required('Update date is required'),
   });
 
   const { handleSubmit } = useForm({
@@ -89,18 +94,31 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     defaultValues: {
       id: update?.id,
       project_id: project.id,
-      update_date: dayjs()
-    }
+      update_date: dayjs(),
+    },
   });
 
-  const onSubmit = () => {
+  let submitWithoutAdd = true;
+
+  const onSubmit = (submitWithoutAdd = false) => {
     const payload = {
       id: formIdRef.current,
       project_id: project.id,
       description: [descriptionContent],
       tasks_executions: taskProgressItems,
-      update_date: dayjs()
+      update_date: dayjs(),
     };
+
+    if (!isFormDirty) {
+      setShowWarning(false);
+    } else {
+      if (submitWithoutAdd) {
+        setShowWarning(false);
+      } else {
+        setShowWarning(true);
+        return;
+      }
+    }
 
     if (!formIdRef.current) {
       addMutation.mutate(payload);
@@ -110,6 +128,8 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
 
     setOpenDialog(false);
   };
+
+  const handleSubmitWithoutAdd = () => {};
 
   useEffect(() => {
     setIsUpdateFormOpen(true);
@@ -133,7 +153,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
     setDescriptionContent(parseDescription(update.description));
     setTaskProgressItems(
       update?.task_executions
-        ? update.task_executions.map(te => ({
+        ? update.task_executions.map((te) => ({
             ...te,
             project_task_id: te.task?.id,
           }))
@@ -150,17 +170,17 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
         setTaskProgressItems,
         removedTaskProgressItems,
         setRemovedTaskProgressItems,
-        activeTab
+        activeTab,
       }}
     >
-      <Typography textAlign="center" variant="h4" paddingTop={1}>
-        {update ? "Edit Project Update" : "New Project Update"}
+      <Typography textAlign='center' variant='h4' paddingTop={1}>
+        {update ? 'Edit Project Update' : 'New Project Update'}
       </Typography>
 
       <DialogTitle>
         <Tabs value={activeTab} onChange={(e, v) => setActiveTab(v)}>
-          <Tab label="Description" />
-          <Tab label="Tasks Progress" />
+          <Tab label='Description' />
+          <Tab label='Tasks Progress' />
         </Tabs>
       </DialogTitle>
 
@@ -176,7 +196,7 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
         </div>
 
         <div style={{ display: activeTab === 1 ? 'block' : 'none' }}>
-          <TaskProgress update={update} />
+          <TaskProgress update={update} setIsFormDirty={setIsFormDirty} />
           {taskProgressItems.map((item, index) => (
             <TaskProgressRow
               key={index}
@@ -188,20 +208,68 @@ function UpdatesForm({ setOpenDialog, update, setIsUpdateFormOpen = () => {} }) 
       </DialogContent>
 
       <DialogActions>
-        <Button size="small" onClick={() => setOpenDialog(false)}>
+        <Button size='small' onClick={() => setOpenDialog(false)}>
           Cancel
         </Button>
 
-        <LoadingButton
-          type="submit"
-          onClick={handleSubmit(onSubmit)}
-          variant="contained"
-          size="small"
-          loading={addMutation.isPending || updateMutation.isPending}
-        >
-          Submit
-        </LoadingButton>
+        {activeTab === 0 ? (
+          <Button
+            size='small'
+            variant='outlined'
+            onClick={() => setActiveTab((prev) => Math.min(prev + 1, 1))}
+            disabled={activeTab >= 1}
+          >
+            Next &gt;
+          </Button>
+        ) : (
+          <LoadingButton
+            type='submit'
+            // onClick={handleSubmit(onSubmit((submitWithoutAdd = false)))}
+            onClick={() => onSubmit((submitWithoutAdd = false))}
+            variant='contained'
+            size='small'
+            loading={addMutation.isPending || updateMutation.isPending}
+          >
+            Submit
+          </LoadingButton>
+        )}
       </DialogActions>
+
+      <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
+        <DialogTitle>
+          <Grid container alignItems='center' justifyContent='space-between'>
+            <Grid size={{ xs: 11 }}>Unsaved Changes</Grid>
+            <Grid size={{ xs: 1 }} textAlign='right'>
+              <Tooltip title='Close'>
+                <IconButton size='small' onClick={() => setShowWarning(false)}>
+                  <HighlightOff color='primary' />
+                </IconButton>
+              </Tooltip>
+            </Grid>
+          </Grid>
+        </DialogTitle>
+        <DialogContent>Last item was not added to the list</DialogContent>
+        <DialogActions>
+          <Button
+            size='small'
+            onClick={() => {
+              setShowWarning(false);
+            }}
+          >
+            Return and Add
+          </Button>
+          <Button
+            size='small'
+            onClick={() => {
+              setIsFormDirty(false);
+              onSubmit((submitWithoutAdd = true));
+            }}
+            color='secondary'
+          >
+            Submit without add
+          </Button>
+        </DialogActions>
+      </Dialog>
     </UpdateFormContext.Provider>
   );
 }

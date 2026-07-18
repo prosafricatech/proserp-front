@@ -25,6 +25,7 @@ interface ApprovedPaymentItemFormProps {
   approvedDetails?: boolean;
   isImprestPayment?: boolean;
   payFromLedgerName?: string;
+  serverError?: Record<string, string | string[]> | null;
 }
 
 const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({ 
@@ -33,6 +34,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
   approvedDetails,
   isImprestPayment = false,
   payFromLedgerName,
+  serverError,
 }) => {
   const filteredItems = approvedDetails
     ? items.filter(item => item.unpaid_amount > 0)
@@ -53,9 +55,23 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
     return `${sourceLedgerName} (${itemLedgerName})`;
   };
 
+  const resolveFieldError = (index: number, field: string) => {
+    const errorValue = serverError?.[`items.${index}.${field}`];
+
+    if (Array.isArray(errorValue)) {
+      return errorValue[0] || '';
+    }
+
+    return errorValue || '';
+  };
+
   return (
     <React.Fragment>
       {filteredItems.map((item, itemIndex) => (
+        (() => {
+          const descriptionError = resolveFieldError(itemIndex, 'description');
+
+          return (
         <Grid
           container
           key={`${item.id}-${itemIndex}`}
@@ -118,10 +134,18 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
             </Div>
           </Grid>
           <Grid size={{xs: 11, md: 2.5, lg: 2.5}}>
-            <Div sx={{ mt: 2, mb: 1.7 }}>
-              <Tooltip title="Remarks">
-                <Typography>{item.remarks || item.description}</Typography>
-              </Tooltip>
+            <Div sx={{ mt: 1, mb: 0.5 }}>
+              <TextField
+                label="Description"
+                fullWidth
+                size="small"
+                value={item.description || item.remarks || ''}
+                error={!!descriptionError}
+                helperText={descriptionError}
+                onChange={(e) => {
+                  handleItemChange(itemIndex, 'description', e.target.value);
+                }}
+              />
             </Div>
           </Grid>
           {items.length > 1 &&
@@ -139,6 +163,8 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
             </Grid>
           }
         </Grid>
+          );
+        })()
       ))}
     </React.Fragment>
   );

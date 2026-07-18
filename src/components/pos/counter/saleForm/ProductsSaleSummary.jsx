@@ -1,8 +1,6 @@
 import { Checkbox, Divider, Grid, Switch, Typography } from '@mui/material';
-
 import React, { useEffect, useState } from 'react';
 import { useVFD } from "@/components/vfd/VFDProvider";
-import { debounce } from 'lodash';
 
 function ProductsSaleSummary({
   items = [],
@@ -16,7 +14,6 @@ function ProductsSaleSummary({
   setValue,
   watch
 }) {
-
   const [totalAmount, settotalAmount] = useState(0);
   const [vatableAmount, setvatableAmount] = useState(0);
   const majorInfoOnly = watch('major_info_only');
@@ -95,10 +92,12 @@ function ProductsSaleSummary({
                 checked={!!vat_percentage}
                 onChange={e => {
                   const checked = e.target.checked;
-                  setValue('vat_percentage', checked ? organization.settings.vat_percentage : 0, {
-                    shouldDirty: true,
-                    shouldValidate: true
-                  });
+                  if (typeof setValue === 'function') {
+                    setValue('vat_percentage', checked ? organization.settings.vat_percentage : 0, {
+                      shouldDirty: true,
+                      shouldValidate: true
+                    });
+                  }
                 }}
               />
             </Typography>
@@ -149,10 +148,12 @@ function ProductsSaleSummary({
               disabled={!!sale && !sale?.is_instant_sale ? true : false}
               onChange={e => {
                 setCheckedForInstantSale(e.target.checked);
-                setValue('instant_sale', e.target.checked, {
-                  shouldDirty: true,
-                  shouldValidate: true
-                });
+                if (typeof setValue === 'function') {
+                  setValue('instant_sale', e.target.checked, {
+                    shouldDirty: true,
+                    shouldValidate: true
+                  });
+                }
               }}
             />
           </Grid>

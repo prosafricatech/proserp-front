@@ -14,10 +14,6 @@ export async function POST(req: NextRequest) {
         'Content-Disposition': 'attachment; filename="payroll.xlsx"',
       },
     });
-
-    // return NextResponse.json({
-    //   message: buffer,
-    // });
   } catch (error: any) {
     console.error('Error in API route:', error);
     return new Response(

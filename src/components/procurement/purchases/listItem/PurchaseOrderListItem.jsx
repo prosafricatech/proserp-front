@@ -1,12 +1,14 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { Attachment } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
+  Badge,
   Chip,
   Divider,
   Grid,
@@ -144,7 +146,7 @@ const PurchaseOrderListItem = ({ order }) => {
                   }
                 />
               </Grid>
-              <Grid size={{ xs: 6, md: 5 }}>
+              <Grid size={{ xs: 6, md: 4.5 }}>
                 <Tooltip title={'Supplier'}>
                   <Typography>{order.stakeholder.name}</Typography>
                 </Tooltip>
@@ -163,8 +165,9 @@ const PurchaseOrderListItem = ({ order }) => {
                   </Tooltip>
                 )}
               </Grid>
+
               <Grid
-                size={{ xs: 12, md: 4.5 }}
+                size={{ xs: 11, md: 4 }}
                 display={'flex'}
                 alignItems={'center'}
                 justifyContent={'space-between'}
@@ -199,6 +202,20 @@ const PurchaseOrderListItem = ({ order }) => {
                     </Typography>
                   </Tooltip>
                 )}
+              </Grid>
+
+              <Grid size={{ xs: 1, md: 1 }} textAlign={'right'}>
+                {order.attachments_count !== undefined &&
+                  order.attachments_count > 0 && (
+                    <Tooltip title='Attachments Count'>
+                      <Badge
+                        badgeContent={order.attachments_count}
+                        color='info'
+                      >
+                        <Attachment fontSize='small' />
+                      </Badge>
+                    </Tooltip>
+                  )}
               </Grid>
             </Grid>
             <Divider />

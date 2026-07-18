@@ -1,5 +1,5 @@
-import { Currency } from "@/components/masters/Currencies/CurrencyType";
-import { Stakeholder } from "@/components/masters/stakeholders/StakeholderType";
+import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { Stakeholder } from '@/components/masters/stakeholders/StakeholderType';
 
 interface Creator {
   id: number;
@@ -46,4 +46,5 @@ export interface Proforma {
   vat_registered?: boolean;
   reference?: string;
   sales_outlet_id?: number;
+  attachments_count?: number;
 }

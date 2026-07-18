@@ -29,7 +29,7 @@ const LeaveApprovalItemAction = ({
   const [isEditMode, setIsEditMode] = useState(false);
 
   const queryClient = useQueryClient();
-  const { authUser, hasOrganizationRole } = useJumboAuth();
+  const { authUser } = useJumboAuth();
   const { showDialog, hideDialog } = useJumboDialog();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -110,14 +110,6 @@ const LeaveApprovalItemAction = ({
             }}
           >
             <EditOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
-
-      {canDelete && (
-        <Tooltip title='Delete'>
-          <IconButton onClick={handleDelete} disabled={isDeleting}>
-            <DeleteOutlined color='error' />
           </IconButton>
         </Tooltip>
       )}

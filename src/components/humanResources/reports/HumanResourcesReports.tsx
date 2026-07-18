@@ -6,7 +6,7 @@ import { AssessmentOutlined } from '@mui/icons-material';
 import { Button, Dialog, DialogActions, Grid, Typography, useMediaQuery } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
-import PayrollSalaryComponentsDashboard from '../payrollPeriods/PayrollSalaryComponentsDashboard';
+import PayrollSalaryComponentsDashboard from '../payrollPeriods/PayrollSalaryComponents/PayrollSalaryComponentsDashboard';
 
 type ReportCardItem = {
   key: string;

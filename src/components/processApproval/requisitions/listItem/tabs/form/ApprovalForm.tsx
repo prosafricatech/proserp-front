@@ -249,16 +249,6 @@ function ApprovalForm({
   const isLeaveType =
     requisition?.approval_chain?.process_type?.toLowerCase() ===
     'leave_request';
-  const approvalRequisitionItems: RequisitionItem[] =
-    approval?.requisition && 'items' in approval.requisition
-      ? approval.requisition.items || []
-      : [];
-  const leaveSummaryItems =
-    requisition.leave_items ||
-    approval?.requisition?.leave_items ||
-    requisitionItems ||
-    approvalRequisitionItems ||
-    [];
 
   const validationSchema = yup.object().shape({
     approval_date: yup

@@ -10,6 +10,7 @@ export const FileExportGrid = ({
   handlePdf,
   exportData,
   exportingExcel,
+  startComponent,
 }: {
   exportExcel?: boolean;
   exportPdf?: boolean;
@@ -17,6 +18,7 @@ export const FileExportGrid = ({
   handlePdf?: () => void | undefined;
   exportData?: any;
   exportingExcel?: boolean;
+  startComponent?: React.ReactNode;
 }) => {
   return (
     <Box
@@ -34,6 +36,10 @@ export const FileExportGrid = ({
         },
       }}
     >
+      {startComponent && startComponent}
+      {exportExcel && startComponent && (
+        <Divider orientation='vertical' variant='middle' flexItem />
+      )}
       {exportExcel && (
         <Tooltip title='Export Excel'>
           <LoadingButton
