@@ -1,11 +1,3 @@
-// Shape returned by GET /me/payslips (see frontend-handoff-hr-8.md, Part 6.2).
-// Confirmed against a real sample response (2026-07-18).
-//
-// Note: this is the LIST shape only — it does NOT include allowances/
-// deductions/employer_contributions breakdowns (those come back from the
-// detail endpoint, GET /me/payslips/{id}, which is a separate, not-yet-seen
-// shape — see MyHrPayslipDetail below).
-
 export interface MyHrPayslipListItem {
   id: number;
   payroll_run_id: number;
@@ -74,9 +66,4 @@ interface PayslipRun {
   };
 }
 
-// GET /me/payslips/{id} — full breakdown for one payslip. Shape not confirmed
-// yet (expected to include allowances/deductions/employer_contributions, per
-// the admin PayrollRunType/payslipCalculations.ts equivalents). Left loose
-// until a real response is available — see MyHrPayslipViewAction.tsx, which
-// only logs this to the console for now rather than rendering it.
 export type MyHrPayslipDetail = Record<string, unknown>;

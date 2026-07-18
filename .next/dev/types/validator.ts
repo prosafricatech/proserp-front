@@ -2621,6 +2621,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/humanResources/myHr/contracts/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/myHr/contracts">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/myHr/contracts/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/humanResources/myHr/nextOfKin/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/myHr/nextOfKin">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/myHr/nextOfKin/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/humanResources/myHr/payslips/[id]/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/myHr/payslips/[id]">> = Specific
@@ -5865,6 +5883,24 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfq-responses/[id]">> = Specific
   const handler = {} as typeof import("../../../src/app/api/rfq-responses/[id]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/rfqs/[id]/comparison/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]/comparison">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/rfqs/[id]/comparison/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/rfqs/[id]/responses/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/rfqs/[id]/responses">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/rfqs/[id]/responses/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

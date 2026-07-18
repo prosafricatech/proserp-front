@@ -17,6 +17,8 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import MyHrContracts from './contractsTab/MyHrContracts';
+import MyHrNextOfKin from './nextOfKinTab/MyHrNextOfKin';
 import MyHrPayslips from './payslipsTab/MyHrPayslips';
 import MyHrProfile from './profileTab/MyHrProfile';
 type TabKey =
@@ -109,9 +111,9 @@ const MyHr = () => {
       case 'leave':
         return <div>Leave Content</div>;
       case 'contracts':
-        return <div>Contracts Content</div>;
+        return <MyHrContracts />;
       case 'nextOfKins':
-        return <div>Next of Kin Content</div>;
+        return <MyHrNextOfKin />;
       case 'accountStatement':
         return <div>Account Statement Content</div>;
       case 'imprestAccounts':

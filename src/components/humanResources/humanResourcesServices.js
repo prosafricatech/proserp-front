@@ -821,7 +821,6 @@ humanResourcesServices.myHrProfile = async () => {
 };
 
 // --- Payslips tab ---
-
 humanResourcesServices.myHrPayslipsList = async (params = {}) => {
     const { data } = await axios.get('/api/humanResources/myHr/payslips', {
         params,
@@ -831,6 +830,22 @@ humanResourcesServices.myHrPayslipsList = async (params = {}) => {
 
 humanResourcesServices.myHrPayslip = async (id) => {
     const { data } = await axios.get(`/api/humanResources/myHr/payslips/${id}`);
+    return data;
+};
+
+// --- contractstab ---
+humanResourcesServices.myHrContracts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/contracts', {
+        params,
+    });
+    return data;
+};
+
+// --- next of kin tab ---
+humanResourcesServices.myHrNextOfKin = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/nextOfKin', {
+        params,
+    });
     return data;
 };
 
