@@ -51,7 +51,10 @@ function CostCenterSelector(props: CostCenterSelectorProps) {
   );
 
   useEffect(() => {
-    if (defaultValue) setSelectedItems(defaultValue);
+    if (defaultValue && Array.isArray(defaultValue) && defaultValue.length > 0)
+      setSelectedItems(defaultValue);
+    if (defaultValue && !Array.isArray(defaultValue))
+      setSelectedItems(defaultValue);
   }, [defaultValue]);
 
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
