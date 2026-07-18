@@ -41,9 +41,11 @@ interface FormValues {
   measurement_unit_id?: number | null;
   unit_symbol?: string | null;
   description?: string;
+  currency_id?: number;
 }
 
 interface ProformaItemFormProps {
+  selectedCurrencyId?: number;
   setClearFormKey: React.Dispatch<React.SetStateAction<number>>;
   submitMainForm: () => void;
   submitItemForm: boolean;
@@ -99,6 +101,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   items = [],
   setShowForm = null,
   vat_percentage,
+  selectedCurrencyId,
 }) => {
   const { activeOutlet } = useSalesOutlet();
   const vat_factor = vat_percentage * 0.01;
@@ -150,23 +153,32 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
   }, [dirtyFields, setIsDirty]);
 
   const { isFetching } = useQuery({
-    queryKey: ['sellingPrice', { id: watch('product')?.id }],
+    queryKey: [
+      'sellingPrice', 
+      { 
+        id: watch('product')?.id,
+        sales_outlet_id: activeOutlet?.id,
+        currency_id: selectedCurrencyId,
+      }
+    ],
     queryFn: async () => {
       const product_id = watch('product')?.id;
       if (product_id && activeOutlet?.id) {
         const response = await productServices.getSellingPrices({
           productId: product_id,
           sales_outlet_id: activeOutlet.id,
+          currency_id: selectedCurrencyId,
         });
         setValue('rate', response.price, {
           shouldDirty: true,
           shouldValidate: true,
         });
+        setValue('currency_id' as keyof FormValues, response.currency_id)
         return response;
       }
       return null;
     },
-    enabled: !!watch('product')?.id && !!activeOutlet?.id && !item,
+    enabled: !!watch('product')?.id && !!activeOutlet?.id && !item
   });
 
   const calculateAmount = (): number => {

@@ -322,6 +322,8 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
     await saveMutation.mutate(updatedData);
   };
 
+  const selectedCurrencyId = watch('currency_id');
+
   return (
     <FormProvider
       {...{ setValue, register, handleSubmit, watch, clearErrors, errors }}
@@ -378,6 +380,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
                 )}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
+                selectedCurrencyId={selectedCurrencyId}
                 key={clearFormKey}
                 setIsDirty={setIsDirty}
                 vat_percentage={vat_percentage}
@@ -405,6 +408,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
                 submitMainForm={handleSubmit((data) =>
                   saveMutation.mutate(data)
                 )}
+                selectedCurrencyId={selectedCurrencyId}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
                 setIsDirty={setIsDirty}
