@@ -205,11 +205,7 @@ function RFQResponsesFormContent({
 
   return (
     <>
-      <Grid container columnSpacing={1} rowSpacing={1}>
-        <Grid size={12}>
-          <Divider />
-        </Grid>
-
+      <Grid container columnSpacing={1} rowSpacing={1} paddingTop={1}>
         {serverError && (
           <Grid size={12}>
             <Alert severity="error">{serverError}</Alert>
@@ -372,9 +368,6 @@ function RFQResponsesFormContent({
       </Grid>
 
       <Grid container justifyContent="space-between" mt={2}>
-        <Grid size={12}>
-          <Divider />
-        </Grid>
         <Grid size={12} display="flex" justifyContent="flex-end" gap={1} mt={1}>
           <Button size="small" onClick={() => toggleOpen(false)}>
             Cancel

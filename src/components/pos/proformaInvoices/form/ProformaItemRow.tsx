@@ -2,6 +2,7 @@ import { MeasurementUnit } from '@/components/masters/measurementUnits/Measureme
 import PhotoThumbnail from '@/components/productAndServices/products/PhotoCard';
 import { Product } from '@/components/productAndServices/products/ProductType';
 import { DisabledByDefault, EditOutlined } from '@mui/icons-material';
+import { useEffect } from 'react';
 import {
   Divider,
   Grid,
@@ -17,6 +18,7 @@ import ProformaItemForm from './ProformaItemForm';
 interface ProformaItem {
   product_id?: number;
   product?: Product;
+  currency_id?: number;
   quantity: number;
   rate: number;
   measurement_unit_id?: number;
@@ -39,6 +41,7 @@ interface ProformaItemRowProps {
   item: ProformaItem;
   index: number;
   vat_percentage?: number;
+  selectedCurrencyId?: number;
 }
 
 function ProformaItemRow({
@@ -47,6 +50,7 @@ function ProformaItemRow({
   setSubmitItemForm,
   submitItemForm,
   setIsDirty,
+  selectedCurrencyId,
   items,
   setItems,
   item,
@@ -105,29 +109,26 @@ function ProformaItemRow({
                 />
                 <ListItemText
                   primary={
-                    <Tooltip title={'Product'}>
-                      <Typography
-                        variant='h5'
-                        fontSize={14}
-                        lineHeight={1.25}
-                        mb={0}
-                        noWrap
+                    <Typography
+                      variant='h5'
+                      fontSize={14}
+                      lineHeight={1.25}
+                      mb={0}
+                      noWrap
+                    >
+                      <span
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 4,
+                        }}
                       >
-                        <span
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 4,
-                          }}
-                        >
-                          {product?.name}
-                          <span style={{ color: '#888', fontStyle: 'italic' }}>
-                            ({product?.description})
-                          </span>
+                        {product?.name}
+                        <span style={{ color: '#888', fontStyle: 'italic' }}>
+                          {product?.description && `(${product?.description})`}
                         </span>
-                        {/* {product?.name} */}
-                      </Typography>
-                    </Tooltip>
+                      </span>
+                    </Typography>
                   }
                   secondary={
                     <Tooltip title={'Description'}>
@@ -211,6 +212,7 @@ function ProformaItemRow({
           submitItemForm={submitItemForm}
           setIsDirty={setIsDirty}
           item={item}
+          selectedCurrencyId={selectedCurrencyId}
           vat_percentage={vat_percentage}
           setShowForm={setShowForm}
           index={index}

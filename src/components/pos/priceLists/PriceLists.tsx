@@ -12,6 +12,7 @@ import ProductsSelectProvider from '../../productAndServices/products/ProductsSe
 import { useParams, useSearchParams } from 'next/navigation';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import { PriceList } from './PriceListType';
+import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 
 function PriceLists({fuelPriceLists = false}: {fuelPriceLists?: boolean}) {
     const params = useParams<{ id?: string }>();
@@ -58,36 +59,38 @@ function PriceLists({fuelPriceLists = false}: {fuelPriceLists?: boolean}) {
 
     return (
         <ProductsSelectProvider>
-            <Typography variant={'h4'} mb={2}>Price Lists</Typography>
-            <JumboRqList
-                ref={listRef}
-                wrapperComponent={Card}
-                service={(params) => priceListservices.getList(params, fuelPriceLists)}
-                primaryKey="id"
-                queryOptions={queryOptions}
-                itemsPerPage={10}
-                itemsPerPageOptions={[5, 8, 10, 15, 20]}
-                renderItem={renderPriceList}
-                wrapperSx={{
-                    flex: 1,
-                    display: 'flex',
-                    flexDirection: 'column',
-                }}
-                toolbar={
-                    <JumboListToolbar 
-                        hideItemsPerPage={true} 
-                        actionTail={
-                            <Stack direction="row">
-                                <JumboSearch
-                                    onChange={handleOnChange}
-                                    value={queryOptions.queryParams.keyword}
-                                />
-                                <PriceListsActionTail fuelPriceLists={fuelPriceLists} />
-                            </Stack>
-                        }
-                    />
-                }
-            />
+            <CurrencySelectProvider>
+                <Typography variant={'h4'} mb={2}>Price Lists</Typography>
+                <JumboRqList
+                    ref={listRef}
+                    wrapperComponent={Card}
+                    service={(params) => priceListservices.getList(params, fuelPriceLists)}
+                    primaryKey="id"
+                    queryOptions={queryOptions}
+                    itemsPerPage={10}
+                    itemsPerPageOptions={[5, 8, 10, 15, 20]}
+                    renderItem={renderPriceList}
+                    wrapperSx={{
+                        flex: 1,
+                        display: 'flex',
+                        flexDirection: 'column',
+                    }}
+                    toolbar={
+                        <JumboListToolbar 
+                            hideItemsPerPage={true} 
+                            actionTail={
+                                <Stack direction="row">
+                                    <JumboSearch
+                                        onChange={handleOnChange}
+                                        value={queryOptions.queryParams.keyword}
+                                    />
+                                    <PriceListsActionTail fuelPriceLists={fuelPriceLists} />
+                                </Stack>
+                            }
+                        />
+                    }
+                /> 
+            </CurrencySelectProvider>
         </ProductsSelectProvider>
     );
 }

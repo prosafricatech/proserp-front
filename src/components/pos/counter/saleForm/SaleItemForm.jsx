@@ -32,6 +32,7 @@ function SaleItemForm({
     salesDate,
     checkedForInstantSale,
     getLastPriceItems,
+    selectedCurrencyId,
     checkedForSuggestPrice
 }) {
     const {outlet} = useCounter();//From counter provider
@@ -206,6 +207,7 @@ function SaleItemForm({
                 as_at: salesDate,
                 productId: product.id,
                 storeIds: !!storeId ? [storeId] : storesArray.map(store => store.id),
+                currency_id: selectedCurrencyId,
                 costCenterId : cost_center?.id,
                 sales_outlet_id : outlet.id,
                 measurement_unit_id: measurement_unit_id

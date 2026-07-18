@@ -52,6 +52,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
   const { items } = proforma;
   const [isRetrieving, setIsRetrieving] = useState({});
   const [counterLedgers, setCounterLedgers] = useState([]);
+  const [selectedCounter, setSelectedCounter] = useState(null);
 
   const addSale = useMutation({
     mutationFn: posServices.addSale,
@@ -65,13 +66,6 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
         enqueueSnackbar(error.response.data.message, { variant: 'error' });
     },
   });
-
-  useEffect(() => {
-    if (counters?.id) {
-      setCounterLedgers(counters.ledgers);
-      setValue('sales_outlet_counter_id', counters.id);
-    }
-  }, [counters]);
 
   const validationSchema = yup.object({
     sales_outlet_counter_id: yup
@@ -134,7 +128,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
     resolver: yupResolver(validationSchema),
     defaultValues: {
       transaction_date: transaction_date.toISOString(),
-      sales_outlet_counter_id: counters?.id,
+      sales_outlet_counter_id: counters?.[0]?.id || null,
       currency_id: proforma?.currency_id ? proforma.currency_id : 1,
       exchange_rate: proforma?.exchange_rate ? proforma.exchange_rate : 1,
       vat_registered: !!organization?.settings?.vat_registered,
@@ -144,6 +138,7 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
           organization?.settings.vat_percentage,
       stakeholder_id: proforma?.stakeholder.id ? proforma.stakeholder.id : null,
       payment_method: 'instant',
+      reference: proforma?.reference || '',
       remarks: proforma && proforma.remarks,
       instant_sale: checkedForInstantSale,
       submitType: 'complete',
@@ -158,7 +153,27 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
       })),
     },
     context: { instant_sale: checkedForInstantSale },
-  });
+  }); 
+
+  useEffect(() => {
+    if (Array.isArray(counters) && counters.length > 0) {
+      const defaultCounter = counters[0];
+      setSelectedCounter(defaultCounter);
+      setCounterLedgers(defaultCounter?.ledgers || []);
+      setValue('sales_outlet_counter_id', defaultCounter?.id || null, {
+        shouldDirty: false,
+        shouldValidate: true,
+      });
+      return;
+    }
+
+    setSelectedCounter(null);
+    setCounterLedgers([]);
+    setValue('sales_outlet_counter_id', null, {
+      shouldDirty: false,
+      shouldValidate: true,
+    });
+  }, [counters, setValue]);
 
   // Load Stakeholder debit ledgers
   const {
@@ -240,7 +255,6 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
   }
 
   const vat_percentage = parseFloat(watch('vat_percentage'));
-  console.log(activeOutlet)
 
   return (
     <FormProvider>
@@ -354,6 +368,48 @@ function ProformaSaleForm({ proforma, toggleOpen }) {
                           label='Reference'
                           fullWidth
                           {...register('reference')}
+                        />
+                      </Div>
+                    </Grid>
+                    <Grid size={{ xs: 12, md: 4, lg: 4 }}>
+                      <Div sx={{ mt: 0.3 }}>
+                        <Autocomplete
+                          size='small'
+                          isOptionEqualToValue={(option, value) =>
+                            option.id === value.id
+                          }
+                          options={counters || []}
+                          getOptionLabel={(option) => option.name || ''}
+                          value={selectedCounter}
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label='Sale Counter'
+                              error={!!errors?.sales_outlet_counter_id}
+                              helperText={
+                                errors?.sales_outlet_counter_id?.message
+                              }
+                            />
+                          )}
+                          onChange={(event, newValue) => {
+                            setSelectedCounter(newValue || null);
+                            setCounterLedgers(newValue?.ledgers || []);
+                            setDebitLedger(null);
+
+                            setValue(
+                              'sales_outlet_counter_id',
+                              newValue ? newValue.id : null,
+                              {
+                                shouldDirty: true,
+                                shouldValidate: true,
+                              }
+                            );
+
+                            setValue('debit_ledger_id', null, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            });
+                          }}
                         />
                       </Div>
                     </Grid>
