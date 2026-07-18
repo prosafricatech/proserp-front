@@ -865,6 +865,11 @@ humanResourcesServices.myHrImprestAccounts = async (params = {}) => {
     return data;
 };
 
+humanResourcesServices.myHrImprestAccountStatement = async (id, params = {}) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/imprestAccounts/${id}`, { params });
+    return data;
+};
+
 // ===== LEAVES TAB ===== //
 // ---Leave requests ---
 humanResourcesServices.myHrLeaveRequests = async (params = {}) => {

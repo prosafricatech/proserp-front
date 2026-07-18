@@ -34,16 +34,6 @@ const MyHrLeaveRequests = () => {
     return <MyHrLeaveRequestsListItem leaveRequest={leaveRequest} />;
   }, []);
 
-  const handleOnChange = useCallback((keyword: string) => {
-    setQueryOptions((state) => ({
-      ...state,
-      queryParams: {
-        ...state.queryParams,
-        keyword: keyword,
-      },
-    }));
-  }, []);
-
   useEffect(() => {
     setQueryOptions((state) => ({
       ...state,
@@ -100,19 +90,6 @@ const MyHrLeaveRequests = () => {
           display: 'flex',
           flexDirection: 'column',
         }}
-        // toolbar={
-        //   <JumboListToolbar
-        //     hideItemsPerPage={true}
-        //     actionTail={
-        //       <Stack direction='row'>
-        //         <JumboSearch
-        //           onChange={handleOnChange}
-        //           value={queryOptions.queryParams.keyword}
-        //         />
-        //       </Stack>
-        //     }
-        //   ></JumboListToolbar>
-        // }
       />
     </>
   );
