@@ -9,6 +9,7 @@ import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import organizationServices from '@/components/organizations/organizationServices';
 import UsersSelector from '@/components/sharedComponents/UsersSelector';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -198,9 +199,14 @@ const EmployeeForm = ({
     },
     onError: (err: any) => {
       console.error('err: ', err.response.data);
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        err?.response?.data?.message ||
+          getErrorMessage(err) ||
+          'Something went wrong',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -226,9 +232,14 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        err?.response?.data?.message ||
+          getErrorMessage(err) ||
+          'Something went wrong',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
