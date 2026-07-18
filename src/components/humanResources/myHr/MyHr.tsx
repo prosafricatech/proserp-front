@@ -17,7 +17,10 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import MyHrAccountStatement from './accountStatementTab/MyHrAccountStatement';
 import MyHrContracts from './contractsTab/MyHrContracts';
+import MyHrImprestAccounts from './imprestAccountsTab/MyHrImprestAccounts';
+import MyHrLeaves from './leavesTab/MyHrLeaves';
 import MyHrNextOfKin from './nextOfKinTab/MyHrNextOfKin';
 import MyHrPayslips from './payslipsTab/MyHrPayslips';
 import MyHrProfile from './profileTab/MyHrProfile';
@@ -109,15 +112,15 @@ const MyHr = () => {
       case 'payslips':
         return <MyHrPayslips />;
       case 'leave':
-        return <div>Leave Content</div>;
+        return <MyHrLeaves />;
       case 'contracts':
         return <MyHrContracts />;
       case 'nextOfKins':
         return <MyHrNextOfKin />;
       case 'accountStatement':
-        return <div>Account Statement Content</div>;
+        return <MyHrAccountStatement />;
       case 'imprestAccounts':
-        return <div>Imprest Accounts Content</div>;
+        return <MyHrImprestAccounts />;
       default:
         return null;
     }

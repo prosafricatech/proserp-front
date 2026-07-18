@@ -849,6 +849,38 @@ humanResourcesServices.myHrNextOfKin = async (params = {}) => {
     return data;
 };
 
+// --- account statemtnt tab ---
+humanResourcesServices.myHrAccountStatement = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/accountStatement', {
+        params,
+    });
+    return data;
+};
+
+// --- imprest accounts tab ---
+humanResourcesServices.myHrImprestAccounts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/imprestAccounts', {
+        params,
+    });
+    return data;
+};
+
+// ===== LEAVES TAB ===== //
+// ---Leave requests ---
+humanResourcesServices.myHrLeaveRequests = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveRequests', {
+        params,
+    });
+    return data;
+};
+// ---Leave balances ---
+humanResourcesServices.myHrLeaveBalances = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveBalances', {
+        params,
+    });
+    return data;
+};
+
 // ============================================
 // EXPORT
 // ============================================
