@@ -26,15 +26,13 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const {
-    // productCategories,
     item_names,
     brands,
     models,
-    measurementUnits,
     specifications,
   } = useProductApp();
 
-  const { data: productCategories, isLoading } = useQuery({
+  const { data: productCategories } = useQuery({
     queryKey: ['productCategoryOptions'],
     queryFn: productCategoryServices.getCategoryOptions,
   });
@@ -60,12 +58,38 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
       setFormResetKey((prev) => prev + 1);
     },
     onError: (error) => {
-      enqueueSnackbar(
-        error?.response?.data?.message || 'Failed to add product',
-        {
+      // Check if the error has validation errors
+      const errorData = error?.response?.data;
+      
+      if (errorData?.validation_errors) {
+        // Set server validation errors to form fields
+        const validationErrors = errorData.validation_errors;
+        
+        Object.keys(validationErrors).forEach((field) => {
+          const errorMessage = Array.isArray(validationErrors[field]) 
+            ? validationErrors[field][0] 
+            : validationErrors[field];
+          
+          // Set error for each field
+          setError(field, {
+            type: 'server',
+            message: errorMessage,
+          });
+        });
+        
+        // Also show a general error message
+        enqueueSnackbar(errorData.message || 'Please check the information you submitted', {
           variant: 'error',
-        }
-      );
+        });
+      } else {
+        // Handle other errors
+        enqueueSnackbar(
+          error?.response?.data?.message || 'Failed to add product',
+          {
+            variant: 'error',
+          }
+        );
+      }
     },
   });
 
@@ -89,6 +113,7 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
   const {
     register,
     setValue,
+    setError, // Add setError to destructure
     handleSubmit,
     formState: { errors },
   } = useForm({
@@ -133,6 +158,10 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
                 shouldValidate: true,
                 shouldDirty: true,
               });
+              // Clear server error when user changes the value
+              if (errors.product_category_id) {
+                setError('product_category_id', {});
+              }
             }}
           />
         </Div>
@@ -170,6 +199,10 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
                 shouldValidate: true,
                 shouldDirty: true,
               });
+              // Clear server error when user changes the value
+              if (errors.type) {
+                setError('type', {});
+              }
             }}
           />
         </Div>
@@ -195,12 +228,20 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
                 shouldValidate: true,
                 shouldDirty: true,
               });
+              // Clear server error when user changes the value
+              if (errors.item_name) {
+                setError('item_name', {});
+              }
             }}
             onInputChange={(event, newValue) => {
               setValue('item_name', newValue ? newValue : '', {
                 shouldValidate: true,
                 shouldDirty: true,
               });
+              // Clear server error when user types
+              if (errors.item_name) {
+                setError('item_name', {});
+              }
             }}
           />
         </Div>
@@ -304,6 +345,10 @@ function ProductQuickAdd({ setOpen, setAddedProduct }) {
                 shouldValidate: true,
               });
               setSelectedUnit(newValue);
+              // Clear server error when user changes the value
+              if (errors.measurement_unit_id) {
+                setError('measurement_unit_id', {});
+              }
             }}
             showQuickAdd
             onQuickAddClick={() => setMeasurementUnitFormOpen(true)}
