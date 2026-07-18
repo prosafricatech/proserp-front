@@ -503,7 +503,7 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                           </Stack>
                           {!hasResponded && (
                             <Button size="small" startIcon={<ReplyOutlined />}>
-                              Respond
+                              Response
                             </Button>
                           )}
                         </Paper>
