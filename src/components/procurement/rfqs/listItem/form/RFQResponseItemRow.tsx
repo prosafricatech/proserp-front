@@ -7,45 +7,62 @@ import {
   TextField,
   Tooltip,
   Typography,
+  IconButton,
+  Box,
 } from '@mui/material';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import { DeleteOutline } from '@mui/icons-material';
 
 interface RFQResponseItemRowProps {
   index: number;
   item: any;
   onUpdate: (index: number, field: string, value: any) => void;
+  onRemove: () => void;
+  isLastItem?: boolean;
 }
 
 const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
   index,
   item,
   onUpdate,
+  onRemove,
+  isLastItem = false,
 }) => {
   const rfqItem = item.rfq_item;
+  const hasQuantityAndRate = item.quantity > 0 && item.rate > 0;
 
   return (
     <React.Fragment>
       <Divider />
-      <Grid container width={'100%'} columnSpacing={1} sx={{ py: 1 }}>
-        <Grid size={{ xs: 1, md: 0.5 }}>
+      <Grid 
+        container 
+        width={'100%'} 
+        columnSpacing={1} 
+        sx={{ 
+          py: 1,
+          borderRadius: 1,
+          transition: 'background-color 0.2s ease',
+        }}
+      >
+        <Grid size={{ xs: 12, md: 0.5 }} display="flex" alignItems="center">
           <Typography variant="body2" color="text.secondary">
             {index + 1}.
           </Typography>
         </Grid>
 
-        <Grid size={{ xs: 11, md: 4 }}>
+        <Grid size={{ xs: 10, md: 3.5 }}>
           <Tooltip title="Product Name">
             <Typography variant="body2">
               {rfqItem?.product?.name || rfqItem?.product?.item_name || 'Item'}
             </Typography>
           </Tooltip>
           <Typography variant="caption" color="text.secondary" display="block">
-            Required Qty: {rfqItem?.quantity || 0} {rfqItem?.measurement_unit?.symbol || ''}
+            Required: {rfqItem?.quantity || 0} {rfqItem?.measurement_unit?.symbol || ''}
           </Typography>
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid size={{ xs: 5, md: 2 }}>
           <TextField
             label="Quantity"
             fullWidth
@@ -61,7 +78,7 @@ const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid size={{ xs: 5, md: 2 }}>
           <TextField
             label="Rate"
             fullWidth
@@ -77,7 +94,7 @@ const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 6, md: 2}}>
+        <Grid size={{ xs: 5, md: 2 }}>
           <TextField
             label="Amount"
             fullWidth
@@ -90,9 +107,9 @@ const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
           />
         </Grid>
 
-        <Grid size={{ xs: 6, md: 1.5 }}>
+        <Grid size={{ xs: 5, md: 1.5 }}>
           <TextField
-            label="Lead Time (Days)"
+            label="Lead Time"
             fullWidth
             size="small"
             value={item.lead_time_days || ''}
@@ -101,7 +118,26 @@ const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
               onUpdate(index, 'lead_time_days', value);
             }}
             inputProps={{ min: 0 }}
+            placeholder="Days"
           />
+        </Grid>
+
+        <Grid size={{ xs: 1, md: 0.5 }} display="flex" alignItems="center" justifyContent="center">
+          <Tooltip title={isLastItem ? 'Cannot remove last item' : 'Remove this item'}>
+            <span>
+              <IconButton
+                size="small"
+                onClick={onRemove}
+                disabled={isLastItem}
+                color="error"
+                sx={{
+                  opacity: isLastItem ? 0.3 : 1
+                }}
+              >
+                <DeleteOutline fontSize="small" />
+              </IconButton>
+            </span>
+          </Tooltip>
         </Grid>
 
         <Grid size={{ xs: 12, md: 12 }}>

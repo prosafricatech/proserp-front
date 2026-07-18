@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   Alert,
   Button,
@@ -15,6 +15,10 @@ import {
   InputLabel,
   Select,
   FormHelperText,
+  IconButton,
+  Tooltip,
+  Chip,
+  Box,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -32,6 +36,7 @@ import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import RFQResponseItemRow from './RFQResponseItemRow';
 import { RFQItem } from '../../rfq-types';
 import rfqServices from '../../rfq-services';
+import { Restore } from '@mui/icons-material';
 
 interface RFQResponsesFormProps {
   toggleOpen: (open: boolean) => void;
@@ -60,6 +65,8 @@ interface ResponseItem {
   remarks?: string;
   lead_time_days?: number;
   total?: number;
+  isRemoved?: boolean;
+  uniqueKey: string; // Make it required
 }
 
 interface Stakeholder {
@@ -93,6 +100,7 @@ function RFQResponsesFormContent({
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<string | null>(null);
   const [responseItems, setResponseItems] = useState<ResponseItem[]>([]);
+  const [removedItems, setRemovedItems] = useState<ResponseItem[]>([]);
 
   // Get stakeholders from rfqDetails
   const stakeholders: Stakeholder[] = rfqDetails?.stakeholders || [];
@@ -116,6 +124,11 @@ function RFQResponsesFormContent({
     },
   });
 
+  // Generate a unique key
+  const generateUniqueKey = useCallback((prefix: string, id: number) => {
+    return `${prefix}-${id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  }, []);
+
   // Initialize response items from RFQ items
   useEffect(() => {
     if (rfqDetails?.items?.length) {
@@ -127,10 +140,13 @@ function RFQResponsesFormContent({
         remarks: item?.remarks,
         lead_time_days: undefined,
         total: 0,
+        isRemoved: false,
+        uniqueKey: generateUniqueKey('active', item.id),
       }));
       setResponseItems(items);
+      setRemovedItems([]);
     }
-  }, [rfqDetails]);
+  }, [rfqDetails, generateUniqueKey]);
 
   // Set stakeholder if preselected
   useEffect(() => {
@@ -175,7 +191,178 @@ function RFQResponsesFormContent({
     });
   };
 
+  // Remove an item from the response (move to removed items)
+  const removeItem = (index: number) => {
+    // Find the active item at this index
+    const activeItems = responseItems.filter(item => !item.isRemoved);
+    
+    // Ensure at least one item remains in active list
+    if (activeItems.length <= 1) {
+      enqueueSnackbar('At least one item must remain in the response', { variant: 'warning' });
+      return;
+    }
+
+    const itemToRemove = activeItems[index];
+    if (!itemToRemove) return;
+
+    // Find the actual index in the full responseItems array
+    const actualIndex = responseItems.findIndex(item => item.uniqueKey === itemToRemove.uniqueKey);
+    if (actualIndex === -1) return;
+
+    // Create removed version with unique key
+    const removedItem = {
+      ...responseItems[actualIndex],
+      isRemoved: true,
+      uniqueKey: generateUniqueKey('removed', responseItems[actualIndex].rfq_item_id),
+      quantity: 0,
+      rate: 0,
+      total: 0,
+      lead_time_days: undefined,
+    };
+
+    // Update responseItems - mark as removed
+    setResponseItems((prev) => {
+      const next = [...prev];
+      next[actualIndex] = {
+        ...next[actualIndex],
+        isRemoved: true,
+        quantity: 0,
+        rate: 0,
+        total: 0,
+        lead_time_days: undefined,
+      };
+      return next;
+    });
+
+    // Add to removedItems
+    setRemovedItems((prev) => [...prev, removedItem]);
+  };
+
+  // Restore a removed item back to the response
+  const restoreItem = (index: number) => {
+    const itemToRestore = removedItems[index];
+    if (!itemToRestore) return;
+
+    // Find the corresponding item in responseItems
+    const existingIndex = responseItems.findIndex(
+      item => item.rfq_item_id === itemToRestore.rfq_item_id && item.isRemoved
+    );
+
+    if (existingIndex === -1) {
+      // If not found, add it back to the list
+      const restoredItem = {
+        ...itemToRestore,
+        isRemoved: false,
+        uniqueKey: generateUniqueKey('active', itemToRestore.rfq_item_id),
+        quantity: 0,
+        rate: 0,
+        total: 0,
+        lead_time_days: undefined,
+      };
+      
+      // Remove from removedItems
+      setRemovedItems((prev) => {
+        const next = [...prev];
+        next.splice(index, 1);
+        return next;
+      });
+
+      // Add back to responseItems
+      setResponseItems((prev) => [...prev, restoredItem]);
+      
+      enqueueSnackbar('Item restored successfully', { variant: 'success' });
+      return;
+    }
+
+    // Restore the existing item
+    setResponseItems((prev) => {
+      const next = [...prev];
+      next[existingIndex] = {
+        ...next[existingIndex],
+        isRemoved: false,
+        uniqueKey: generateUniqueKey('active', itemToRestore.rfq_item_id),
+        quantity: 0,
+        rate: 0,
+        total: 0,
+        lead_time_days: undefined,
+      };
+      return next;
+    });
+
+    // Remove from removedItems
+    setRemovedItems((prev) => {
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
+
+    enqueueSnackbar('Item restored successfully', { variant: 'success' });
+  };
+
+  // Restore all removed items
+  const restoreAllItems = () => {
+    if (removedItems.length === 0) return;
+
+    // Process each removed item
+    removedItems.forEach((removedItem) => {
+      const existingIndex = responseItems.findIndex(
+        item => item.rfq_item_id === removedItem.rfq_item_id && item.isRemoved
+      );
+
+      if (existingIndex !== -1) {
+        // Update existing item
+        setResponseItems((prev) => {
+          const next = [...prev];
+          next[existingIndex] = {
+            ...next[existingIndex],
+            isRemoved: false,
+            uniqueKey: generateUniqueKey('active', removedItem.rfq_item_id),
+            quantity: 0,
+            rate: 0,
+            total: 0,
+            lead_time_days: undefined,
+          };
+          return next;
+        });
+      } else {
+        // Add new item
+        const restoredItem = {
+          ...removedItem,
+          isRemoved: false,
+          uniqueKey: generateUniqueKey('active', removedItem.rfq_item_id),
+          quantity: 0,
+          rate: 0,
+          total: 0,
+          lead_time_days: undefined,
+        };
+        setResponseItems((prev) => [...prev, restoredItem]);
+      }
+    });
+
+    // Clear removed items
+    setRemovedItems([]);
+    enqueueSnackbar(`Restored ${removedItems.length} item(s)`, { variant: 'success' });
+  };
+
+  const activeItems = responseItems.filter(item => !item.isRemoved);
+
   const handleSave = handleSubmit((formData) => {
+    // Filter out removed items and items with no quantity or rate
+    const itemsToSend = responseItems
+      .filter(item => !item.isRemoved && item.quantity > 0 && item.rate > 0)
+      .map((item) => ({
+        rfq_item_id: item.rfq_item_id,
+        quantity: Number(item.quantity) || 0,
+        rate: Number(item.rate) || 0,
+        remarks: item.remarks || '',
+        lead_time_days: item.lead_time_days ? Number(item.lead_time_days) : undefined,
+      }));
+
+    if (itemsToSend.length === 0) {
+      enqueueSnackbar('Please add at least one item with quantity and rate', { variant: 'warning' });
+      return;
+    }
+
     const payload = {
       rfq_id: rfqId,
       response_date: formData.response_date?.toISOString(),
@@ -185,13 +372,7 @@ function RFQResponsesFormContent({
       exchange_rate: formData.exchange_rate || 1,
       status: formData.status || 'pending',
       remarks: formData.remarks,
-      items: responseItems.map((item) => ({
-        rfq_item_id: item.rfq_item_id,
-        quantity: Number(item.quantity) || 0,
-        rate: Number(item.rate) || 0,
-        remarks: item.remarks || '',
-        lead_time_days: item.lead_time_days ? Number(item.lead_time_days) : undefined,
-      })),
+      items: itemsToSend,
     };
 
     addMutation.mutate(payload as any);
@@ -202,6 +383,9 @@ function RFQResponsesFormContent({
   // Watch currency_id with null check
   const watchedCurrencyId = watch('currency_id') || 0;
   const isPreselected = !!preselectedStakeholder?.id;
+
+  // Check if any active item has valid quantity and rate
+  const hasItemsWithValues = activeItems.some(item => item.quantity > 0 && item.rate > 0);
 
   return (
     <>
@@ -351,20 +535,99 @@ function RFQResponsesFormContent({
           <Divider sx={{ my: 1 }} />
         </Grid>
 
-        <Grid size={12}>
-            <Typography variant="h4" gutterBottom>
-                RFQ Response Items
+        <Grid size={12} display="flex" justifyContent="space-between" alignItems="center">
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="h6">
+              RFQ Response Items
             </Typography>
+          </Box>
         </Grid>
 
-        {responseItems.map((item, index) => (
-          <RFQResponseItemRow
-            key={item.rfq_item_id || index}
-            index={index}
-            item={item}
-            onUpdate={updateItem as any}
-          />
-        ))}
+        <Grid size={12}>
+          {activeItems.map((item, index) => (
+            <RFQResponseItemRow
+              key={item.uniqueKey}
+              index={index}
+              item={item}
+              onUpdate={updateItem as any}
+              onRemove={() => removeItem(index)}
+              isLastItem={activeItems.length <= 1}
+            />
+          ))}
+        </Grid>
+
+        {/* Removed Items Section */}
+        {removedItems.length > 0 && (
+          <Grid size={12}>
+            <Box sx={{ mt: 2 }}>
+              <Divider sx={{ mb: 2 }} />
+              <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+                <Typography variant="subtitle1" color="text.secondary">
+                  Removed Items ({removedItems.length})
+                </Typography>
+                <Button
+                  size="small"
+                  startIcon={<Restore />}
+                  onClick={restoreAllItems}
+                  variant="text"
+                >
+                  Restore All
+                </Button>
+              </Box>
+              {removedItems.map((item, index) => (
+                <Box
+                  key={item.uniqueKey}
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    py: 1,
+                    px: 2,
+                    mb: 0.5,
+                    borderRadius: 1,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                  }}
+                >
+                  <Box display="flex" alignItems="center" gap={2}>
+                    <Typography variant="body2" color="text.secondary">
+                      {index + 1}.
+                    </Typography>
+                    <Typography variant="body2">
+                      {item.rfq_item?.product?.name || item.rfq_item?.product?.item_name || 'Item'}
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Required: {item.rfq_item?.quantity || 0} {item.rfq_item?.measurement_unit?.symbol || ''}
+                    </Typography>
+                    <Chip
+                      label="Removed"
+                      size="small"
+                      color="error"
+                      variant="outlined"
+                    />
+                  </Box>
+                  <Tooltip title="Restore this item">
+                    <IconButton
+                      size="small"
+                      onClick={() => restoreItem(index)}
+                      color="primary"
+                    >
+                      <Restore fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </Box>
+              ))}
+            </Box>
+          </Grid>
+        )}
+
+        {activeItems.length === 0 && (
+          <Grid size={12}>
+            <Alert severity="warning" sx={{ mt: 1 }}>
+              All items have been removed. Please restore at least one item to submit the response.
+            </Alert>
+          </Grid>
+        )}
       </Grid>
 
       <Grid container justifyContent="space-between" mt={2}>
@@ -372,8 +635,14 @@ function RFQResponsesFormContent({
           <Button size="small" onClick={() => toggleOpen(false)}>
             Cancel
           </Button>
-          <LoadingButton loading={loading} size="small" variant="contained" onClick={handleSave}>
-            Submit
+          <LoadingButton 
+            loading={loading} 
+            size="small" 
+            variant="contained" 
+            onClick={handleSave}
+            disabled={!hasItemsWithValues || activeItems.length === 0}
+          >
+            Submit Response
           </LoadingButton>
         </Grid>
       </Grid>

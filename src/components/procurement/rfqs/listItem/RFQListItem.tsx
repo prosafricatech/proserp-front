@@ -7,6 +7,10 @@ import {
   AccordionSummary,
   Alert,
   Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
   Chip,
   Divider,
   Grid,
@@ -17,6 +21,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  Button,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter, useParams } from 'next/navigation';
@@ -31,6 +36,7 @@ import RFQDialogForm from '../form/RFQDialogForm';
 import RFQListItemAction from './RFQListItemAction';
 import RFQListResponseTab from './RFQListResponseTab';
 import { RFQListRow } from '../rfq-types';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -59,6 +65,7 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { showDialog, hideDialog } = useJumboDialog();
 
   const { data: rfqDetails, isLoading } = useQuery({
     queryKey: ['rfqDetails', rfq?.id],
@@ -88,6 +95,12 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
       if (rfq?.id) {
         queryClient.invalidateQueries({ queryKey: ['rfqDetails', rfq.id] });
       }
+      hideDialog();
+    },
+    onError: (error) => {
+      // Optionally show error message
+      console.error('Failed to delete RFQ:', error);
+      hideDialog();
     },
   });
 
@@ -97,12 +110,26 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
     setOpenEdit(true);
   };
 
-  // Handle delete button click
+  // Handle delete button click - show confirmation dialog
   const handleDeleteClick = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to delete this RFQ?')) {
-      deleteMutation.mutate({ id: rfq.id });
-    }
+    showDialog({
+      title: 'Confirm Delete',
+      content: (
+        <div>
+          <Typography variant="body1" gutterBottom>
+            Are you sure you want to delete this RFQ?
+          </Typography>
+        </div>
+      ),
+      onYes: () => {
+        deleteMutation.mutate({ id: rfq.id });
+      },
+      onNo: () => {
+        hideDialog();
+      },
+      variant: 'confirm'
+    });
   };
 
   // Handle dialog close
@@ -302,6 +329,7 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
         </AccordionDetails>
       </Accordion>
 
+      {/* Edit Dialog */}
       <Dialog
         fullWidth
         maxWidth="lg"
