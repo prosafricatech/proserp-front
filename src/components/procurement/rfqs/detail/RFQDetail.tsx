@@ -466,9 +466,11 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                     <Typography variant="body1">
                       {rfq.rfq_date ? readableDate(rfq.rfq_date) : 'N/A'}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      Reference: {rfq.reference || 'N/A'}
-                    </Typography>
+                    {rfq.reference &&
+                      <Typography variant="caption" color="text.secondary">
+                        Reference: {rfq.reference}
+                      </Typography>
+                    }
                   </CardContent>
                 </Card>
               </Grid>
