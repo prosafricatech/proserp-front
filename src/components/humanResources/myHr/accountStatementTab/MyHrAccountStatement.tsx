@@ -207,6 +207,11 @@ const MyHrAccountStatement = () => {
       ) : (
         <>
           <Grid container spacing={2}>
+            <Grid size={12}>
+              <Typography variant='h3' color='primary' textAlign={'center'}>
+                {data?.filters?.ledger?.name} - Statement
+              </Typography>
+            </Grid>
             <Grid size={6}>
               <Typography variant='subtitle2' color='primary'>
                 Total Debits

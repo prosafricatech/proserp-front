@@ -1,11 +1,10 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
-import { LinkOffOutlined } from '@mui/icons-material';
 import {
   Avatar,
-  Box,
   Card,
   Skeleton,
   Stack,
@@ -15,6 +14,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import MyHrAccountStatement from './accountStatementTab/MyHrAccountStatement';
@@ -46,6 +46,7 @@ const VALID_TABS: TabKey[] = [
 const MyHr = () => {
   const { authUser } = useJumboAuth();
   const user = authUser?.user;
+  const { enqueueSnackbar } = useSnackbar();
   const [activeTab, setActiveTab] = useState<TabKey>('profile');
   const [isClient, setIsClient] = useState(false);
   const [profileLoading, setProfileLoading] = useState(false);
@@ -135,6 +136,12 @@ const MyHr = () => {
       setProfileLoading(false);
     }
     if (axios.isAxiosError(profileError)) {
+      if (profileError?.status === 404) {
+        setActiveTab('imprestAccounts');
+      }
+      enqueueSnackbar(getErrorMessage(profileError) || 'Something went wrong', {
+        variant: 'error',
+      });
       setErrStatus(profileError?.status);
     }
   }, [profileError, isLoading]);
@@ -169,7 +176,7 @@ const MyHr = () => {
     >
       {errStatus && errStatus === 404 ? (
         <Card sx={{ height: '100%', p: 1 }}>
-          <Box
+          {/* <Box
             width={'100%'}
             height={'100%'}
             display={'flex'}
@@ -183,7 +190,17 @@ const MyHr = () => {
             <Typography textAlign={'center'} fontSize={15}>
               Your account is not linked to an employee record. contact HR.
             </Typography>
-          </Box>
+          </Box> */}
+          <Tabs
+            value={activeTab}
+            onChange={handleTabChange}
+            variant='scrollable'
+            scrollButtons='auto'
+            allowScrollButtonsMobile
+          >
+            <Tab label='Imprest Accounts' value='imprestAccounts' />
+          </Tabs>
+          {renderTabContent()}
         </Card>
       ) : (
         <Card sx={{ height: '100%', p: 1 }}>

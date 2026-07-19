@@ -198,7 +198,6 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      console.error('err: ', err.response.data);
       enqueueSnackbar(
         err?.response?.data?.message ||
           getErrorMessage(err) ||
