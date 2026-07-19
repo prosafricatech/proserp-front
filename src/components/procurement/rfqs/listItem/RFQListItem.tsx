@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  Badge,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import AddIcon from '@mui/icons-material/Add';
@@ -30,6 +31,7 @@ import RFQListItemAction from './RFQListItemAction';
 import RFQListResponseTab from './RFQListResponseTab';
 import { RFQListRow } from '../rfq-types';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { DescriptionOutlined, ReplyOutlined, InventoryOutlined } from '@mui/icons-material';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -147,6 +149,15 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
     e.stopPropagation();
   };
 
+  // Get counts from details or rfq
+  const itemsCount = details?.items_count || rfq?.items_count || 0;
+  const responsesCount = details?.responses_count || rfq?.responses_count || 0;
+  const reference = details?.reference || rfq?.reference || null;
+  const creator = details?.creator || rfq?.creator || null;
+  const rfqNo = details?.rfqNo || rfq?.rfqNo || `RFQ/${rfq.id}`;
+  const rfqDate = details?.rfq_date || rfq?.rfq_date;
+  const responseDeadline = details?.response_deadline || rfq?.response_deadline;
+
   return (
     <>
       <Accordion
@@ -185,29 +196,56 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
           }}
         >
           <Grid container spacing={1} alignItems="center" sx={{ width: '100%', m: 0 }}>
-            <Grid size={{ xs: 4, md: 4 }}>
+            {/* RFQ Number and Date */}
+            <Grid size={{ xs: 6, md: 3 }}>
               <Tooltip title="RFQ Number">
-                <Typography>{details?.rfqNo || rfq.rfqNo || `RFQ/${rfq.id}`}</Typography>
+                <Typography variant="body2" fontWeight="medium">
+                  {rfqNo}
+                </Typography>
               </Tooltip>
               <Tooltip title="RFQ Date">
-                <Typography variant="caption" color="text.secondary">
-                  {readableDate(details?.rfq_date || rfq.rfq_date, false)}
+                <Typography variant="caption" color="text.secondary" display="block">
+                  {readableDate(rfqDate, false)}
                 </Typography>
               </Tooltip>
+              {reference && (
+                <Tooltip title="Reference">
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    Ref: {reference}
+                  </Typography>
+                </Tooltip>
+              )}
             </Grid>
-            <Grid size={{ xs: 4, md: 4 }}>
+
+            {/* Response Deadline */}
+            <Grid size={{ xs: 6, md: 2 }}>
               <Tooltip title="Response Deadline">
                 <Typography variant="caption" color="text.secondary" display="block">
-                  {readableDate(details?.response_deadline || rfq.response_deadline, false)}
+                  Deadline
                 </Typography>
               </Tooltip>
+              <Typography variant="body2">
+                {readableDate(responseDeadline, false)}
+              </Typography>
             </Grid>
-            <Grid size={{ xs: 4, md: 4 }} textAlign="end">
-              <Stack direction="row" spacing={1} flexWrap="wrap" justifyContent="flex-end">
-                <Tooltip title="RFQ Status">
-                  <Chip size="small" label={formattedStatus} color={statusColor as any} />
-                </Tooltip>
-              </Stack>
+
+            {/* Status and Counts */}
+            <Grid size={{ xs: 12, md: 5 }} display="flex" alignItems="center" justifyContent="flex-end" gap={1}>
+              <Tooltip title="RFQ Status">
+                <Chip size="small" label={formattedStatus} color={statusColor as any} />
+              </Tooltip>
+
+              <Tooltip title="Items Count">
+                <Badge badgeContent={itemsCount} color="primary" showZero>
+                  <InventoryOutlined fontSize="small" />
+                </Badge>
+              </Tooltip>
+
+              <Tooltip title="Responses Count">
+                <Badge badgeContent={responsesCount} color={responsesCount > 0 ? 'success' : 'default'} showZero>
+                  <ReplyOutlined fontSize="small" />
+                </Badge>
+              </Tooltip>
             </Grid>
           </Grid>
           <Divider />

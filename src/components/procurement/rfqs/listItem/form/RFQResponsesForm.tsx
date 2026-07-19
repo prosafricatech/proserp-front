@@ -8,13 +8,8 @@ import {
   DialogTitle,
   Divider,
   Grid,
-  MenuItem,
   TextField,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  FormHelperText,
   IconButton,
   Tooltip,
   Chip,
@@ -65,7 +60,7 @@ interface ResponseItem {
   rfq_item?: RFQItem;
   quantity: number;
   rate: number;
-  vat_percentage?: number;   // add this
+  vat_percentage?: number;
   remarks?: string;
   lead_time_days?: number;
   total?: number;
@@ -120,6 +115,7 @@ function RFQResponsesFormContent({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
       response_date: response?.response_date ? dayjs(response.response_date) : dayjs(),
+      status: response?.status || 'sent',
       validity_date: response?.validity_date ? dayjs(response.validity_date) : dayjs().add(30, 'day'),
       stakeholder_id: response?.stakeholder?.id || preselectedStakeholder?.id || undefined,
       currency_id: response?.currency?.id || subContract?.currency_id || 1,
@@ -137,16 +133,19 @@ function RFQResponsesFormContent({
   useEffect(() => {
     if (rfqDetails?.items?.length) {
       const items = rfqDetails.items.map((item: any) => {
+        // Find if this item exists in the response
         const existing = response?.items?.find((ri: any) => ri.rfq_item_id === item.id);
+        
         return {
           rfq_item_id: item.id,
           rfq_item: item,
+          // If editing, use the response values, otherwise use defaults
           quantity: existing?.quantity ?? (isEditMode ? 0 : (item.quantity || 0)),
           rate: existing?.rate || 0,
           vat_percentage: existing?.vat_percentage || 0,
           remarks: existing?.remarks ?? item?.remarks,
           lead_time_days: existing?.lead_time_days,
-          total: 0,
+          total: existing?.amount || 0,
           isRemoved: false,
           uniqueKey: generateUniqueKey('active', item.id),
         };
@@ -156,11 +155,14 @@ function RFQResponsesFormContent({
     }
   }, [rfqDetails, response, generateUniqueKey, isEditMode]);
 
+  // Set stakeholder if preselected or from response
   useEffect(() => {
-    if (preselectedStakeholder?.id && !isEditMode) {
+    if (isEditMode && response?.stakeholder?.id) {
+      setValue('stakeholder_id', response.stakeholder.id, { shouldDirty: true, shouldValidate: true });
+    } else if (preselectedStakeholder?.id && !isEditMode) {
       setValue('stakeholder_id', preselectedStakeholder.id, { shouldDirty: true, shouldValidate: true });
     }
-  }, [preselectedStakeholder, setValue, isEditMode]);
+  }, [preselectedStakeholder, setValue, isEditMode, response]);
 
   const addMutation = useMutation({
     mutationFn: (payload: any) => rfqServices.addResponse(rfqId, payload),
@@ -373,6 +375,7 @@ function RFQResponsesFormContent({
       rfq_id: rfqId,
       response_date: formData.response_date?.toISOString(),
       validity_date: formData.validity_date?.toISOString(),
+      status: formData.status || 'sent',
       stakeholder_id: formData.stakeholder_id,
       currency_id: formData.currency_id,
       exchange_rate: formData.exchange_rate || 1,
@@ -393,14 +396,16 @@ function RFQResponsesFormContent({
       if (actualIndex === -1) return prev;
 
       const next = [...prev];
-      next[actualIndex] = { ...next[actualIndex], [field]: value };
-
+      const updatedItem = { ...next[actualIndex], [field]: value };
+      
+      // Calculate total if quantity or rate changes
       if (field === 'quantity' || field === 'rate') {
-        const quantity = Number(next[actualIndex].quantity) || 0;
-        const rate = Number(next[actualIndex].rate) || 0;
-        next[actualIndex].total = quantity * rate;
+        const quantity = Number(updatedItem.quantity) || 0;
+        const rate = Number(updatedItem.rate) || 0;
+        updatedItem.total = quantity * rate;
       }
-
+      
+      next[actualIndex] = updatedItem;
       return next;
     });
   };
@@ -480,7 +485,7 @@ function RFQResponsesFormContent({
           <StakeholderSelector
             label="Supplier"
             frontError={errors?.stakeholder_id as any}
-            defaultValue={preselectedStakeholder?.id || undefined}
+            defaultValue={isEditMode ? response?.stakeholder?.id : preselectedStakeholder?.id || undefined}
             onChange={handleStakeholderChange}
           />
         </Grid>
@@ -488,7 +493,7 @@ function RFQResponsesFormContent({
         <Grid size={{ xs: 12, md: 4 }}>
           <CurrencySelector
             frontError={errors?.currency_id}
-            defaultValue={subContract?.currency_id || 1}
+            defaultValue={response?.currency?.id || subContract?.currency_id || 1}
             onChange={(newValue) => {
               setValue('currency_id', newValue ? newValue.id : undefined, {
                 shouldDirty: true,
@@ -545,6 +550,14 @@ function RFQResponsesFormContent({
             <Typography variant="h6">
               RFQ Response Items
             </Typography>
+            {isEditMode && (
+              <Chip 
+                label={`${activeItems.filter(item => item.quantity > 0 && item.rate > 0).length} of ${activeItems.length} items priced`}
+                size="small"
+                color="info"
+                variant="outlined"
+              />
+            )}
           </Box>
         </Grid>
 
@@ -552,7 +565,7 @@ function RFQResponsesFormContent({
           {activeItems.map((item, displayIndex) => (
             <RFQResponseItemRow
               key={item.uniqueKey}
-              index={displayIndex}           // still used for display numbering ("1.", "2.") and isLastItem
+              index={displayIndex}
               item={item}
               onUpdate={(_ignoredIndex: number, field: string, value: any) => updateItem(item.uniqueKey, field as any, value)}
               onRemove={() => removeItem(displayIndex)}
