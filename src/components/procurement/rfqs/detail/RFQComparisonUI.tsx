@@ -158,7 +158,7 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
           <ReceiptOutlined />
           <Typography variant="body2">
             Select the best quote per item, then click "Award" under a supplier's column to create a
-            purchase order from that supplier's selected items. Amounts shown are normalized to your base currency for comparison; each supplier's own quoted currency is shown alongside their column.
+            purchase order from that supplier's selected items.
           </Typography>
         </Stack>
       </Alert>
