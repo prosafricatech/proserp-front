@@ -33,10 +33,12 @@ import dayjs from 'dayjs';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
+import StakeholderSelector from '@/components/masters/stakeholders/StakeholderSelector';
 import RFQResponseItemRow from './RFQResponseItemRow';
 import { RFQItem } from '../../rfq-types';
 import rfqServices from '../../rfq-services';
 import { Restore } from '@mui/icons-material';
+import StakeholderSelectProvider from '@/components/masters/stakeholders/StakeholderSelectProvider';
 
 interface RFQResponsesFormProps {
   toggleOpen: (open: boolean) => void;
@@ -44,6 +46,7 @@ interface RFQResponsesFormProps {
   rfqId: number;
   subContract?: any;
   preselectedStakeholder?: any;
+  response?: any;
   onSuccess?: () => void;
 }
 
@@ -62,11 +65,12 @@ interface ResponseItem {
   rfq_item?: RFQItem;
   quantity: number;
   rate: number;
+  vat_percentage?: number;   // add this
   remarks?: string;
   lead_time_days?: number;
   total?: number;
   isRemoved?: boolean;
-  uniqueKey: string; // Make it required
+  uniqueKey: string;
 }
 
 interface Stakeholder {
@@ -94,6 +98,7 @@ function RFQResponsesFormContent({
   rfqId, 
   subContract,
   preselectedStakeholder,
+  response,
   onSuccess 
 }: RFQResponsesFormProps) {
   const queryClient = useQueryClient();
@@ -102,8 +107,7 @@ function RFQResponsesFormContent({
   const [responseItems, setResponseItems] = useState<ResponseItem[]>([]);
   const [removedItems, setRemovedItems] = useState<ResponseItem[]>([]);
 
-  // Get stakeholders from rfqDetails
-  const stakeholders: Stakeholder[] = rfqDetails?.stakeholders || [];
+  const isEditMode = !!response?.id;
 
   const {
     handleSubmit,
@@ -115,12 +119,12 @@ function RFQResponsesFormContent({
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      response_date: dayjs(),
-      validity_date: dayjs().add(30, 'day'),
-      stakeholder_id: preselectedStakeholder?.id || undefined,
-      currency_id: subContract?.currency_id || 1,
-      exchange_rate: subContract?.exchange_rate || 1,
-      remarks: '',
+      response_date: response?.response_date ? dayjs(response.response_date) : dayjs(),
+      validity_date: response?.validity_date ? dayjs(response.validity_date) : dayjs().add(30, 'day'),
+      stakeholder_id: response?.stakeholder?.id || preselectedStakeholder?.id || undefined,
+      currency_id: response?.currency?.id || subContract?.currency_id || 1,
+      exchange_rate: response?.exchange_rate || subContract?.exchange_rate || 1,
+      remarks: response?.remarks || '',
     },
   });
 
@@ -129,67 +133,69 @@ function RFQResponsesFormContent({
     return `${prefix}-${id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }, []);
 
-  // Initialize response items from RFQ items
+  // Initialize response items — overlay existing quoted values when editing
   useEffect(() => {
     if (rfqDetails?.items?.length) {
-      const items = rfqDetails.items.map((item: any) => ({
-        rfq_item_id: item.id,
-        rfq_item: item,
-        quantity: item.quantity || 0,
-        rate: 0,
-        remarks: item?.remarks,
-        lead_time_days: undefined,
-        total: 0,
-        isRemoved: false,
-        uniqueKey: generateUniqueKey('active', item.id),
-      }));
+      const items = rfqDetails.items.map((item: any) => {
+        const existing = response?.items?.find((ri: any) => ri.rfq_item_id === item.id);
+        return {
+          rfq_item_id: item.id,
+          rfq_item: item,
+          quantity: existing?.quantity ?? (isEditMode ? 0 : (item.quantity || 0)),
+          rate: existing?.rate || 0,
+          vat_percentage: existing?.vat_percentage || 0,
+          remarks: existing?.remarks ?? item?.remarks,
+          lead_time_days: existing?.lead_time_days,
+          total: 0,
+          isRemoved: false,
+          uniqueKey: generateUniqueKey('active', item.id),
+        };
+      });
       setResponseItems(items);
       setRemovedItems([]);
     }
-  }, [rfqDetails, generateUniqueKey]);
+  }, [rfqDetails, response, generateUniqueKey, isEditMode]);
 
-  // Set stakeholder if preselected
   useEffect(() => {
-    if (preselectedStakeholder?.id) {
-      setValue('stakeholder_id', preselectedStakeholder.id, {
-        shouldDirty: true,
-        shouldValidate: true,
-      });
+    if (preselectedStakeholder?.id && !isEditMode) {
+      setValue('stakeholder_id', preselectedStakeholder.id, { shouldDirty: true, shouldValidate: true });
     }
-  }, [preselectedStakeholder, setValue]);
+  }, [preselectedStakeholder, setValue, isEditMode]);
 
   const addMutation = useMutation({
     mutationFn: (payload: any) => rfqServices.addResponse(rfqId, payload),
     onSuccess: (data) => {
       enqueueSnackbar(data?.message || 'RFQ response saved successfully', { variant: 'success' });
       queryClient.invalidateQueries({ queryKey: ['rfqDetails', rfqId] });
+      queryClient.invalidateQueries({ queryKey: ['rfqDetails'] });
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
+      queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
       toggleOpen(false);
       if (onSuccess) onSuccess();
     },
     onError: (error: any) => {
       setServerError(error?.response?.data?.message || 'Please check the information you submitted');
-      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', {
-        variant: 'error',
-      });
+      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', { variant: 'error' });
     },
   });
 
-  const updateItem = (index: number, field: keyof ResponseItem, value: any) => {
-    setResponseItems((prev) => {
-      const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
-      
-      // Calculate total if quantity or rate changes
-      if (field === 'quantity' || field === 'rate') {
-        const quantity = Number(next[index].quantity) || 0;
-        const rate = Number(next[index].rate) || 0;
-        next[index].total = quantity * rate;
-      }
-      
-      return next;
-    });
-  };
+  const updateMutation = useMutation({
+    mutationFn: rfqServices.updateResponse,
+    onSuccess: (data) => {
+      enqueueSnackbar(data?.message || 'RFQ response updated successfully', { variant: 'success' });
+      queryClient.invalidateQueries({ queryKey: ['rfqDetails', rfqId] });
+      queryClient.invalidateQueries({ queryKey: ['rfqDetails'] });
+      queryClient.invalidateQueries({ queryKey: ['rfqs'] });
+      queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfqId] });
+      queryClient.invalidateQueries({ queryKey: ['rfqResponseDetail', response?.id] });
+      toggleOpen(false);
+      if (onSuccess) onSuccess();
+    },
+    onError: (error: any) => {
+      setServerError(error?.response?.data?.message || 'Please check the information you submitted');
+      enqueueSnackbar(error?.response?.data?.message || 'Please check the information you submitted', { variant: 'error' });
+    },
+  });
 
   // Remove an item from the response (move to removed items)
   const removeItem = (index: number) => {
@@ -347,13 +353,13 @@ function RFQResponsesFormContent({
   const activeItems = responseItems.filter(item => !item.isRemoved);
 
   const handleSave = handleSubmit((formData) => {
-    // Filter out removed items and items with no quantity or rate
     const itemsToSend = responseItems
       .filter(item => !item.isRemoved && item.quantity > 0 && item.rate > 0)
       .map((item) => ({
         rfq_item_id: item.rfq_item_id,
         quantity: Number(item.quantity) || 0,
         rate: Number(item.rate) || 0,
+        vat_percentage: Number(item.vat_percentage) || 0,
         remarks: item.remarks || '',
         lead_time_days: item.lead_time_days ? Number(item.lead_time_days) : undefined,
       }));
@@ -370,25 +376,62 @@ function RFQResponsesFormContent({
       stakeholder_id: formData.stakeholder_id,
       currency_id: formData.currency_id,
       exchange_rate: formData.exchange_rate || 1,
-      status: formData.status || 'pending',
       remarks: formData.remarks,
       items: itemsToSend,
     };
 
-    addMutation.mutate(payload as any);
+    if (isEditMode) {
+      updateMutation.mutate({ id: response.id, ...payload } as any);
+    } else {
+      addMutation.mutate(payload as any);
+    }
   });
 
-  const loading = addMutation.isPending;
+  const updateItem = (uniqueKey: string, field: keyof ResponseItem, value: any) => {
+    setResponseItems((prev) => {
+      const actualIndex = prev.findIndex((item) => item.uniqueKey === uniqueKey);
+      if (actualIndex === -1) return prev;
+
+      const next = [...prev];
+      next[actualIndex] = { ...next[actualIndex], [field]: value };
+
+      if (field === 'quantity' || field === 'rate') {
+        const quantity = Number(next[actualIndex].quantity) || 0;
+        const rate = Number(next[actualIndex].rate) || 0;
+        next[actualIndex].total = quantity * rate;
+      }
+
+      return next;
+    });
+  };
+
+  const loading = addMutation.isPending || updateMutation.isPending;
 
   // Watch currency_id with null check
   const watchedCurrencyId = watch('currency_id') || 0;
-  const isPreselected = !!preselectedStakeholder?.id;
 
   // Check if any active item has valid quantity and rate
   const hasItemsWithValues = activeItems.some(item => item.quantity > 0 && item.rate > 0);
 
+  // Handle stakeholder selection from StakeholderSelector
+  const handleStakeholderChange = (newValue: any) => {
+    if (newValue) {
+      setValue('stakeholder_id', newValue.id, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+      clearErrors('stakeholder_id');
+    } else {
+      setValue('stakeholder_id', undefined, {
+        shouldDirty: true,
+        shouldValidate: true,
+      });
+    }
+  };
+
   return (
     <>
+    <StakeholderSelectProvider type='suppliers'>
       <Grid container columnSpacing={1} rowSpacing={1} paddingTop={1}>
         {serverError && (
           <Grid size={12}>
@@ -434,49 +477,11 @@ function RFQResponsesFormContent({
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <Controller
-            name="stakeholder_id"
-            control={control}
-            render={({ field, fieldState }) => (
-              <FormControl fullWidth size="small" error={!!fieldState.error}>
-                <InputLabel>Supplier</InputLabel>
-                <Select
-                  {...field}
-                  label="Supplier"
-                  value={field.value || ''}
-                  disabled={isPreselected}
-                  onChange={(e) => {
-                    const value = e.target.value as number;
-                    field.onChange(value);
-                    clearErrors('stakeholder_id');
-                  }}
-                >
-                  {stakeholders.length === 0 ? (
-                    <MenuItem value="" disabled>
-                      No suppliers available
-                    </MenuItem>
-                  ) : (
-                    stakeholders.map((stakeholder) => (
-                      <MenuItem key={stakeholder.id} value={stakeholder.id}>
-                        {stakeholder.name}
-                        {stakeholder.status && (
-                          <Typography
-                            component="span"
-                            variant="caption"
-                            sx={{ ml: 1, color: 'text.secondary' }}
-                          >
-                            ({stakeholder.status})
-                          </Typography>
-                        )}
-                      </MenuItem>
-                    ))
-                  )}
-                </Select>
-                {fieldState.error && (
-                  <FormHelperText>{fieldState.error.message}</FormHelperText>
-                )}
-              </FormControl>
-            )}
+          <StakeholderSelector
+            label="Supplier"
+            frontError={errors?.stakeholder_id as any}
+            defaultValue={preselectedStakeholder?.id || undefined}
+            onChange={handleStakeholderChange}
           />
         </Grid>
 
@@ -544,13 +549,13 @@ function RFQResponsesFormContent({
         </Grid>
 
         <Grid size={12}>
-          {activeItems.map((item, index) => (
+          {activeItems.map((item, displayIndex) => (
             <RFQResponseItemRow
               key={item.uniqueKey}
-              index={index}
+              index={displayIndex}           // still used for display numbering ("1.", "2.") and isLastItem
               item={item}
-              onUpdate={updateItem as any}
-              onRemove={() => removeItem(index)}
+              onUpdate={(_ignoredIndex: number, field: string, value: any) => updateItem(item.uniqueKey, field as any, value)}
+              onRemove={() => removeItem(displayIndex)}
               isLastItem={activeItems.length <= 1}
             />
           ))}
@@ -642,37 +647,34 @@ function RFQResponsesFormContent({
             onClick={handleSave}
             disabled={!hasItemsWithValues || activeItems.length === 0}
           >
-            Submit Response
+            {isEditMode ? 'Update Response' : 'Submit Response'}
           </LoadingButton>
         </Grid>
       </Grid>
+    </StakeholderSelectProvider>
+
     </>
   );
 }
 
-function RFQResponsesForm({ 
-  toggleOpen, 
-  rfqDetails, 
-  rfqId, 
-  subContract,
-  preselectedStakeholder,
-  onSuccess 
-}: RFQResponsesFormProps) {
+function RFQResponsesForm({ toggleOpen, rfqDetails, rfqId, subContract, preselectedStakeholder, response, onSuccess }: RFQResponsesFormProps) {
+  const title = response?.id
+    ? `Edit RFQ Response - ${response?.stakeholder?.name || ''}`
+    : preselectedStakeholder?.name
+    ? `New RFQ Response - ${preselectedStakeholder.name}`
+    : 'New RFQ Response';
+
   return (
     <>
-      <DialogTitle textAlign="center">
-        {preselectedStakeholder?.name 
-          ? `New RFQ Response - ${preselectedStakeholder.name}`
-          : 'New RFQ Response'
-        }
-      </DialogTitle>
+      <DialogTitle textAlign="center">{title}</DialogTitle>
       <DialogContent>
-        <RFQResponsesFormContent 
-          toggleOpen={toggleOpen} 
-          rfqDetails={rfqDetails} 
-          rfqId={rfqId} 
+        <RFQResponsesFormContent
+          toggleOpen={toggleOpen}
+          rfqDetails={rfqDetails}
+          rfqId={rfqId}
           subContract={subContract}
           preselectedStakeholder={preselectedStakeholder}
+          response={response}
           onSuccess={onSuccess}
         />
       </DialogContent>

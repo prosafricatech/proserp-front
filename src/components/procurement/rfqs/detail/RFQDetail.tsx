@@ -47,6 +47,7 @@ import {
   ReceiptOutlined,
   SendOutlined,
   AddOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -98,6 +99,10 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
   const [currentOrderIndex, setCurrentOrderIndex] = useState(0);
   
+  // State declarations
+  const [viewResponseId, setViewResponseId] = useState<number | null>(null);
+  const [editResponseId, setEditResponseId] = useState<number | null>(null);
+  
   // Confirmation Dialog States
   const [confirmDialog, setConfirmDialog] = useState({
     open: false,
@@ -122,6 +127,18 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
     queryKey: ['rfqComparison', rfqId],
     queryFn: () => rfqServices.getComparison(rfqId),
     enabled: !!rfqId,
+  });
+
+  const { data: editResponseData, isLoading: isLoadingEdit } = useQuery({
+    queryKey: ['rfqResponseDetail', editResponseId],
+    queryFn: () => rfqServices.getResponse(editResponseId as number),
+    enabled: !!editResponseId,
+  });
+
+  const { data: viewResponseData, isLoading: isLoadingView } = useQuery({
+    queryKey: ['rfqResponseDetail', viewResponseId],
+    queryFn: () => rfqServices.getResponse(viewResponseId as number),
+    enabled: !!viewResponseId,
   });
 
   const deleteMutation = useMutation({
@@ -265,6 +282,18 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
     } else if (confirmDialog.type === 'response') {
       deleteResponseMutation.mutate({ id: confirmDialog.id });
     }
+  };
+
+  // Handle edit response close
+  const handleEditResponseClose = (open: boolean) => {
+    if (!open) {
+      setEditResponseId(null);
+    }
+  };
+
+  // Handle view response close
+  const handleViewResponseClose = () => {
+    setViewResponseId(null);
   };
 
   if (!mounted) return null;
@@ -576,7 +605,7 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                             {response.stakeholder?.name}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {response.currency?.name} · Rate: {response.exchange_rate}
+                            {response.currency?.code}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }}>
@@ -590,6 +619,16 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, md: 3 }} textAlign="right">
+                          <Tooltip title="View Response">
+                            <IconButton size="small" onClick={() => setViewResponseId(response.id)}>
+                              <VisibilityOutlined fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                          <Tooltip title="Edit Response">
+                            <IconButton size="small" onClick={() => setEditResponseId(response.id)}>
+                              <EditOutlined fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
                           <Tooltip title="Delete Response">
                             <IconButton 
                               size="small" 
@@ -619,6 +658,7 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
             <RFQComparisonUI
               comparison={comparison as any}
               isAwarding={false}
+              rfqDetails={rfq}
               onAward={handleAward}
             />
           )}
@@ -637,6 +677,125 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
             <RFQDialogForm toggleOpen={setOpenEdit} rfq={rfq} />
           </Dialog>
         )}
+
+        {/* View Response Dialog */}
+        <Dialog 
+          fullWidth 
+          maxWidth="md" 
+          fullScreen={belowLargeScreen} 
+          scroll={belowLargeScreen ? 'body' : 'paper'}
+          open={!!viewResponseId} 
+          onClose={handleViewResponseClose}
+        >
+          <DialogTitle>
+            Response Details{viewResponseData?.stakeholder?.name ? ` — ${viewResponseData.stakeholder.name}` : ''}
+          </DialogTitle>
+          <DialogContent dividers>
+            {isLoadingView || !viewResponseData ? (
+              <LinearProgress />
+            ) : (
+              <>
+                <Grid container spacing={2} sx={{ mb: 2 }}>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Response Date</Typography>
+                    <Typography variant="body2">{readableDate(viewResponseData.response_date, false)}</Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Validity Date</Typography>
+                    <Typography variant="body2">
+                      {viewResponseData.validity_date ? readableDate(viewResponseData.validity_date, false) : '-'}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Currency</Typography>
+                    <Typography variant="body2">
+                      {viewResponseData.currency?.name} ({viewResponseData.currency?.code})
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography variant="caption" color="text.secondary" display="block">Exchange Rate</Typography>
+                    <Typography variant="body2">{viewResponseData.exchange_rate}</Typography>
+                  </Grid>
+                  {viewResponseData.remarks && (
+                    <Grid size={12}>
+                      <Typography variant="caption" color="text.secondary" display="block">Remarks</Typography>
+                      <Typography variant="body2">{viewResponseData.remarks}</Typography>
+                    </Grid>
+                  )}
+                </Grid>
+                <Divider sx={{ mb: 2 }} />
+                <TableContainer component={Paper} variant="outlined">
+                  <Table size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Product</TableCell>
+                        <TableCell align="right">Requested</TableCell>
+                        <TableCell align="right">Quoted Qty</TableCell>
+                        <TableCell align="right">Rate</TableCell>
+                        <TableCell align="right">VAT %</TableCell>
+                        <TableCell align="right">Amount</TableCell>
+                        <TableCell align="right">Lead Time</TableCell>
+                        <TableCell align="right">Award Status</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {(viewResponseData.items || []).map((item: any) => (
+                        <TableRow key={item.id}>
+                          <TableCell>
+                            {item.product?.item_name || item.product?.name || 'Item'}
+                            {item.remarks && (
+                              <Typography variant="caption" color="text.secondary" display="block">{item.remarks}</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="right">{item.requested_quantity} {item.measurement_unit?.symbol}</TableCell>
+                          <TableCell align="right">{item.quantity} {item.measurement_unit?.symbol}</TableCell>
+                          <TableCell align="right">{item.rate?.toLocaleString()}</TableCell>
+                          <TableCell align="right">{item.vat_percentage || 0}%</TableCell>
+                          <TableCell align="right">{item.amount?.toLocaleString()}</TableCell>
+                          <TableCell align="right">
+                            {item.lead_time_days !== null && item.lead_time_days !== undefined ? `${item.lead_time_days}d` : '-'}
+                          </TableCell>
+                          <TableCell align="right">
+                            {item.awarded_quantity > 0 ? (
+                              <Chip label={`${item.awarded_quantity} awarded`} size="small" color="success" variant="outlined" />
+                            ) : (
+                              <Chip label="Not awarded" size="small" variant="outlined" />
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              </>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleViewResponseClose}>Close</Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Response Dialog */}
+        <Dialog 
+          fullWidth 
+          maxWidth="lg" 
+          fullScreen={belowLargeScreen} 
+          scroll={belowLargeScreen ? 'body' : 'paper'}
+          open={!!editResponseId} 
+          onClose={() => handleEditResponseClose(false)}
+        >
+          {isLoadingEdit || !editResponseData ? (
+            <DialogContent><LinearProgress /></DialogContent>
+          ) : (
+            <RFQResponsesForm
+              toggleOpen={handleEditResponseClose}
+              rfqDetails={rfq}
+              rfqId={Number(rfqId)}
+              response={editResponseData}
+              onSuccess={() => setEditResponseId(null)}
+            />
+          )}
+        </Dialog>
 
         {/* RFQ Response Form Dialog */}
         <Dialog

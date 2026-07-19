@@ -232,86 +232,12 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
                   variant="fullWidth"
                   sx={{ borderBottom: 1, borderColor: 'divider' }}
                 >
-                  <Tab label="Summary" />
                   <Tab label="Responses" />
                 </Tabs>
 
                 <Grid size={12}>
-                  <TabPanel value={tabValue} index={0}>
-                    <Grid size={12}>
-                      <Tooltip title="List of invited suppliers">
-                        <Typography variant="subtitle2" gutterBottom>
-                          Suppliers
-                        </Typography>
-                      </Tooltip>
-                      <Stack direction="row" spacing={1} flexWrap="wrap">
-                        {(details?.stakeholders || []).map((stakeholder: any) => (
-                          <Tooltip key={stakeholder.id} title={`Supplier: ${stakeholder.name}${stakeholder.status ? ` (${stakeholder.status})` : ''}`}>
-                            <Chip 
-                              size="small" 
-                              label={`${stakeholder.name}${stakeholder.status ? ` · ${stakeholder.status}` : ''}`} 
-                            />
-                          </Tooltip>
-                        ))}
-                        {!details?.stakeholders?.length && (
-                          <Typography variant="body2" color="text.secondary">
-                            No suppliers invited yet
-                          </Typography>
-                        )}
-                      </Stack>
-                    </Grid>
-                    <Grid size={12}>
-                      <Tooltip title="List of RFQ items">
-                        <Typography variant="subtitle2" gutterBottom>
-                          Items
-                        </Typography>
-                      </Tooltip>
-                      {details?.items?.length ? (
-                        details.items.map((item: any, index: number) => (
-                          <Grid
-                            key={`${item.id || index}`}
-                            container
-                            spacing={1}
-                            alignItems="center"
-                            sx={{ borderBottom: 1, borderColor: 'divider', py: 0.5 }}
-                          >
-                            <Grid size={{ xs: 1 }}>
-                              <Typography variant="body2" color="text.secondary">
-                                {index + 1}.
-                              </Typography>
-                            </Grid>
-                            <Grid size={{ xs: 7, md: 4 }}>
-                              <Tooltip title={`Product: ${item.product?.name || item.product?.item_name || 'Item'}`}>
-                                <Typography variant="body2">
-                                  {item.product?.name || item.product?.item_name || 'Item'}
-                                </Typography>
-                              </Tooltip>
-                            </Grid>
-                            <Grid size={{ xs: 3 }} textAlign="right">
-                              <Tooltip title={`Quantity: ${item.quantity}`}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {item.quantity}
-                                </Typography>
-                              </Tooltip>
-                            </Grid>
-                            <Grid size={{ xs: 2, md: 3 }} textAlign="right">
-                              <Tooltip title={`Unit: ${item.unit_symbol || item.measurement_unit?.symbol || ''}`}>
-                                <Typography variant="body2" color="text.secondary">
-                                  {item.unit_symbol || item.measurement_unit?.symbol || ''}
-                                </Typography>
-                              </Tooltip>
-                            </Grid>
-                          </Grid>
-                        ))
-                      ) : (
-                        <Alert variant="outlined" severity="info">
-                          No items found
-                        </Alert>
-                      )}
-                    </Grid>
-                  </TabPanel>
 
-                  <TabPanel value={tabValue} index={1}>
+                  <TabPanel value={tabValue} index={0}>
                     <Grid size={12}>
                       <RFQListResponseTab details={details} rfqId={rfq.id as any} />
                     </Grid>
