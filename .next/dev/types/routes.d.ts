@@ -746,3 +746,33 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
+ * ```tsx
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
+   *   return Response.json({ id })
+   * }
+   * ```
+   */
+  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}
+ct.ReactNode
+  } & {
+    [K in LayoutSlotMap[LayoutRoute]]: React.ReactNode
+  }
+
+  /**
+   * Context for Next.js App Router route handlers
+   * @example
+   * ```tsx
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
+   *   return Response.json({ id })
+   * }
+   * ```
+   */
+  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}

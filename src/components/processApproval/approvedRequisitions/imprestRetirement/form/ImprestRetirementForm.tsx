@@ -22,13 +22,12 @@ import { DatePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useFieldArray, useForm, useWatch } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
@@ -71,49 +70,9 @@ type RetirementItem = {
   };
 };
 
-type PendingAttachment = {
-  file: File | null;
-  name: string;
-};
-
-type AttachmentFormValues = {
-  attachments: PendingAttachment[];
-};
-
 type ImprestLedgerOption = {
   id: number;
   name: string;
-};
-
-const ALLOWED_ATTACHMENT_EXTENSIONS = new Set([
-  'jpg',
-  'jpeg',
-  'png',
-  'gif',
-  'bmp',
-  'svg',
-  'webp',
-  'mp4',
-  'mov',
-  'avi',
-  'mkv',
-  'wmv',
-  'pdf',
-  'doc',
-  'docx',
-  'xls',
-  'xlsx',
-  'ppt',
-  'pptx',
-  'mp3',
-  'wav',
-  'aac',
-  'ogg',
-]);
-
-const getFileExtension = (fileName: string) => {
-  const parts = String(fileName || '').toLowerCase().split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
 };
 
 type ImprestRetirementFormProps = {
@@ -193,31 +152,6 @@ function ImprestRetirementForm({
   const [remarks, setRemarks] = React.useState('');
   const [items, setItems] = React.useState<RetirementItem[]>([{ ...EMPTY_ITEM }]);
   const [clientError, setClientError] = React.useState<string | null>(null);
-
-  const { control, getValues, setValue } = useForm<AttachmentFormValues>({
-    defaultValues: {
-      attachments: [{ name: '', file: null }],
-    },
-  });
-
-  const {
-    fields: pendingAttachments,
-    append: appendPendingAttachment,
-    remove: removePendingAttachmentField,
-  } = useFieldArray({
-    control,
-    name: 'attachments',
-  });
-
-  const attachmentValues = useWatch({
-    control,
-    name: 'attachments',
-  }) || [];
-
-  const attachmentRows = React.useMemo(
-    () => pendingAttachments.map((field, index) => ({ ...field, ...(attachmentValues[index] || {}) })),
-    [pendingAttachments, attachmentValues]
-  );
 
   const { data: myLedgersResponse } = useQuery({
     queryKey: ['my-ledgers'],
@@ -397,13 +331,6 @@ function ImprestRetirementForm({
   const totalItemsAmountDisplay = formatMoney(Number.isFinite(totalAmount) ? totalAmount : 0);
 
   const statusRaw = String(statusLabel || '').toLowerCase();
-  const approvalStatusRaw = String(
-    existingRetirementFromShow?.latest_approval?.status ||
-      existingRetirement?.latest_approval?.status ||
-      existingRetirementFromShow?.approval?.status ||
-      existingRetirement?.approval?.status ||
-      ''
-  ).toLowerCase();
   const isLocked = false;
   const canSubmitForApproval =
     !isEditMode &&
@@ -474,29 +401,10 @@ function ImprestRetirementForm({
       const createdId = await resolveRetirementIdFromResponse(response);
       if (createdId) {
         setRetirementId(createdId);
-      } else {
-        enqueueSnackbar('Draft saved. Reopen the form if attachments do not appear yet.', {
-          variant: 'info',
-        });
       }
     },
     onError: (error: any) => {
       const apiMessage = error?.response?.data?.message || 'Failed to create retirement draft';
-      const validationErrors = error?.response?.data?.validation_errors;
-      const attachmentErrorKeys = validationErrors
-        ? Object.keys(validationErrors).filter((key) => key.startsWith('attachments.'))
-        : [];
-
-      if (attachmentErrorKeys.length > 0) {
-        setClientError(
-          'Some attachments are invalid. Allowed types: jpg, jpeg, png, gif, bmp, svg, webp, mp4, mov, avi, mkv, wmv, pdf, doc, docx, xls, xlsx, ppt, pptx, mp3, wav, aac, ogg.'
-        );
-        enqueueSnackbar('Please fix invalid attachments and try again.', {
-          variant: 'error',
-        });
-        return;
-      }
-
       enqueueSnackbar(apiMessage, { variant: 'error' });
     },
   });
@@ -585,17 +493,7 @@ function ImprestRetirementForm({
     });
 
     if (hasInvalidItem) {
-      setClientError('Each item requires source account/product, measurement unit, quantity > 0 and rate > 0.');
-      return false;
-    }
-
-    const attachmentsValues = getValues('attachments') || [];
-    const hasIncompleteAttachment = attachmentsValues.some(
-      (attachment) => (attachment?.name || '').trim() !== '' && !(attachment?.file instanceof File)
-    );
-
-    if (hasIncompleteAttachment) {
-      setClientError('Each attachment with a name must have a selected file.');
+      setClientError('Each item requires source account/product, measurement unit, quantity greater than 0 and rate greater than 0.');
       return false;
     }
 
@@ -620,85 +518,6 @@ function ImprestRetirementForm({
     })),
   });
 
-  const buildCreateFormData = () => {
-    const payload = buildPayload();
-    const formData = new FormData();
-
-    formData.append('requisition_approval_id', String(payload.requisition_approval_id || ''));
-    formData.append('ledger_id', String(payload.ledger_id || ''));
-    formData.append('retirement_date', payload.retirement_date || '');
-    formData.append('remarks', payload.remarks || '');
-
-    payload.items.forEach((item, index) => {
-      if (item.line_type === 'PRODUCT') {
-        formData.append(`items[${index}][product_id]`, String(item.product_id || ''));
-        formData.append(`items[${index}][store_id]`, String(item.store_id || ''));
-      } else {
-        formData.append(`items[${index}][ledger_id]`, String(item.ledger_id || ''));
-      }
-      formData.append(
-        `items[${index}][measurement_unit_id]`,
-        String(item.measurement_unit_id || '')
-      );
-      formData.append(`items[${index}][quantity]`, String(item.quantity || 0));
-      formData.append(`items[${index}][rate]`, String(item.rate || 0));
-      formData.append(`items[${index}][description]`, item.description || '');
-    });
-
-    getValues('attachments').forEach((attachment) => {
-      if (!(attachment.file instanceof File)) return;
-      formData.append('attachments[]', attachment.file);
-      formData.append('attachment_names[]', attachment.name || attachment.file.name);
-    });
-
-    return formData;
-  };
-
-  const addPendingAttachment = () => {
-    setClientError(null);
-    appendPendingAttachment({ name: '', file: null });
-  };
-
-  const removePendingAttachment = (index: number) => {
-    removePendingAttachmentField(index);
-  };
-
-  const updatePendingAttachmentName = (index: number, name: string) => {
-    setValue(`attachments.${index}.name`, name, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-  };
-
-  const updatePendingAttachmentFile = (index: number, file: File | null) => {
-    if (!file) return;
-
-    const isAllowed = ALLOWED_ATTACHMENT_EXTENSIONS.has(getFileExtension(file.name));
-    if (!isAllowed) {
-      setClientError(
-        `Invalid file type: ${file.name}. Allowed types: jpg, jpeg, png, gif, bmp, svg, webp, mp4, mov, avi, mkv, wmv, pdf, doc, docx, xls, xlsx, ppt, pptx, mp3, wav, aac, ogg.`
-      );
-      enqueueSnackbar('Selected file type is not allowed.', { variant: 'warning' });
-      return;
-    }
-
-    const existing = getValues(`attachments.${index}`);
-    if (!existing) return;
-
-    setClientError(null);
-    const shouldSyncName = !existing.name || existing.name === (existing.file?.name || '');
-    setValue(`attachments.${index}.file`, file, {
-      shouldDirty: true,
-      shouldTouch: true,
-    });
-    if (shouldSyncName) {
-      setValue(`attachments.${index}.name`, file.name, {
-        shouldDirty: true,
-        shouldTouch: true,
-      });
-    }
-  };
-
   const handleSaveDraft = async () => {
     if (!validateBeforeSave()) return;
 
@@ -711,8 +530,7 @@ function ImprestRetirementForm({
       return;
     }
 
-    const createFormData = buildCreateFormData();
-    await addRetirement.mutateAsync(createFormData);
+    await addRetirement.mutateAsync(buildPayload());
   };
 
   const handleSubmitForApproval = async () => {
@@ -723,7 +541,7 @@ function ImprestRetirementForm({
 
     if (!validateBeforeSave()) return;
 
-    const response = await addRetirement.mutateAsync(buildCreateFormData());
+    const response = await addRetirement.mutateAsync(buildPayload());
     const createdId = await resolveRetirementIdFromResponse(response);
 
     if (!createdId) {
@@ -846,216 +664,226 @@ function ImprestRetirementForm({
 
         <Divider sx={{ mb: 1.5 }} />
 
-        {items.map((item, index) => (
-          <Grid container spacing={1} alignItems="center" key={`${item.id || 'new'}-${index}`} mb={1}>
-            <Grid size={{ xs: 1, md: 0.5 }}>
-              <Typography variant="body2">{index + 1}.</Typography>
-            </Grid>
-            {isLocked ? (
-              <>
-                <Grid size={{ xs: 12, md: 4.5 }}>
-                  <ReadOnlyField
-                    label={String(item.line_type || 'EXPENSE') === 'PRODUCT' ? 'Product / Store' : 'Paid Through (Item Ledger)'}
-                    value={
-                      String(item.line_type || 'EXPENSE') === 'PRODUCT'
-                        ? `${item.product?.item_name || item.product?.name || (item.product_id ? `Product #${item.product_id}` : '-')} (${item.store?.name || (item.store_id ? `Store #${item.store_id}` : '-')})`
-                        : `${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`
-                    }
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
-                  <ReadOnlyField
-                    label="Unit"
-                    value={item.measurement_unit?.alias || item.measurement_unit?.symbol || item.measurement_unit?.name || '-'}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 1.5 }}>
-                  <ReadOnlyField
-                    label="Qty"
-                    value={Number(item.quantity || 0).toLocaleString('en-US', {
-                      maximumFractionDigits: 4,
-                    })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 2.5 }}>
-                  <ReadOnlyField
-                    label="Rate"
-                    value={formatMoney(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 1.5 }}>
-                  <ReadOnlyField
-                    label="Amount"
-                    value={formatMoney(
-                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
-                        (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
-                    )}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <ReadOnlyField label="Description" value={item.description || '-'} />
-                </Grid>
-              </>
-            ) : (
-              <>
-                <Grid size={{ xs: 12, md: 2 }}>
-                  <TextField
-                    select
-                    size='small'
-                    fullWidth
-                    label='Line Type'
-                    value={item.line_type || 'EXPENSE'}
-                    onChange={(e) => {
-                      const lineType = String(e.target.value) === 'PRODUCT' ? 'PRODUCT' : 'EXPENSE';
-                      updateItem(index, {
-                        line_type: lineType,
-                        ledger_id: lineType === 'EXPENSE' ? item.ledger_id : null,
-                        product_id: lineType === 'PRODUCT' ? item.product_id : null,
-                        store_id: lineType === 'PRODUCT' ? item.store_id : null,
-                      });
-                    }}
-                  >
-                    <MenuItem value='EXPENSE'>Expense</MenuItem>
-                    <MenuItem value='PRODUCT'>Product</MenuItem>
-                  </TextField>
-                </Grid>
-                <Grid size={{ xs: 12, md: 3.5 }}>
-                  {String(item.line_type || 'EXPENSE') === 'PRODUCT' ? (
-                    <ProductSelect
-                      label='Product'
-                      defaultValue={item.product || null}
-                      onChange={(newValue: any) => {
-                        updateItem(index, {
-                          product_id: Number(newValue?.id || 0) || null,
-                          product: newValue || undefined,
-                          measurement_unit_id:
-                            Number(
-                              newValue?.primary_unit?.id ||
-                                newValue?.measurement_unit_id ||
-                                newValue?.measurement_unit?.id ||
-                                0
-                            ) || item.measurement_unit_id,
-                        });
-                      }}
+        {items.map((item, index) => {
+          const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
+          const hasProductSelected = !!item.product_id;
+          const showStoreField = isProductLine && hasProductSelected;
+
+          return (
+            <Grid container spacing={1} alignItems="center" key={`${item.id || 'new'}-${index}`} mb={1}>
+              <Grid size={{ xs: 1, md: 0.5 }}>
+                <Typography variant="body2">{index + 1}.</Typography>
+              </Grid>
+              {isLocked ? (
+                <>
+                  <Grid size={{ xs: 12, md: 4.5 }}>
+                    <ReadOnlyField
+                      label={isProductLine ? 'Product / Store' : 'Paid Through (Item Ledger)'}
+                      value={
+                        isProductLine
+                          ? `${item.product?.item_name || item.product?.name || (item.product_id ? `Product #${item.product_id}` : '-')} (${item.store?.name || (item.store_id ? `Store #${item.store_id}` : '-')})`
+                          : `${paidThroughLabel} (${item.ledger?.name || (item.ledger_id ? `Ledger #${item.ledger_id}` : '-')})`
+                      }
                     />
-                  ) : (
-                    <LedgerSelect
-                      label={`Item Ledger (Paid via ${paidThroughLabel})`}
-                      defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
-                      onChange={(newValue: any) => {
-                        const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
-                        updateItem(index, {
-                          ledger_id: Number(singleValue?.id || 0) || null,
-                          ledger: singleValue,
-                        });
-                      }}
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 2 }}>
+                    <ReadOnlyField
+                      label="Unit"
+                      value={item.measurement_unit?.alias || item.measurement_unit?.symbol || item.measurement_unit?.name || '-'}
                     />
-                  )}
-                </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
-                  {String(item.line_type || 'EXPENSE') === 'PRODUCT' ? (
-                    <StoreSelector
-                      label='Store'
-                      multiple={false}
-                      defaultValue={item.store || null}
-                      onChange={(newValue: any) => {
-                        updateItem(index, {
-                          store_id: Number(newValue?.id || 0) || null,
-                          store: newValue || undefined,
-                        });
-                      }}
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 1.5 }}>
+                    <ReadOnlyField
+                      label="Qty"
+                      value={Number(item.quantity || 0).toLocaleString('en-US', {
+                        maximumFractionDigits: 4,
+                      })}
                     />
-                  ) : (
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 2.5 }}>
+                    <ReadOnlyField
+                      label="Rate"
+                      value={formatMoney(Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 1.5 }}>
+                    <ReadOnlyField
+                      label="Amount"
+                      value={formatMoney(
+                        (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                          (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                      )}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <ReadOnlyField label="Description" value={item.description || '-'} />
+                  </Grid>
+                </>
+              ) : (
+                <>
+                  <Grid size={{ xs: 12, md: 3 }}>
                     <TextField
+                      select
                       size='small'
                       fullWidth
-                      label='Store'
-                      value='N/A'
+                      label='Line Type'
+                      value={item.line_type || 'EXPENSE'}
+                      onChange={(e) => {
+                        const lineType = String(e.target.value) === 'PRODUCT' ? 'PRODUCT' : 'EXPENSE';
+                        updateItem(index, {
+                          line_type: lineType,
+                          ledger_id: lineType === 'EXPENSE' ? item.ledger_id : null,
+                          product_id: lineType === 'PRODUCT' ? item.product_id : null,
+                          store_id: lineType === 'PRODUCT' ? item.store_id : null,
+                        });
+                      }}
+                    >
+                      <MenuItem value='EXPENSE'>Expense</MenuItem>
+                      <MenuItem value='PRODUCT'>Product</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    {isProductLine ? (
+                      <ProductSelect
+                        label='Product'
+                        defaultValue={item.product || null}
+                        onChange={(newValue: any) => {
+                          const product = newValue;
+                          updateItem(index, {
+                            product_id: Number(product?.id || 0) || null,
+                            product: product || undefined,
+                            store_id: null,
+                            store: undefined,
+                            measurement_unit_id:
+                              Number(
+                                product?.primary_unit?.id ||
+                                  product?.measurement_unit_id ||
+                                  product?.measurement_unit?.id ||
+                                  0
+                              ) || item.measurement_unit_id,
+                          });
+                        }}
+                      />
+                    ) : (
+                      <LedgerSelect
+                        label={`Item Ledger (Paid via ${paidThroughLabel})`}
+                        defaultValue={item.ledger_id ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any) : null}
+                        onChange={(newValue: any) => {
+                          const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+                          updateItem(index, {
+                            ledger_id: Number(singleValue?.id || 0) || null,
+                            ledger: singleValue,
+                          });
+                        }}
+                      />
+                    )}
+                  </Grid>
+
+                  {/* Store field - ONLY for product lines with product selected */}
+                  {isProductLine && (
+                    <Grid size={{ xs: 12, md: 3 }}>
+                      <StoreSelector
+                        label='Store'
+                        multiple={false}
+                        defaultValue={item.store || null}
+                        onChange={(newValue: any) => {
+                          updateItem(index, {
+                            store_id: Number(newValue?.id || 0) || null,
+                            store: newValue || undefined,
+                          });
+                        }}
+                      />
+                    </Grid>
+                  )}
+
+                  <Grid size={{ xs: 12, md: 2.5 }}>
+                    <MeasurementSelector
+                      label="Unit"
+                      defaultValue={item.measurement_unit_id || null}
+                      onChange={(newValue: any) => {
+                        const selected = Array.isArray(newValue) ? newValue[0] : newValue;
+                        updateItem(index, {
+                          measurement_unit_id: Number(selected?.id || 0) || null,
+                          measurement_unit: selected,
+                        });
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: isProductLine ? 2 : 3 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      disabled={isLocked}
+                      label="Quantity"
+                      value={item.quantity ?? 0}
+                      InputProps={{ inputComponent: CommaSeparatedField as any }}
+                      onChange={(e) => {
+                        const quantity = sanitizedNumber(e.target.value);
+                        updateItem(index, { quantity: Number.isFinite(quantity) ? quantity : 0 });
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: isProductLine ? 2 : 3 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      disabled={isLocked}
+                      label="Rate"
+                      value={item.rate ?? 0}
+                      InputProps={{ inputComponent: CommaSeparatedField as any }}
+                      onChange={(e) => {
+                        const rate = sanitizedNumber(e.target.value);
+                        updateItem(index, { rate: Number.isFinite(rate) ? rate : 0 });
+                      }}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: isProductLine ? 2 : 3 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      label="Amount"
+                      value={(
+                        (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
+                        (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
+                      ).toLocaleString('en-US', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      })}
                       disabled
                     />
-                  )}
-                </Grid>
-                <Grid size={{ xs: 12, md: 2 }}>
-                  <MeasurementSelector
-                    label="Unit"
-                    defaultValue={item.measurement_unit_id || null}
-                    onChange={(newValue: any) => {
-                      const selected = Array.isArray(newValue) ? newValue[0] : newValue;
-                      updateItem(index, {
-                        measurement_unit_id: Number(selected?.id || 0) || null,
-                        measurement_unit: selected,
-                      });
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 1.5 }}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    disabled={isLocked}
-                    label="Qty"
-                    value={item.quantity ?? 0}
-                    InputProps={{ inputComponent: CommaSeparatedField as any }}
-                    onChange={(e) => {
-                      const quantity = sanitizedNumber(e.target.value);
-                      updateItem(index, { quantity: Number.isFinite(quantity) ? quantity : 0 });
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: 2.5 }}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    disabled={isLocked}
-                    label="Rate"
-                    value={item.rate ?? 0}
-                    InputProps={{ inputComponent: CommaSeparatedField as any }}
-                    onChange={(e) => {
-                      const rate = sanitizedNumber(e.target.value);
-                      updateItem(index, { rate: Number.isFinite(rate) ? rate : 0 });
-                    }}
-                  />
-                </Grid>
-                <Grid size={{ xs: 12, md: items.length > 1 ? 1.5 : 2 }}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    label="Amount"
-                    value={(
-                      (Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 0) *
-                      (Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0)
-                    ).toLocaleString('en-US', {
-                      minimumFractionDigits: 2,
-                      maximumFractionDigits: 2,
-                    })}
-                    disabled
-                  />
-                </Grid>
-                <Grid size={{ xs: items.length > 1 ? 11.5 : 12 }}>
-                  <TextField
-                    size="small"
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    disabled={isLocked}
-                    label="Description"
-                    value={item.description || ''}
-                    onChange={(e) => updateItem(index, { description: e.target.value })}
-                  />
-                </Grid>
-                <Grid size={{ xs: 0.5 }} textAlign="right">
-                  {!isLocked && items.length > 1 && (
-                    <Tooltip title="Remove Item">
-                      <IconButton size="small" onClick={() => removeItem(index)}>
-                        <DisabledByDefault fontSize="small" color="error" />
-                      </IconButton>
-                    </Tooltip>
-                  )}
-                </Grid>
-              </>
-            )}
-          </Grid>
-        ))}
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: items.length > 1 ? 5.5 : 6 }}>
+                    <TextField
+                      size="small"
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      disabled={isLocked}
+                      label="Description"
+                      value={item.description || ''}
+                      onChange={(e) => updateItem(index, { description: e.target.value })}
+                    />
+                  </Grid>
+
+                  <Grid size={{ xs: 0.5 }} textAlign="right">
+                    {!isLocked && items.length > 1 && (
+                      <Tooltip title="Remove Item">
+                        <IconButton size="small" onClick={() => removeItem(index)}>
+                          <DisabledByDefault fontSize="small" color="error" />
+                        </IconButton>
+                      </Tooltip>
+                    )}
+                  </Grid>
+                </>
+              )}
+            </Grid>
+          );
+        })}
 
         {!isLocked && (
           <Div sx={{ textAlign: 'right', mb: 1.5 }}>
@@ -1075,88 +903,6 @@ function ImprestRetirementForm({
             {clientError}
           </Alert>
         )}
-
-        <>
-          <Divider sx={{ mb: 1.5 }} />
-          <Typography variant="subtitle2" mb={1}>
-            Receipts / Supporting Documents
-          </Typography>
-
-          {!retirementId && (
-            <Grid container spacing={1} alignItems="center">
-              {attachmentRows.map((attachment, index) => (
-                <React.Fragment key={attachment.id}>
-                  <Grid size={{ xs: 12, md: 1 }}>
-                    <Typography variant="body2" sx={{ pt: { xs: 0, md: 1 } }}>
-                      {`${index + 1}.`}
-                    </Typography>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <TextField
-                      size="small"
-                      fullWidth
-                      label="Attachment Name"
-                      value={attachment.name}
-                      onChange={(e) => updatePendingAttachmentName(index, e.target.value)}
-                    />
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 6 }}>
-                    <Div>
-                      <input
-                        type="file"
-                        style={{ width: '100%' }}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0] || null;
-                          updatePendingAttachmentFile(index, file);
-                        }}
-                      />
-                      <Typography variant="caption" color="text.secondary">
-                        {attachment.file?.name || 'File Attachment'}
-                      </Typography>
-                    </Div>
-                  </Grid>
-                  <Grid size={{ xs: 12, md: 1 }}>
-                    {attachmentRows.length > 1 && (
-                      <Tooltip title="Remove Attachment">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => removePendingAttachment(index)}
-                        >
-                          <DisabledByDefault fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    )}
-                  </Grid>
-                </React.Fragment>
-              ))}
-
-              <Grid size={{ xs: 12 }}>
-                <Div sx={{ display: 'flex', justifyContent: 'flex-end' }}>
-                  <Button
-                    size="small"
-                    variant="outlined"
-                    startIcon={<AddOutlined />}
-                    onClick={addPendingAttachment}
-                  >
-                    Add
-                  </Button>
-                </Div>
-              </Grid>
-            </Grid>
-          )}
-
-          {retirementId && (
-            <AttachmentForm
-              hideFeatures
-              readOnly={isLocked}
-              attachmentable_id={retirementId}
-              attachmentable_type="imprest_retirement"
-              attachment_name="imprest retirement"
-              attachment_sourceNo={approvedRequisition?.requisition?.requisitionNo || ''}
-            />
-          )}
-        </>
       </DialogContent>
 
       <DialogActions>
