@@ -1,16 +1,13 @@
 'use client';
 
 import React, { useState } from 'react';
+import { useSnackbar } from 'notistack';
 import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
   Alert,
   Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
   Chip,
   Divider,
   Grid,
@@ -21,16 +18,12 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
-  Button,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRouter, useParams } from 'next/navigation';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 import rfqServices from '../rfq-services';
 import RFQDialogForm from '../form/RFQDialogForm';
 import RFQListItemAction from './RFQListItemAction';
@@ -62,6 +55,7 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
   const [expanded, setExpanded] = useState(false);
   const [openEdit, setOpenEdit] = useState(false);
   const [tabValue, setTabValue] = useState(0);
+  const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -97,9 +91,10 @@ function RFQListItem({ rfq }: { rfq: RFQListRow }) {
       }
       hideDialog();
     },
-    onError: (error) => {
-      // Optionally show error message
-      console.error('Failed to delete RFQ:', error);
+    onError: (error: any) => {
+      enqueueSnackbar(error?.response?.data?.message, {
+        variant: 'error',
+      });
       hideDialog();
     },
   });
