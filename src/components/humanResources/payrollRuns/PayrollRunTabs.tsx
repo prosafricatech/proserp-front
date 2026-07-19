@@ -1,8 +1,8 @@
 // components/humanResources/payrollRuns/PayrollRunTabs.tsx
 'use client';
 
-import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import {
   CloseOutlined,
   SearchOutlined,
@@ -28,12 +28,12 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import PayrollApprovalItemAction from './PayrollApprovalItemAction';
-import PayrollApprovalsActionTail from './PayrollApprovalsActionTail';
-import { PayrollRunType } from './PayrollRunType';
 import { useRouter } from 'next/navigation';
 import EmployeeSelector from '../employees/EmployeeSelector';
 import { Employee } from '../employees/EmployeesType';
+import PayrollApprovalItemAction from './PayrollApprovalItemAction';
+import PayrollApprovalsActionTail from './PayrollApprovalsActionTail';
+import { PayrollRunType } from './PayrollRunType';
 import {
   calculateGrossSalary,
   calculateNetSalary,
@@ -388,7 +388,7 @@ export const EmployeesTab = ({
               </TableRow>
             </TableHead>
             <TableBody>
-              {filteredRows.slice(0, 10).map((row: any, index: number) => {
+              {filteredRows.map((row: any, index: number) => {
                 const allowances = row.allowances || [];
                 const deductions = row.deductions || [];
                 const contributions = row.employer_contributions || [];
@@ -545,7 +545,7 @@ export const EmployeesTab = ({
                   </TableRow>
                 );
               })}
-              {filteredRows.length > 10 && (
+              {/* {filteredRows.length > 10 && (
                 <TableRow>
                   <TableCell
                     colSpan={
@@ -561,7 +561,7 @@ export const EmployeesTab = ({
                     </Typography>
                   </TableCell>
                 </TableRow>
-              )}
+              )} */}
               {/* Totals Row */}
               {filteredRows.length > 1 && (
                 <TableRow sx={{ fontWeight: 500, bgcolor: 'action.hover' }}>
@@ -995,7 +995,9 @@ export const ApprovalsTab = ({ payrollRun }: ApprovalsTabProps) => {
               const chainLevel = payrollRun?.approval_chain?.levels?.find(
                 (level) =>
                   Number(level.id) ===
-                  Number(approval.chain_level_id || approval.approval_chain_level_id)
+                  Number(
+                    approval.chain_level_id || approval.approval_chain_level_id
+                  )
               );
 
               return (

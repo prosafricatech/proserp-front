@@ -811,6 +811,82 @@ humanResourcesServices.showPayslip = async (id) => {
 }
 
 // ============================================
+// MY HR
+// ============================================
+
+// --- Profile tab ---
+humanResourcesServices.myHrProfile = async () => {
+    const { data } = await axios.get(`/api/humanResources/myHr/profile`);
+    return data;
+};
+
+// --- Payslips tab ---
+humanResourcesServices.myHrPayslipsList = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/payslips', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.myHrPayslip = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/payslips/${id}`);
+    return data;
+};
+
+// --- contractstab ---
+humanResourcesServices.myHrContracts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/contracts', {
+        params,
+    });
+    return data;
+};
+
+// --- next of kin tab ---
+humanResourcesServices.myHrNextOfKin = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/nextOfKin', {
+        params,
+    });
+    return data;
+};
+
+// --- account statemtnt tab ---
+humanResourcesServices.myHrAccountStatement = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/accountStatement', {
+        params,
+    });
+    return data;
+};
+
+// --- imprest accounts tab ---
+humanResourcesServices.myHrImprestAccounts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/imprestAccounts', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.myHrImprestAccountStatement = async (id, params = {}) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/imprestAccounts/${id}`, { params });
+    return data;
+};
+
+// ===== LEAVES TAB ===== //
+// ---Leave requests ---
+humanResourcesServices.myHrLeaveRequests = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveRequests', {
+        params,
+    });
+    return data;
+};
+// ---Leave balances ---
+humanResourcesServices.myHrLeaveBalances = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveBalances', {
+        params,
+    });
+    return data;
+};
+
+// ============================================
 // EXPORT
 // ============================================
 humanResourcesServices.ExportPayrollToExcel = async (exportedData) => {

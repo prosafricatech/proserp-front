@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import CheckBox from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlank from '@mui/icons-material/CheckBoxOutlineBlank';
 import {
   Autocomplete,
   Checkbox,
   Chip,
   LinearProgress,
   TextField,
-} from "@mui/material";
-import CheckBoxOutlineBlank from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBox from "@mui/icons-material/CheckBox";
-import { useJumboAuth } from "@/app/providers/JumboAuthProvider";
-import organizationServices from "../organizations/organizationServices";
-import { useQuery } from "@tanstack/react-query";
+} from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import organizationServices from '../organizations/organizationServices';
 
 interface User {
   id: number;
@@ -33,7 +39,7 @@ interface UsersSelectorProps {
 const UsersSelector: React.FC<UsersSelectorProps> = ({
   onChange,
   multiple = false,
-  label = "Users",
+  label = 'Users',
   defaultValue = null,
   value: controlledValue,
   frontError = null,
@@ -42,8 +48,12 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   const { authOrganization } = useJumboAuth();
   const organization = authOrganization?.organization;
 
-  const { data: rawUsers = [], isFetching, error } = useQuery<User[]>({
-    queryKey: ["users", organization?.id],
+  const {
+    data: rawUsers = [],
+    isFetching,
+    error,
+  } = useQuery<User[]>({
+    queryKey: ['users', organization?.id],
     queryFn: () =>
       organizationServices.getOrganizationUsers({
         organizationId: organization?.id,
@@ -96,10 +106,17 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
 
     if (multiple) {
       const current = (value as User[]) || [];
-      const incoming = (Array.isArray(controlledValue) ? controlledValue : controlledValue ? [controlledValue] : []) as User[];
+      const incoming = (
+        Array.isArray(controlledValue)
+          ? controlledValue
+          : controlledValue
+            ? [controlledValue]
+            : []
+      ) as User[];
       const sameLength = current.length === incoming.length;
       const sameValues =
-        sameLength && current.every((item, index) => item?.id === incoming[index]?.id);
+        sameLength &&
+        current.every((item, index) => item?.id === incoming[index]?.id);
 
       if (!sameValues) {
         setValue(incoming);
@@ -108,10 +125,16 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
     }
 
     const currentId = (value as User | null)?.id ?? null;
-    const incomingId = (Array.isArray(controlledValue) ? controlledValue[0] : controlledValue)?.id ?? null;
+    const incomingId =
+      (Array.isArray(controlledValue) ? controlledValue[0] : controlledValue)
+        ?.id ?? null;
 
     if (currentId !== incomingId) {
-      setValue((Array.isArray(controlledValue) ? controlledValue[0] : controlledValue) || null);
+      setValue(
+        (Array.isArray(controlledValue)
+          ? controlledValue[0]
+          : controlledValue) || null
+      );
     }
   }, [controlledValue, multiple, value]);
 
@@ -128,7 +151,7 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
   return (
     <Autocomplete
       multiple={multiple}
-      size="small"
+      size='small'
       options={users}
       value={value}
       onChange={handleChange}
@@ -147,10 +170,7 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
       )}
       renderTags={(value: User[], getTagProps) =>
         value.map((option, index) => (
-          <Chip
-            {...getTagProps({ index })}
-            label={option.name}
-          />
+          <Chip {...getTagProps({ index })} label={option.name} />
         ))
       }
       {...(multiple && {
@@ -160,8 +180,8 @@ const UsersSelector: React.FC<UsersSelectorProps> = ({
           return (
             <li key={key} {...rest}>
               <Checkbox
-                icon={<CheckBoxOutlineBlank fontSize="small" />}
-                checkedIcon={<CheckBox fontSize="small" />}
+                icon={<CheckBoxOutlineBlank fontSize='small' />}
+                checkedIcon={<CheckBox fontSize='small' />}
                 checked={selected}
                 sx={{ mr: 1 }}
               />
