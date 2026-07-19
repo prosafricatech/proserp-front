@@ -1,7 +1,14 @@
 'use client';
 
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { VisibilityOutlined } from '@mui/icons-material';
-import { Dialog, IconButton, LinearProgress, Tooltip } from '@mui/material';
+import {
+  Dialog,
+  IconButton,
+  LinearProgress,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
 import humanResourcesServices from '../../humanResourcesServices';
@@ -49,6 +56,8 @@ function mapPayslipForDialog(raw: any, profile?: any) {
 }
 
 const MyHrPayslipItemAction = ({ payslipId }: MyHrPayslipItemActionProps) => {
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [open, setOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -74,6 +83,7 @@ const MyHrPayslipItemAction = ({ payslipId }: MyHrPayslipItemActionProps) => {
             open={open}
             onClose={() => setOpen(false)}
             fullWidth
+            fullScreen={belowLargeScreen}
             maxWidth='sm'
           >
             <LinearProgress />

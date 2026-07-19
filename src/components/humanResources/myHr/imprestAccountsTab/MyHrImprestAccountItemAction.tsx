@@ -3,11 +3,14 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { VisibilityOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
+  Button,
   Dialog,
+  DialogActions,
   DialogContent,
   DialogTitle,
   Grid,
@@ -22,6 +25,7 @@ import {
   TableRow,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
@@ -46,24 +50,8 @@ const formatBalance = (value: number) => {
   return formatted === '-0.00' ? '0.00' : formatted;
 };
 
-// An imprest/float ledger tracks money advanced TO the employee that they
-// still owe an accounting of until it's retired — from the employee's side
-// this behaves like an asset/receivable balance, which conventionally
-// increases with Debit (the opposite of the Account Statement tab's payable
-// ledger, which increases with Credit). NOT yet confirmed against a real
-// populated statement response (only the /my-ledgers list sample was seen,
-// which has no transactions) — verify the sign once real data comes back,
-// and flip to 'CR' here if balances come out inverted.
 const INCREASES_WITH: 'DR' | 'CR' = 'DR';
 
-// Pulled into a function on purpose: TypeScript narrows a directly-
-// referenced `const` to its literal initializer within the same scope even
-// when it's annotated with a wider union type, so comparing
-// `INCREASES_WITH === 'CR'` inline gets flagged as an "unintentional
-// comparison" (the two literal types never overlap, as far as the narrowed
-// type is concerned) even though it's fine at runtime. A function parameter
-// isn't narrowed the same way, so wrapping the comparison here avoids the
-// false-positive without needing a runtime cast.
 function signedAmount(
   credit: number,
   debit: number,
@@ -81,20 +69,12 @@ interface MyHrImprestAccountItemActionProps {
   link: MyHrImprestLedgerLink;
 }
 
-/**
- * Row action for one imprest ledger — opens a statement dialog. Same
- * self-contained action-with-own-dialog convention used elsewhere
- * (UserLedgerUnlinkRowAction.tsx / MyHrPayslipItemAction.tsx), query gated
- * on `enabled: open`.
- *
- * Filters here are From/To only (no Cost Centers, unlike the Account
- * Statement tab) — per the handoff doc, GET /my-ledgers/{ledgerId}/statement
- * only documents optional ?from=&to=.
- */
 const MyHrImprestAccountItemAction = ({
   link,
 }: MyHrImprestAccountItemActionProps) => {
   const { authOrganization } = useJumboAuth();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [open, setOpen] = useState(false);
   const [fromDate, setFromDate] = useState<Dayjs | null>(null);
   const [toDate, setToDate] = useState<Dayjs | null>(null);
@@ -178,6 +158,7 @@ const MyHrImprestAccountItemAction = ({
         open={open}
         onClose={() => setOpen(false)}
         fullWidth
+        fullScreen={belowLargeScreen}
         maxWidth='md'
       >
         <DialogTitle>
@@ -369,6 +350,12 @@ const MyHrImprestAccountItemAction = ({
             )}
           </Stack>
         </DialogContent>
+
+        <DialogActions>
+          <Button size='small' onClick={() => setOpen(false)}>
+            Cancel
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
