@@ -18,7 +18,7 @@ import {
   Typography,
 } from '@mui/material';
 import { AddOutlined, DisabledByDefault } from '@mui/icons-material';
-import { DatePicker } from '@mui/x-date-pickers';
+import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -31,6 +31,7 @@ import userLedgerServices from '@/components/accounts/ledgers/user-ledger-servic
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
 import ProductSelect from '@/components/productAndServices/products/ProductSelect';
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
+import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 
 type RetirementItem = {
   id?: number;
@@ -144,6 +145,8 @@ function ImprestRetirementForm({
 }: ImprestRetirementFormProps) {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
+  const {productOptions} = useProductsSelect();
+  const nonInventoryIds = productOptions.filter(product => product.type !== 'Inventory').map(product => product.id);
 
   const [retirementId, setRetirementId] = React.useState<number | null>(null);
   const [statusLabel, setStatusLabel] = React.useState<string>('Draft');
@@ -165,8 +168,7 @@ function ImprestRetirementForm({
     queryKey: ['imprestRetirements', { requisition_approval_id: approvedDetails?.id }],
     queryFn: () =>
       imprestRetirementServices.list({
-        requisition_approval_id: approvedDetails?.id,
-        limit: 20,
+        requisition_approval_id: approvedDetails?.id
       }),
     enabled: !!approvedDetails?.id && !existingRetirementDetails && !startNew,
   });
@@ -333,7 +335,6 @@ function ImprestRetirementForm({
   const statusRaw = String(statusLabel || '').toLowerCase();
   const isLocked = false;
   const canSubmitForApproval =
-    !isEditMode &&
     (statusRaw === 'draft' ||
       statusRaw === 'suspended' ||
       statusRaw.includes('reject'));
@@ -625,7 +626,7 @@ function ImprestRetirementForm({
               />
             </Grid>
             <Grid size={{ xs: 12, md: 4 }}>
-              <DatePicker
+              <DateTimePicker
                 label="Retirement Date"
                 disabled={isLocked}
                 value={retirementDate}
@@ -666,8 +667,6 @@ function ImprestRetirementForm({
 
         {items.map((item, index) => {
           const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
-          const hasProductSelected = !!item.product_id;
-          const showStoreField = isProductLine && hasProductSelected;
 
           return (
             <Grid container spacing={1} alignItems="center" key={`${item.id || 'new'}-${index}`} mb={1}>
@@ -748,6 +747,7 @@ function ImprestRetirementForm({
                       <ProductSelect
                         label='Product'
                         defaultValue={item.product || null}
+                        excludeIds={nonInventoryIds}
                         onChange={(newValue: any) => {
                           const product = newValue;
                           updateItem(index, {
