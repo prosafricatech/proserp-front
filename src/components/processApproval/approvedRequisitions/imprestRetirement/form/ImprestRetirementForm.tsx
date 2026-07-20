@@ -18,11 +18,10 @@ import {
   Typography,
 } from '@mui/material';
 import { AddOutlined, DisabledByDefault } from '@mui/icons-material';
-import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
+import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs, { Dayjs } from 'dayjs';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useForm } from 'react-hook-form';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import MeasurementSelector from '@/components/masters/measurementUnits/MeasurementSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
@@ -153,7 +152,6 @@ function ImprestRetirementForm({
   const [ledgerId, setLedgerId] = React.useState<number | null>(null);
   const [retirementDate, setRetirementDate] = React.useState<Dayjs | null>(dayjs());
   const [remarks, setRemarks] = React.useState('');
-  const [items, setItems] = React.useState<RetirementItem[]>([{ ...EMPTY_ITEM }]);
   const [clientError, setClientError] = React.useState<string | null>(null);
 
   const { data: myLedgersResponse } = useQuery({
@@ -232,9 +230,69 @@ function ImprestRetirementForm({
 
   const isEditMode = Boolean(existingRetirement?.id);
 
+  // Initialize items - this runs once when component mounts
+  const [items, setItems] = React.useState<RetirementItem[]>(() => {
+    // If editing an existing retirement, use its items
+    if (existingRetirement) {
+      const sourceItems = Array.isArray(existingRetirement.items)
+        ? existingRetirement.items
+        : Array.isArray(existingRetirement.items?.data)
+          ? existingRetirement.items.data
+          : Array.isArray(existingRetirement.items?.data?.data)
+            ? existingRetirement.items.data.data
+            : [];
+
+      return sourceItems.map((item: any) => ({
+        id: item.id,
+        imprest_retirement_item_id:
+          Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
+        line_type:
+          Number(item.product_id || item.product?.id)
+            ? 'PRODUCT'
+            : 'EXPENSE',
+        ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
+        product_id: Number(item.product_id || item.product?.id) || null,
+        store_id: Number(item.store_id || item.store?.id) || null,
+        measurement_unit_id:
+          Number(item.measurement_unit_id || item.measurement_unit?.id) || null,
+        quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1,
+        rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
+        amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
+        description: item.description || item.remarks || '',
+        ledger: item.ledger,
+        product: item.product,
+        store: item.store,
+        measurement_unit: item.measurement_unit,
+      }));
+    }
+    
+    // If creating new retirement from approvedDetails
+    if (approvedDetails?.items?.length) {
+      return approvedDetails.items.map((item: any) => ({
+        line_type: 'EXPENSE',
+        ledger_id: Number(item?.ledger?.id) || null,
+        product_id: null,
+        store_id: null,
+        measurement_unit_id: Number(item?.measurement_unit?.id) || null,
+        quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
+        rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
+        description: item?.remarks || '',
+        ledger: item?.ledger ? { id: item.ledger.id, name: item.ledger.name } : null,
+        measurement_unit: item?.measurement_unit,
+      }));
+    }
+    
+    // Default: one empty item
+    return [{ ...EMPTY_ITEM }];
+  });
+
+  console.log('approvedDetails:', approvedDetails);
+  console.log('items:', items);
+
   React.useEffect(() => {
     if (!existingRetirement) return;
 
+    // Update state from existing retirement if editing
     setRetirementId(existingRetirement.id);
     setStatusLabel(existingRetirement.status_label || existingRetirement.status || 'Draft');
     setLedgerId(Number(existingRetirement.ledger_id || existingRetirement.ledger?.id) || null);
@@ -244,39 +302,6 @@ function ImprestRetirementForm({
         : dayjs()
     );
     setRemarks(existingRetirement.remarks || '');
-
-    const sourceItems = Array.isArray(existingRetirement.items)
-      ? existingRetirement.items
-      : Array.isArray(existingRetirement.items?.data)
-        ? existingRetirement.items.data
-        : Array.isArray(existingRetirement.items?.data?.data)
-          ? existingRetirement.items.data.data
-          : [];
-
-    const normalizedItems = sourceItems.map((item: any) => ({
-      id: item.id,
-      imprest_retirement_item_id:
-        Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
-      line_type:
-        Number(item.product_id || item.product?.id)
-          ? 'PRODUCT'
-          : 'EXPENSE',
-      ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
-      product_id: Number(item.product_id || item.product?.id) || null,
-      store_id: Number(item.store_id || item.store?.id) || null,
-      measurement_unit_id:
-        Number(item.measurement_unit_id || item.measurement_unit?.id) || null,
-      quantity: Number.isFinite(Number(item.quantity)) ? Number(item.quantity) : 1,
-      rate: Number.isFinite(Number(item.rate)) ? Number(item.rate) : 0,
-      amount: Number.isFinite(Number(item.amount)) ? Number(item.amount) : undefined,
-      description: item.description || item.remarks || '',
-      ledger: item.ledger,
-      product: item.product,
-      store: item.store,
-      measurement_unit: item.measurement_unit,
-    }));
-
-    setItems(normalizedItems.length > 0 ? normalizedItems : [{ ...EMPTY_ITEM }]);
   }, [existingRetirement]);
 
   React.useEffect(() => {
@@ -374,7 +399,6 @@ function ImprestRetirementForm({
 
       const listResponse = await imprestRetirementServices.list({
         requisition_approval_id: requisitionApprovalId,
-        limit: 100,
       });
 
       const list = Array.isArray(listResponse)
