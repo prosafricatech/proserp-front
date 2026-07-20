@@ -8,12 +8,17 @@ import ApprovedPaymentListItem from '../approvedPayment/ApprovedPaymentListItem'
 import ApprovedIssueListItem from '../approvedIssue/ApprovedIssueListItem';
 import ImprestRetirementActionTail from '../imprestRetirement/ImprestRetirementActionTail';
 import ImprestRetirementListItem from '../imprestRetirement/ImprestRetirementListItem';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import ApprovedPurchaseActionTail from '../approvedPurchase/ApprovedPurchaseActionTail';
+import ApprovedPaymentActionTail from '../approvedPayment/ApprovedPaymentActionTail';
+import ApprovedIssueActionTail from '../approvedIssue/ApprovedIssueActionTail';
 
-// Fixed slots for the non-retirement tabs; Retirements and Store Issues shift
-// depending on whether can_retire is true, since Retirements only renders then.
 export const MATERIAL_TAB = {
   PURCHASE_ORDERS: 0,
   PAYMENTS: 1,
+  RETIREMENTS: 2,
+  STORE_ISSUES: 3,
 } as const;
 
 interface MaterialRequisitionTabsProps {
@@ -29,9 +34,12 @@ function MaterialRequisitionTabs({
   activeTab,
   setActiveTab,
 }: MaterialRequisitionTabsProps) {
+  const { checkOrganizationPermission } = useJumboAuth();
+  
   const canRetire = !!approvedRequisition?.can_retire;
-  const retirementTabIndex = canRetire ? 2 : -1;
-  const storeIssueTabIndex = canRetire ? 3 : 2;
+  const isFullyOrdered = approvedRequisition?.is_fully_ordered === true;
+  const isFullyPaid = approvedRequisition?.is_fully_paid === true;
+  const isFullyIssued = approvedRequisition?.is_fully_issued === true;
 
   return (
     <Grid container spacing={1}>
@@ -51,21 +59,53 @@ function MaterialRequisitionTabs({
       </Grid>
       <Grid size={{ xs: 12 }}>
         {activeTab === MATERIAL_TAB.PURCHASE_ORDERS && (
-          <ApprovedPurchaseListItem
-            approvedRequisition={approvedRequisition as any}
-            isExpanded={isExpanded}
-          />
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={1} justifyContent='flex-end' mb={1}>
+              <Grid size={{ xs: 12 }} textAlign='right'>
+                {
+                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) &&
+                  !isFullyOrdered && (
+                    <ApprovedPurchaseActionTail
+                      approvedRequisition={approvedRequisition as any}
+                      isExpanded={isExpanded}
+                    />
+                  )}
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <ApprovedPurchaseListItem
+                  approvedRequisition={approvedRequisition as any}
+                  isExpanded={isExpanded}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
         )}
 
         {activeTab === MATERIAL_TAB.PAYMENTS && (
-          <ApprovedPaymentListItem
-            approvedRequisition={approvedRequisition}
-            isExpanded={isExpanded}
-            showHeader={true}
-          />
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={1} justifyContent='flex-end' mb={1}>
+              <Grid size={{ xs: 12 }} textAlign='right'>
+                {
+                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
+                  !isFullyPaid && (
+                    <ApprovedPaymentActionTail
+                      approvedRequisition={approvedRequisition}
+                      isExpanded={isExpanded}
+                    />
+                  )}
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <ApprovedPaymentListItem
+                  approvedRequisition={approvedRequisition}
+                  isExpanded={isExpanded}
+                  showHeader={true}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
         )}
 
-        {canRetire && activeTab === retirementTabIndex && (
+        {canRetire && activeTab === MATERIAL_TAB.RETIREMENTS && (
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} justifyContent='flex-end' mb={1}>
               <Grid size={{ xs: 12 }} textAlign='right'>
@@ -84,12 +124,28 @@ function MaterialRequisitionTabs({
           </Grid>
         )}
 
-        {activeTab === storeIssueTabIndex && (
-          <ApprovedIssueListItem
-            approvedRequisition={approvedRequisition}
-            isExpanded={isExpanded}
-            showHeader={true}
-          />
+        {activeTab === MATERIAL_TAB.STORE_ISSUES && (
+          <Grid size={{ xs: 12 }}>
+            <Grid container spacing={1} justifyContent='flex-end' mb={1}>
+              <Grid size={{ xs: 12 }} textAlign='right'>
+                {
+                  checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE]) &&
+                  !isFullyIssued && (
+                    <ApprovedIssueActionTail
+                      approvedRequisition={approvedRequisition}
+                      isExpanded={isExpanded}
+                    />
+                  )}
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <ApprovedIssueListItem
+                  approvedRequisition={approvedRequisition}
+                  isExpanded={isExpanded}
+                  showHeader={true}
+                />
+              </Grid>
+            </Grid>
+          </Grid>
         )}
       </Grid>
     </Grid>

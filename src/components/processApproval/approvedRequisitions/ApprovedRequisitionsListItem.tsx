@@ -235,22 +235,6 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                   )}
 
                 {/* Material type: action tail depends on which tab is active in MaterialRequisitionTabs */}
-                {isMaterial && activeMaterialTab === MATERIAL_TAB.PURCHASE_ORDERS &&
-                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) &&
-                  !materialRequisition.is_fully_ordered && (
-                    <ApprovedPurchaseActionTail
-                      approvedRequisition={approvedRequisition as any}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
-                {isMaterial && activeMaterialTab === MATERIAL_TAB.PAYMENTS &&
-                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
-                  !materialRequisition.is_fully_paid && (
-                    <ApprovedPaymentActionTail
-                      approvedRequisition={approvedRequisition}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
                 {isMaterial && activeMaterialTab === MATERIAL_TAB.STORE_ISSUES &&
                   checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE]) &&
                   !materialRequisition.is_fully_issued && (

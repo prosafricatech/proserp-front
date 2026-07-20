@@ -119,7 +119,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       const base = String(rawDescription || '').trim();
       const debitLabel = String(debitLedgerName || '').trim();
 
-      // During edit, keep the user-entered description as-is.
       if (isEditMode || !isImprestPayment) return base;
       if (!debitLabel) return base;
 
@@ -144,7 +143,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
 return payment.items.map((payItem: any, index: number) => {
   let prevItem = null;
 
-  // Try to find by ledger id
   if (payItem?.debit_ledger_id) {
     prevItem = previousItems.find(
       (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
@@ -157,9 +155,6 @@ return payment.items.map((payItem: any, index: number) => {
     );
   }
 
-  // NEW: IMPREST overwrites debit_ledger_id to the imprest ledger on submit,
-  // and saved payment items carry no id linking back to the approval line —
-  // so neither lookup above can match. Fall back to positional matching.
   if (!prevItem && previousItems[index]) {
     prevItem = previousItems[index];
   }
@@ -213,19 +208,13 @@ return payment.items.map((payItem: any, index: number) => {
       return approvedDetails.items
         .filter((item: any) => {
           if (isMaterialPayment) {
-            // MATERIAL: only IMPREST-fulfillment lines are payable here; PURCHASE
-            // lines are settled via Purchase Orders, not this payment form.
             return item.fulfillment_type === 'IMPREST';
           }
-          // Everyone else (PAYMENT, IMPREST process types): only items with something still unpaid
           return item.unpaid_amount > 0;
         })
         .map((item: any) => {
           const ledgerId = item.ledger?.id || item.ledger_id || 0;
           const ledgerName = item.ledger?.name || item.ledger_name || '';
-
-          // MATERIAL/IMPREST-fulfillment items don't carry unpaid_amount directly —
-          // derive the payable amount from quantity * rate (+ vat) instead.
           const vatFactor = (item.vat_percentage || 0) * 0.01;
           const derivedAmount = isMaterialPayment
             ? Number(item.quantity || 0) * Number(item.rate || 0) * (1 + vatFactor)

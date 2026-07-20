@@ -230,9 +230,7 @@ function ImprestRetirementForm({
 
   const isEditMode = Boolean(existingRetirement?.id);
 
-  // Initialize items - this runs once when component mounts
   const [items, setItems] = React.useState<RetirementItem[]>(() => {
-    // If editing an existing retirement, use its items
     if (existingRetirement) {
       const sourceItems = Array.isArray(existingRetirement.items)
         ? existingRetirement.items
@@ -266,9 +264,8 @@ function ImprestRetirementForm({
       }));
     }
     
-    // If creating new retirement from approvedDetails
     if (approvedDetails?.items?.length) {
-      return approvedDetails.items.map((item: any) => ({
+      return approvedDetails.items.filter((item: any) => (item.fulfillment_type === 'IMPREST' || approvedDetails.process_type === 'IMPREST')).map((item: any) => ({
         line_type: 'EXPENSE',
         ledger_id: Number(item?.ledger?.id) || null,
         product_id: null,
@@ -282,17 +279,12 @@ function ImprestRetirementForm({
       }));
     }
     
-    // Default: one empty item
     return [{ ...EMPTY_ITEM }];
   });
-
-  console.log('approvedDetails:', approvedDetails);
-  console.log('items:', items);
 
   React.useEffect(() => {
     if (!existingRetirement) return;
 
-    // Update state from existing retirement if editing
     setRetirementId(existingRetirement.id);
     setStatusLabel(existingRetirement.status_label || existingRetirement.status || 'Draft');
     setLedgerId(Number(existingRetirement.ledger_id || existingRetirement.ledger?.id) || null);
