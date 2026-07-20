@@ -2,6 +2,8 @@
 
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import JumboContentLayout from '@jumbo/components/JumboContentLayout';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -232,20 +234,24 @@ function ProfileContent() {
         maxWidth='md'
         fullScreen={belowLargeScreen}
       >
-        <DepartmentsProvider>
-          <DesignationsProvider>
-            <EmployeeForm
-              employee={editingEmployee ?? employee ?? undefined}
-              setOpenDialog={(v) => {
-                setOpenEditDialog(v);
-                if (!v) {
-                  setEditingEmployee(null);
-                  reFetchEmployee();
-                }
-              }}
-            />
-          </DesignationsProvider>
-        </DepartmentsProvider>
+        <LedgerSelectProvider>
+          <LedgerGroupProvider>
+            <DepartmentsProvider>
+              <DesignationsProvider>
+                <EmployeeForm
+                  employee={editingEmployee ?? employee ?? undefined}
+                  setOpenDialog={(v) => {
+                    setOpenEditDialog(v);
+                    if (!v) {
+                      setEditingEmployee(null);
+                      reFetchEmployee();
+                    }
+                  }}
+                />
+              </DesignationsProvider>
+            </DepartmentsProvider>
+          </LedgerGroupProvider>
+        </LedgerSelectProvider>
       </Dialog>
 
       <JumboContentLayout

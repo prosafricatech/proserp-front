@@ -24,12 +24,14 @@ import MyHrLeaves from './leavesTab/MyHrLeaves';
 import MyHrNextOfKin from './nextOfKinTab/MyHrNextOfKin';
 import MyHrPayslips from './payslipsTab/MyHrPayslips';
 import MyHrProfile from './profileTab/MyHrProfile';
+import MyHrLoans from './loansTab/MyHrLoans';
 type TabKey =
   | 'profile'
   | 'payslips'
   | 'leave'
   | 'contracts'
   | 'nextOfKins'
+  | 'loans'
   | 'accountStatement'
   | 'imprestAccounts';
 
@@ -39,6 +41,7 @@ const VALID_TABS: TabKey[] = [
   'leave',
   'contracts',
   'nextOfKins',
+  'loans',
   'accountStatement',
   'imprestAccounts',
 ];
@@ -118,6 +121,8 @@ const MyHr = () => {
         return <MyHrContracts />;
       case 'nextOfKins':
         return <MyHrNextOfKin />;
+      case 'loans':
+        return <MyHrLoans />;
       case 'accountStatement':
         return <MyHrAccountStatement />;
       case 'imprestAccounts':
@@ -176,21 +181,6 @@ const MyHr = () => {
     >
       {errStatus && errStatus === 404 ? (
         <Card sx={{ height: '100%', p: 1 }}>
-          {/* <Box
-            width={'100%'}
-            height={'100%'}
-            display={'flex'}
-            flexDirection={'column'}
-            justifyContent={'center'}
-            alignItems={'center'}
-          >
-            <LinkOffOutlined
-              sx={{ width: 50, height: 50, textAlign: 'center' }}
-            />
-            <Typography textAlign={'center'} fontSize={15}>
-              Your account is not linked to an employee record. contact HR.
-            </Typography>
-          </Box> */}
           <Tabs
             value={activeTab}
             onChange={handleTabChange}
@@ -217,6 +207,7 @@ const MyHr = () => {
               <Tab label='Leave' value='leave' />
               <Tab label='contracts' value='contracts' />
               <Tab label='Next of Kin' value='nextOfKins' />
+              <Tab label='Loans' value='loans' />
               <Tab label='Account Statement' value='accountStatement' />
               <Tab label='Imprest Accounts' value='imprestAccounts' />
             </Tabs>
