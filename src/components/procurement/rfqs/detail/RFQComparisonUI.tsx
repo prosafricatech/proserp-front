@@ -51,7 +51,7 @@ interface Currency {
 
 interface RFQComparisonProps {
   comparison: { items: ComparisonItem[] };
-  rfqDetails?: any; // full RFQ detail (GET /rfqs/{id}) — used to look up each supplier's response currency
+  rfqDetails?: any;
   isAwarding: boolean;
   awardingSupplierId?: number | null;
   onAward: (selectedQuotes: Record<number, Quote>) => void;
@@ -77,7 +77,6 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
     return Array.from(map.values());
   }, [items]);
 
-  // stakeholder_id -> currency, sourced from rfqDetails.responses (comparison endpoint doesn't include it)
   const currencyBySupplier = useMemo(() => {
     const map = new Map<number, Currency>();
     (rfqDetails?.responses || []).forEach((r: any) => {
@@ -96,8 +95,6 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
     const symbol = currency?.symbol || currency?.code;
     return symbol ? `${symbol} ${value.toLocaleString()}` : value.toLocaleString();
   };
-
-  const totalItems = items.length;
 
   const getBestPrice = (quotes: Quote[]) => {
     if (!quotes || quotes.length === 0) return null;
@@ -137,7 +134,6 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
 
   return (
     <Paper sx={{ p: 3, bgcolor: isDarkMode ? 'background.paper' : 'background.default' }}>
-      {/* Header */}
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }} flexWrap="wrap" rowGap={1}>
         <Typography variant="h6" fontWeight="bold" color="text.primary">
           <AssessmentOutlined fontSize="small" sx={{ mr: 1, verticalAlign: 'middle' }} />
@@ -266,36 +262,37 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
                   </TableRow>
                 );
               })}
+
+              {/* Footer/Award Row - Now properly inside TableBody */}
+              <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 3 }}>
+                <TableCell
+                  sx={{ position: 'sticky', left: 0, bottom: 0, bgcolor: footerBg, zIndex: 4, borderTop: 2, borderColor: 'divider', fontWeight: 'bold' }}
+                >
+                  Award
+                </TableCell>
+                <TableCell sx={{ bgcolor: footerBg, borderTop: 2, borderColor: 'divider' }} />
+                {suppliers.map((supplier) => {
+                  const count = getSupplierSelectionCount(supplier.id);
+                  const isThisSupplierAwarding = isAwarding && awardingSupplierId === supplier.id;
+
+                  return (
+                    <TableCell key={supplier.id} align="center" sx={{ bgcolor: footerBg, borderTop: 2, borderColor: 'divider', py: 1.5 }}>
+                      <LoadingButton
+                        variant={count > 0 ? 'contained' : 'outlined'}
+                        size="small"
+                        loading={isThisSupplierAwarding}
+                        disabled={count === 0 || isAwarding}
+                        onClick={() => handleAwardSupplier(supplier.id)}
+                        startIcon={<ShoppingCartOutlined />}
+                        sx={{ minWidth: 'auto', px: 1.5 }}
+                      >
+                        Award{count > 0 ? ` (${count})` : ''}
+                      </LoadingButton>
+                    </TableCell>
+                  );
+                })}
+              </TableRow>
             </TableBody>
-
-            <TableRow sx={{ position: 'sticky', bottom: 0, zIndex: 3 }}>
-              <TableCell
-                sx={{ position: 'sticky', left: 0, bottom: 0, bgcolor: footerBg, zIndex: 4, borderTop: 2, borderColor: 'divider', fontWeight: 'bold' }}
-              >
-                Award
-              </TableCell>
-              <TableCell sx={{ bgcolor: footerBg, borderTop: 2, borderColor: 'divider' }} />
-              {suppliers.map((supplier) => {
-                const count = getSupplierSelectionCount(supplier.id);
-                const isThisSupplierAwarding = isAwarding && awardingSupplierId === supplier.id;
-
-                return (
-                  <TableCell key={supplier.id} align="center" sx={{ bgcolor: footerBg, borderTop: 2, borderColor: 'divider', py: 1.5 }}>
-                    <LoadingButton
-                      variant={count > 0 ? 'contained' : 'outlined'}
-                      size="small"
-                      loading={isThisSupplierAwarding}
-                      disabled={count === 0 || isAwarding}
-                      onClick={() => handleAwardSupplier(supplier.id)}
-                      startIcon={<ShoppingCartOutlined />}
-                      sx={{ minWidth: 'auto', px: 1.5 }}
-                    >
-                      Award{count > 0 ? ` (${count})` : ''}
-                    </LoadingButton>
-                  </TableCell>
-                );
-              })}
-            </TableRow>
           </Table>
         </TableContainer>
       )}
