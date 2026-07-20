@@ -43,7 +43,7 @@ rfqServices.getResponse = async (id) => {
 };
 
 rfqServices.updateResponse = async (payload) => {
-  const { data } = await axios.put(`/api/rfqs/responses/${payload.id}`, payload);
+  const { data } = await axios.put(`/api/rfqs/${payload.id}/responses`, payload);
   return data;
 };
 

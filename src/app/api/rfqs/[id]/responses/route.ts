@@ -37,3 +37,21 @@ export async function POST(
 
   return handleJsonResponse(res);
 }
+
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const { headers, response } = await getAuthHeaders(request);
+  if (response) return response;
+
+  const body = await request.json();
+  const res = await fetch(`${API_BASE}/rfq-responses/${id}`, {
+    method: 'PUT',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  return handleJsonResponse(res);
+}

@@ -550,14 +550,6 @@ function RFQResponsesFormContent({
             <Typography variant="h6">
               RFQ Response Items
             </Typography>
-            {isEditMode && (
-              <Chip 
-                label={`${activeItems.filter(item => item.quantity > 0 && item.rate > 0).length} of ${activeItems.length} items priced`}
-                size="small"
-                color="info"
-                variant="outlined"
-              />
-            )}
           </Box>
         </Grid>
 

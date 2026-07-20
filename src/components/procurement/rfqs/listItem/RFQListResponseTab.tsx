@@ -227,10 +227,6 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                     {viewResponseData.currency?.name} ({viewResponseData.currency?.code})
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
-                  <Typography variant="caption" color="text.secondary" display="block">Exchange Rate</Typography>
-                  <Typography variant="body2">{viewResponseData.exchange_rate}</Typography>
-                </Grid>
                 {viewResponseData.remarks && (
                   <Grid size={12}>
                     <Typography variant="caption" color="text.secondary" display="block">Remarks</Typography>
@@ -250,7 +246,6 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                       <TableCell align="right">VAT %</TableCell>
                       <TableCell align="right">Amount</TableCell>
                       <TableCell align="right">Lead Time</TableCell>
-                      <TableCell align="right">Award Status</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -269,13 +264,6 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                         <TableCell align="right">{item.amount?.toLocaleString()}</TableCell>
                         <TableCell align="right">
                           {item.lead_time_days !== null && item.lead_time_days !== undefined ? `${item.lead_time_days}d` : '-'}
-                        </TableCell>
-                        <TableCell align="right">
-                          {item.awarded_quantity > 0 ? (
-                            <Chip label={`${item.awarded_quantity} awarded`} size="small" color="success" variant="outlined" />
-                          ) : (
-                            <Chip label="Not awarded" size="small" variant="outlined" />
-                          )}
                         </TableCell>
                       </TableRow>
                     ))}
