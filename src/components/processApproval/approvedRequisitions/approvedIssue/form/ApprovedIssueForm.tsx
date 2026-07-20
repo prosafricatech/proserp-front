@@ -127,10 +127,10 @@ function ApprovedIssueForm({
       <DialogContent>
         {items.length === 0 ? (
           <Alert variant='outlined' severity='info'>
-            No STOCK lines with remaining unissued quantity.
+            No stock lines with remaining unissued quantity.
           </Alert>
         ) : (
-          <Grid container spacing={1} sx={{ mt: 0.5 }}>
+          <Grid container spacing={1} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12, md: 4 }}>
               <DateTimePicker
                 label='Issue Date'

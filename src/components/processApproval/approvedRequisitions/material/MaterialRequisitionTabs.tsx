@@ -141,7 +141,6 @@ function MaterialRequisitionTabs({
                 <ApprovedIssueListItem
                   approvedRequisition={approvedRequisition}
                   isExpanded={isExpanded}
-                  showHeader={true}
                 />
               </Grid>
             </Grid>
