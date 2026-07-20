@@ -105,23 +105,21 @@ const RFQPurchaseOrderForm: React.FC<RFQPurchaseOrderFormProps> = ({
   order,
   rfqDetails,
   rfqId,
-  totalOrders = 1,
-  currentOrderIndex = 1,
+  totalOrders = 1
 }) => {
-  const { authOrganization } = useJumboAuth();
-  const [totalAmount, setTotalAmount] = useState(0);
-  const [vatableAmount, setVatableAmount] = useState(0);
-  const [order_date] = useState(
+  const { authOrganization }= useJumboAuth();
+  const [totalAmount, setTotalAmount]= useState(0);
+  const [vatableAmount, setVatableAmount]= useState(0);
+  const [order_date]= useState(
     order?.order_date ? dayjs(order.order_date) : dayjs()
   );
-  const { enqueueSnackbar } = useSnackbar();
-  const queryClient = useQueryClient();
-  const [displayStoreSelector, setDisplayStoreSelector] = useState(false);
-  const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay] =
-    useState(false);
-  const [addedStakeholder, setAddedStakeholder] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState(0);
-  const [items, setItems] = useState<any[]>(order?.items || []);
+  const { enqueueSnackbar }= useSnackbar();
+  const queryClient= useQueryClient();
+  const [displayStoreSelector, setDisplayStoreSelector]= useState(false);
+  const [stakeholderQuickAddDisplay, setStakeholderQuickAddDisplay]= useState(false);
+  const [addedStakeholder, setAddedStakeholder]= useState<any>(null);
+  const [activeTab, setActiveTab]= useState(0);
+  const [items, setItems]= useState<any[]>(order?.items || []);
 
   // Get currency from RFQ response
   const getResponseCurrency = () => {

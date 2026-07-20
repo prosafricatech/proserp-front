@@ -18,6 +18,7 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { PriceList, PriceListItem } from '../PriceListType';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { Outlet } from '../../outlet/OutletType';
+import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 
 interface PriceListFormProps {
   toggleOpen: (open: boolean) => void;
@@ -26,6 +27,7 @@ interface PriceListFormProps {
 
 interface FormValues {
   effective_date: string;
+  currency_id?: number | null;
   sales_outlets: Array<{ id: number }>;
   items: PriceListItem[];
   narration?: string;
@@ -74,6 +76,7 @@ const PriceListForm: React.FC<PriceListFormProps & { fuelPriceLists?: boolean }>
       effective_date: effective_date.toISOString(),
       id: priceList?.id,
       items: priceList?.items || [],
+      currency_id: priceList?.currency_id || 1,
       sales_outlets: priceList?.items[0]?.sales_outlets || [],
       narration: priceList?.narration || undefined
     }
@@ -191,7 +194,25 @@ const handleMainFormSubmit = async () => {
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 12, md: 8}}>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <CurrencySelector
+                  frontError={
+                    errors?.currency_id?.message
+                      ? { message: errors.currency_id.message }
+                      : null
+                  }
+                  defaultValue={priceList?.currency_id ?? 1}
+                  onChange={(newValue) => {
+                    setValue('currency_id', newValue ? newValue.id : null, {
+                      shouldDirty: true,
+                      shouldValidate: true,
+                    });
+                  }}
+                />
+              </Div>
+            </Grid>
+            <Grid size={{xs: 12, md: 4}}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <OutletSelector
                   multiple={true}

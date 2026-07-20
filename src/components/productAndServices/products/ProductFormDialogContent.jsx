@@ -154,9 +154,10 @@ const ProductFormDialogContent = ({
     const {
       register,
       setValue,
+      setError, // Add setError
+      clearErrors,
       watch,
       handleSubmit,
-      clearErrors,
       formState: { errors },
     } = useForm({
       resolver: yupResolver(validationSchema),
@@ -184,6 +185,47 @@ const ProductFormDialogContent = ({
       }
     }, [costCenters]);
 
+    // Helper function to handle server validation errors
+    const handleServerErrors = (error) => {
+      const errorData = error?.response?.data;
+      
+      if (errorData?.validation_errors) {
+        const validationErrors = errorData.validation_errors;
+        
+        // Set errors for each field
+        Object.keys(validationErrors).forEach((field) => {
+          const errorMessage = Array.isArray(validationErrors[field]) 
+            ? validationErrors[field][0] 
+            : validationErrors[field];
+          
+          // Map backend field names to form field names if needed
+          let formField = field;
+          // Handle special cases where backend field name differs from form field
+          if (field === 'measurement_unit') {
+            formField = 'measurement_unit_id';
+          } else if (field === 'product_category') {
+            formField = 'product_category_id';
+          }
+          
+          setError(formField, {
+            type: 'server',
+            message: errorMessage,
+          });
+        });
+        
+        // Show general error message
+        enqueueSnackbar(errorData.message || 'Please check the information you submitted', {
+          variant: 'error',
+        });
+      } else {
+        // Handle other errors
+        enqueueSnackbar(
+          error?.response?.data?.message || 'Failed to save product',
+          { variant: 'error' }
+        );
+      }
+    };
+
     const addProduct = useMutation({
       mutationFn: productServices.add,
       onSuccess: (data) => {
@@ -193,12 +235,7 @@ const ProductFormDialogContent = ({
         queryClient.invalidateQueries({ queryKey: ['product_select_options'] });
         queryClient.invalidateQueries({ queryKey: ['productParams'] });
       },
-      onError: (error) => {
-        enqueueSnackbar(
-          error?.response?.data?.message || 'Failed to add product',
-          { variant: 'error' }
-        );
-      },
+      onError: handleServerErrors,
     });
 
     const updateProduct = useMutation({
@@ -210,19 +247,14 @@ const ProductFormDialogContent = ({
         queryClient.invalidateQueries({ queryKey: ['product_select_options'] });
         queryClient.invalidateQueries({ queryKey: ['productParams'] });
       },
-      onError: (error) => {
-        enqueueSnackbar(
-          error?.response?.data?.message || 'Failed to update product',
-          { variant: 'error' }
-        );
-      },
+      onError: handleServerErrors,
     });
 
     const saveMutation = React.useMemo(
-      (data) => {
-        return product?.id ? updateProduct.mutate : addProduct.mutate;
+      () => (data) => {
+        return product?.id ? updateProduct.mutate(data) : addProduct.mutate(data);
       },
-      [updateProduct, addProduct]
+      [updateProduct, addProduct, product]
     );
 
     return (
@@ -284,6 +316,10 @@ const ProductFormDialogContent = ({
                           shouldDirty: true,
                         }
                       );
+                      // Clear server error when user changes value
+                      if (errors.product_category_id) {
+                        setError('product_category_id', {});
+                      }
                     }}
                   />
                 </Div>
@@ -300,7 +336,6 @@ const ProductFormDialogContent = ({
                       { name: 'Inventory' },
                       { name: 'Non-Inventory' },
                       { name: 'Service' },
-                      // { name: 'Individually-Tracked' }
                     ]}
                     defaultValue={product?.id && { name: product.type }}
                     disabled={!!product?.id}
@@ -321,6 +356,10 @@ const ProductFormDialogContent = ({
                         setIsInventory(true);
                       } else {
                         setIsInventory(false);
+                      }
+                      // Clear server error when user changes value
+                      if (errors.type) {
+                        setError('type', {});
                       }
                     }}
                   />
@@ -348,12 +387,20 @@ const ProductFormDialogContent = ({
                         shouldValidate: true,
                         shouldDirty: true,
                       });
+                      // Clear server error when user changes value
+                      if (errors.item_name) {
+                        setError('item_name', {});
+                      }
                     }}
                     onInputChange={(event, newValue) => {
                       setValue('item_name', newValue ? newValue : '', {
                         shouldValidate: true,
                         shouldDirty: true,
                       });
+                      // Clear server error when user types
+                      if (errors.item_name) {
+                        setError('item_name', {});
+                      }
                     }}
                   />
                 </Div>
@@ -421,16 +468,14 @@ const ProductFormDialogContent = ({
                     label='SKU (Optional)'
                     defaultValue={product?.id && product.sku}
                     {...register('sku')}
-                    error={
-                      !!errors.sku ||
-                      !!addProduct.error?.response.data.validation_errors.sku ||
-                      !!updateProduct.error?.response.data.validation_errors.sku
-                    }
-                    helperText={
-                      errors.sku?.message ||
-                      addProduct.error?.response.data.validation_errors.sku ||
-                      updateProduct.error?.response.data.validation_errors.sku
-                    }
+                    error={!!errors.sku}
+                    helperText={errors.sku?.message}
+                    onChange={(e) => {
+                      // Clear server error when user types
+                      if (errors.sku) {
+                        setError('sku', {});
+                      }
+                    }}
                   />
                 </Div>
               </Grid>
@@ -516,6 +561,10 @@ const ProductFormDialogContent = ({
                         }
                       );
                       setSelectedUnit(newValue);
+                      // Clear server error when user changes value
+                      if (errors.measurement_unit_id) {
+                        setError('measurement_unit_id', {});
+                      }
                     }}
                   />
                 </Div>
@@ -569,6 +618,10 @@ const ProductFormDialogContent = ({
                           shouldValidate: true,
                           shouldDirty: true,
                         });
+                        // Clear server error when user changes value
+                        if (errors.cost_center_id) {
+                          setError('cost_center_id', {});
+                        }
                       }}
                     />
                   </Div>
@@ -583,7 +636,7 @@ const ProductFormDialogContent = ({
                         'Accounts Payable',
                       ]}
                       frontError={errors.stock_complement_ledger_id}
-                      onChange={(newValue) =>
+                      onChange={(newValue) => {
                         setValue(
                           'stock_complement_ledger_id',
                           !!newValue ? newValue.id : null,
@@ -591,8 +644,12 @@ const ProductFormDialogContent = ({
                             shouldValidate: true,
                             shouldDirty: true,
                           }
-                        )
-                      }
+                        );
+                        // Clear server error when user changes value
+                        if (errors.stock_complement_ledger_id) {
+                          setError('stock_complement_ledger_id', {});
+                        }
+                      }}
                     />
                   </Div>
                 </Grid>
@@ -622,6 +679,10 @@ const ProductFormDialogContent = ({
                             shouldDirty: true,
                           }
                         );
+                        // Clear server error when user changes value
+                        if (errors.opening_balance_date) {
+                          setError('opening_balance_date', {});
+                        }
                       }}
                     />
                   </Div>
@@ -647,6 +708,10 @@ const ProductFormDialogContent = ({
                           shouldValidate: true,
                           shouldDirty: true,
                         });
+                        // Clear server error when user changes value
+                        if (errors.store_id) {
+                          setError('store_id', {});
+                        }
                       }}
                     />
                   </Div>
@@ -660,6 +725,12 @@ const ProductFormDialogContent = ({
                       error={!!errors?.opening_balance}
                       helperText={errors?.opening_balance?.message}
                       {...register('opening_balance')}
+                      onChange={(e) => {
+                        // Clear server error when user types
+                        if (errors.opening_balance) {
+                          setError('opening_balance', {});
+                        }
+                      }}
                     />
                   </Div>
                 </Grid>
@@ -683,6 +754,10 @@ const ProductFormDialogContent = ({
                             shouldDirty: true,
                           }
                         );
+                        // Clear server error when user types
+                        if (errors.unit_cost) {
+                          setError('unit_cost', {});
+                        }
                       }}
                     />
                   </Div>

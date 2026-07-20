@@ -18,6 +18,7 @@ interface OrderItem {
     measurement_unit?: MeasurementUnit;
     unit_symbol?: string;
     requisition_approval_product_item_id?: number;
+    fulfillment_type?: string;
 }
 
 interface ApprovedPurchaseItemFormProps {
@@ -30,8 +31,16 @@ interface ApprovedPurchaseItemFormProps {
 function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, prevApprovedDetails }: ApprovedPurchaseItemFormProps) {
     const { authOrganization } = useJumboAuth();
 
+    // Filter items: only include those with unordered_quantity > 0 AND fulfillment_type === 'PURCHASE'
     const filteredItems = approvedDetails
-        ? items.filter(item => item.unordered_quantity > 0)
+        ? items.filter(item => {
+            // Only include items that have unordered_quantity > 0
+            if (item.unordered_quantity <= 0) return false;
+            
+            // Only include items with fulfillment_type === 'PURCHASE'
+            const fulfillmentType = item.fulfillment_type || (item as any)?.fulfillment_type;
+            return fulfillmentType === 'PURCHASE';
+          })
         : items;
 
     // Helper to get approved rate from prevApprovedDetails if available
@@ -51,6 +60,12 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
                 const vat_factor = (item.vat_percentage || 0) * 0.01;
                 const unitSymbol = item?.unit_symbol || item.measurement_unit?.symbol || item.product.unit_symbol || '';
                 const approvedRate = getApprovedRate(item);
+
+                const enteredRate = item.entered_rate;
+                const hasEnteredRate = typeof enteredRate === 'number';
+                const displayRate = hasEnteredRate ? enteredRate : approvedRate;
+                const isRateExceeded = hasEnteredRate && enteredRate > approvedRate;
+                
 
                 return (
                     <Grid
@@ -145,7 +160,7 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
                                         label="Price"
                                         fullWidth
                                         size="small"
-                                        value={typeof item.entered_rate === 'number' ? item.entered_rate : item.rate}
+                                        value={displayRate}
                                         onChange={(e) => {
                                             const sanitizedValue = sanitizedNumber(e.target.value);
                                             handleItemChange(itemIndex, 'entered_rate', sanitizedValue);
@@ -153,9 +168,9 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
                                         InputProps={{
                                             inputComponent: CommaSeparatedField,
                                         }}
-                                        error={typeof item.entered_rate === 'number' && item.entered_rate > approvedRate}
+                                        error={isRateExceeded}
                                         helperText={
-                                            typeof item.entered_rate === 'number' && item.entered_rate > approvedRate
+                                            isRateExceeded
                                                 ? `Price cannot exceed approved price (${approvedRate.toLocaleString()})`
                                                 : ''
                                         }
@@ -171,7 +186,7 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
                                 <Div sx={{ mt: 2, mb: 1.7 }}>
                                     <Tooltip title="VAT">
                                         <Typography>
-                                            {(item.rate * vat_factor).toLocaleString()}
+                                            {(displayRate * vat_factor).toLocaleString()}
                                         </Typography>
                                     </Tooltip>
                                 </Div>
@@ -188,12 +203,12 @@ function ApprovedPurchaseItemForm({ handleItemChange, items, approvedDetails, pr
                             <Div sx={{ mt: 2, mb: 1.7 }}>
                                 <Tooltip title="Amount">
                                     <Typography>
-                                        {(item.quantity * (typeof item.entered_rate === 'number' ? item.entered_rate : approvedRate) * (1 + vat_factor)).toLocaleString()}
+                                        {(item.quantity * displayRate * (1 + vat_factor)).toLocaleString()}
                                     </Typography>
                                 </Tooltip>
                             </Div>
                         </Grid>
-                        {items.filter(item => item.unordered_quantity > 0).length > 1 && (
+                        {filteredItems.length > 1 && (
                             <Grid 
                                 size={{
                                     xs: vat_factor ? 12 : 1,

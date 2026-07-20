@@ -22,20 +22,30 @@ import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import imprestRetirementServices from '@/components/processApproval/imprestRetirements/imprestRetirementServices';
+import ProductSelect from '@/components/productAndServices/products/ProductSelect';
+import StoreSelector from '@/components/procurement/stores/StoreSelector';
 
 type ApprovalItem = {
   imprest_retirement_item_id: number;
+  line_type?: 'EXPENSE' | 'PRODUCT';
   ledger_id: number | null;
+  product_id?: number | null;
+  store_id?: number | null;
   measurement_unit_id: number | null;
   quantity: number;
   rate: number;
   description: string;
   ledger?: any;
+  product?: any;
+  store?: any;
   measurement_unit?: any;
 };
 
 type ApprovalItemFieldErrors = {
+  source?: string;
   ledger_id?: string;
+  product_id?: string;
+  store_id?: string;
   measurement_unit_id?: string;
   quantity?: string;
   rate?: string;
@@ -111,17 +121,25 @@ function ImprestRetirementApprovalForm({
       ? toList(lastWithItems.items)
       : toList(retirement?.items);
 
-    return source.map((item: any) => ({
-      imprest_retirement_item_id: Number(item?.imprest_retirement_item_id || item?.id || 0),
-      ledger_id: Number(item?.ledger_id || item?.ledger?.id) || null,
-      measurement_unit_id:
-        Number(item?.measurement_unit_id || item?.measurement_unit?.id) || null,
-      quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
-      rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
-      description: item?.description || item?.remarks || '',
-      ledger: item?.ledger,
-      measurement_unit: item?.measurement_unit,
-    }));
+    return source.map((item: any) => {
+      const isProductLine = Number(item.product_id || item.product?.id) > 0;
+      return {
+        imprest_retirement_item_id: Number(item?.imprest_retirement_item_id || item?.id || 0),
+        line_type: isProductLine ? 'PRODUCT' : 'EXPENSE',
+        ledger_id: isProductLine ? null : Number(item?.ledger_id || item?.ledger?.id) || null,
+        product_id: isProductLine ? Number(item?.product_id || item?.product?.id) || null : null,
+        store_id: isProductLine ? Number(item?.store_id || item?.store?.id) || null : null,
+        measurement_unit_id:
+          Number(item?.measurement_unit_id || item?.measurement_unit?.id) || null,
+        quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
+        rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
+        description: item?.description || item?.remarks || '',
+        ledger: item?.ledger,
+        product: item?.product,
+        store: item?.store,
+        measurement_unit: item?.measurement_unit,
+      };
+    });
   }, [retirement]);
 
   const [items, setItems] = React.useState<ApprovalItem[]>(seedItems);
@@ -206,18 +224,23 @@ function ImprestRetirementApprovalForm({
 
   const buildItemsPayload = () =>
     items
-      .map((item) => ({
-        imprest_retirement_item_id: item.imprest_retirement_item_id,
-        ledger_id: Number(item.ledger_id || 0),
-        measurement_unit_id: Number(item.measurement_unit_id || 0),
-        quantity: Number(item.quantity) || 0,
-        rate: Number(item.rate) || 0,
-        description: item.description || '',
-      }))
+      .map((item) => {
+        const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
+        return {
+          imprest_retirement_item_id: item.imprest_retirement_item_id,
+          line_type: item.line_type || 'EXPENSE',
+          ledger_id: isProductLine ? null : Number(item.ledger_id || 0),
+          product_id: isProductLine ? Number(item.product_id || 0) : null,
+          store_id: isProductLine ? Number(item.store_id || 0) : null,
+          measurement_unit_id: Number(item.measurement_unit_id || 0),
+          quantity: Number(item.quantity) || 0,
+          rate: Number(item.rate) || 0,
+          description: item.description || '',
+        };
+      })
       .filter(
         (i) =>
           i.imprest_retirement_item_id > 0 &&
-          i.ledger_id > 0 &&
           i.measurement_unit_id > 0 &&
           i.quantity > 0 &&
           (!isFinalLevel || i.rate > 0)
@@ -228,9 +251,24 @@ function ImprestRetirementApprovalForm({
     let hasAnyError = false;
 
     items.forEach((item, index) => {
-      if (!item.ledger_id) {
-        nextFieldErrors[index].ledger_id = 'Ledger is required.';
-        hasAnyError = true;
+      const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
+
+      if (isProductLine) {
+        if (!item.product_id) {
+          nextFieldErrors[index].source = 'Product is required.';
+          hasAnyError = true;
+        }
+        if (!item.store_id) {
+          nextFieldErrors[index].source = nextFieldErrors[index].source 
+            ? 'Product and Store are required.' 
+            : 'Store is required.';
+          hasAnyError = true;
+        }
+      } else {
+        if (!item.ledger_id) {
+          nextFieldErrors[index].source = 'Ledger is required.';
+          hasAnyError = true;
+        }
       }
 
       if (!item.measurement_unit_id) {
@@ -267,8 +305,8 @@ function ImprestRetirementApprovalForm({
     if (!validateItems()) {
       setClientError(
         isFinalLevel
-          ? 'Final approval requires valid ledger, unit, quantity, and rate on each item.'
-          : 'Each item requires valid ledger, unit, and quantity.'
+          ? 'Final approval requires valid source, unit, quantity, and rate on each item.'
+          : 'Each item requires valid source, unit, and quantity.'
       );
       return false;
     }
@@ -308,6 +346,11 @@ function ImprestRetirementApprovalForm({
     if (clientError === 'Remarks are required for this decision.' && value.trim()) {
       setClientError(null);
     }
+  };
+
+  // Helper to get field error
+  const getFieldError = (index: number, field: keyof ApprovalItemFieldErrors): string => {
+    return fieldErrors[index]?.[field] || '';
   };
 
   return (
@@ -366,108 +409,161 @@ function ImprestRetirementApprovalForm({
 
         <Divider sx={{ mb: 1.5 }} />
 
-        {items.map((item, index) => (
-          <Grid
-            container
-            spacing={1}
-            alignItems="flex-start"
-            key={`${item.imprest_retirement_item_id}-${index}`}
-            mb={1}
-          >
-            <Grid size={{ xs: 1, md: 0.5 }}>
-              <Typography variant="body2" mt={1}>
-                {index + 1}.
-              </Typography>
+        {items.map((item, index) => {
+          const isProductLine = String(item.line_type || 'EXPENSE') === 'PRODUCT';
+          const hasProductSelected = !!item.product_id;
+          const showStoreField = isProductLine && hasProductSelected;
+
+          return (
+            <Grid
+              container
+              spacing={1}
+              alignItems="flex-start"
+              key={`${item.imprest_retirement_item_id}-${index}`}
+              mb={1}
+            >
+              <Grid size={{ xs: 1, md: 0.5 }}>
+                <Typography variant="body2" mt={1}>
+                  {index + 1}.
+                </Typography>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: isProductLine ? (showStoreField ? 3.5 : 4.5) : 4.5 }}>
+                {isProductLine ? (
+                  <ProductSelect
+                    label='Product'
+                    defaultValue={item.product || null}
+                    frontError={getFieldError(index, 'source') ? { message: getFieldError(index, 'source') } : undefined}
+                    onChange={(newValue: any) => {
+                      const product = newValue;
+                      handleItemChange(index, {
+                        product_id: Number(product?.id || 0) || null,
+                        product: product || undefined,
+                        store_id: null,
+                        store: undefined,
+                        measurement_unit_id:
+                          Number(
+                            product?.primary_unit?.id ||
+                              product?.measurement_unit_id ||
+                              product?.measurement_unit?.id ||
+                              0
+                          ) || item.measurement_unit_id,
+                      }, ['source', 'measurement_unit_id']);
+                    }}
+                  />
+                ) : (
+                  <LedgerSelect
+                    label="Item Ledger"
+                    frontError={getFieldError(index, 'source') ? { message: getFieldError(index, 'source') } : null}
+                    defaultValue={
+                      item.ledger_id
+                        ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any)
+                        : null
+                    }
+                    onChange={(v: any) => {
+                      const val = Array.isArray(v) ? v[0] : v;
+                      handleItemChange(index, {
+                        ledger_id: Number(val?.id || 0) || null,
+                        ledger: val,
+                      }, ['source']);
+                    }}
+                  />
+                )}
+              </Grid>
+
+              {isProductLine && (
+                <Grid size={{ xs: 12, md: 2.5 }}>
+                  <StoreSelector
+                    label='Store'
+                    multiple={false}
+                    defaultValue={item.store || null}
+                    frontError={getFieldError(index, 'source') ? { message: getFieldError(index, 'source') } : undefined as any}
+                    onChange={(newValue: any) => {
+                      handleItemChange(index, {
+                        store_id: Number(newValue?.id || 0) || null,
+                        store: newValue || undefined,
+                      }, ['source']);
+                    }}
+                  />
+                </Grid>
+              )}
+
+              <Grid size={{ xs: 12, md: 2 }}>
+                <MeasurementSelector
+                  label="Unit"
+                  frontError={getFieldError(index, 'measurement_unit_id') ? { message: getFieldError(index, 'measurement_unit_id') } : null}
+                  defaultValue={item.measurement_unit_id || null}
+                  onChange={(v: any) => {
+                    const val = Array.isArray(v) ? v[0] : v;
+                    handleItemChange(index, {
+                      measurement_unit_id: Number(val?.id || 0) || null,
+                      measurement_unit: val,
+                    }, ['measurement_unit_id']);
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 1 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Quantity"
+                  value={item.quantity ?? 0}
+                  error={!!getFieldError(index, 'quantity')}
+                  helperText={getFieldError(index, 'quantity')}
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
+                  onChange={(e) => {
+                    const q = sanitizedNumber(e.target.value);
+                    handleItemChange(index, { quantity: Number.isFinite(q) ? q : 0 }, ['quantity']);
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: isProductLine ? 2.5 : 2 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Rate"
+                  value={item.rate ?? 0}
+                  error={!!getFieldError(index, 'rate')}
+                  helperText={getFieldError(index, 'rate')}
+                  InputProps={{ inputComponent: CommaSeparatedField as any }}
+                  onChange={(e) => {
+                    const r = sanitizedNumber(e.target.value);
+                    handleItemChange(index, { rate: Number.isFinite(r) ? r : 0 }, ['rate']);
+                  }}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: isProductLine ? 2.5 : 2 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  label="Amount"
+                  disabled
+                  value={(
+                    (Number(item.quantity) || 0) * (Number(item.rate) || 0)
+                  ).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
+                />
+              </Grid>
+
+              <Grid size={{ xs: 12, md: isProductLine ? 9.5 : 12 }}>
+                <TextField
+                  size="small"
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Description"
+                  value={item.description || ''}
+                  onChange={(e) => updateItem(index, { description: e.target.value })}
+                />
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 11, md: 3.5 }}>
-              <LedgerSelect
-                label="Item Ledger"
-                frontError={fieldErrors[index]?.ledger_id ? { message: fieldErrors[index].ledger_id } : null}
-                defaultValue={
-                  item.ledger_id
-                    ? ({ id: item.ledger_id, name: item.ledger?.name || '' } as any)
-                    : null
-                }
-                onChange={(v: any) => {
-                  const val = Array.isArray(v) ? v[0] : v;
-                  handleItemChange(index, {
-                    ledger_id: Number(val?.id || 0) || null,
-                    ledger: val,
-                  }, ['ledger_id']);
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
-              <MeasurementSelector
-                label="Unit"
-                frontError={fieldErrors[index]?.measurement_unit_id ? { message: fieldErrors[index].measurement_unit_id } : null}
-                defaultValue={item.measurement_unit_id || null}
-                onChange={(v: any) => {
-                  const val = Array.isArray(v) ? v[0] : v;
-                  handleItemChange(index, {
-                    measurement_unit_id: Number(val?.id || 0) || null,
-                    measurement_unit: val,
-                  }, ['measurement_unit_id']);
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 1.5 }}>
-              <TextField
-                size="small"
-                fullWidth
-                label="Qty"
-                value={item.quantity ?? 0}
-                error={!!fieldErrors[index]?.quantity}
-                helperText={fieldErrors[index]?.quantity}
-                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                onChange={(e) => {
-                  const q = sanitizedNumber(e.target.value);
-                  handleItemChange(index, { quantity: Number.isFinite(q) ? q : 0 }, ['quantity']);
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2.5 }}>
-              <TextField
-                size="small"
-                fullWidth
-                label="Rate"
-                value={item.rate ?? 0}
-                error={!!fieldErrors[index]?.rate}
-                helperText={fieldErrors[index]?.rate}
-                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                onChange={(e) => {
-                  const r = sanitizedNumber(e.target.value);
-                  handleItemChange(index, { rate: Number.isFinite(r) ? r : 0 }, ['rate']);
-                }}
-              />
-            </Grid>
-            <Grid size={{ xs: 12, md: 2 }}>
-              <TextField
-                size="small"
-                fullWidth
-                label="Amount"
-                disabled
-                value={(
-                  (Number(item.quantity) || 0) * (Number(item.rate) || 0)
-                ).toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                })}
-              />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField
-                size="small"
-                fullWidth
-                multiline
-                rows={2}
-                label="Description"
-                value={item.description || ''}
-                onChange={(e) => updateItem(index, { description: e.target.value })}
-              />
-            </Grid>
-          </Grid>
-        ))}
+          );
+        })}
 
         <TextField
           size="small"

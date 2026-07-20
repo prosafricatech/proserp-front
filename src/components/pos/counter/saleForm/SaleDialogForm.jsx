@@ -145,6 +145,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
     defaultValues: {
       transaction_date: transaction_date.toISOString(),
       currency_id: sale?.currency_id ? sale.currency_id : 1,
+      sales_person: sale?.sales_person,
       currency: sale?.currency
         ? sale.currency
         : currencies?.find((c) => c.is_base === 1),
@@ -278,7 +279,6 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
   }, [updateSale, addSale]);
 
   useEffect(() => {
-    console.log(sale);
     if (!!sale?.sale_items) {
       setItems(
         sale.sale_items.map((item) => {
@@ -321,6 +321,8 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
     const updatedData = { ...data, items };
     await saveMutation.mutate(updatedData);
   };
+
+  const selectedCurrencyId = watch('currency_id');
 
   return (
     <FormProvider
@@ -378,6 +380,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
                 )}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
+                selectedCurrencyId={selectedCurrencyId}
                 key={clearFormKey}
                 setIsDirty={setIsDirty}
                 vat_percentage={vat_percentage}
@@ -405,6 +408,7 @@ function SaleDialogForm({ toggleOpen, sale = null }) {
                 submitMainForm={handleSubmit((data) =>
                   saveMutation.mutate(data)
                 )}
+                selectedCurrencyId={selectedCurrencyId}
                 submitItemForm={submitItemForm}
                 setSubmitItemForm={setSubmitItemForm}
                 setIsDirty={setIsDirty}

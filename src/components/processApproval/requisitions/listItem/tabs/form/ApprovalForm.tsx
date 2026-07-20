@@ -274,8 +274,8 @@ function ApprovalForm({
                       is: 'STOCK',
                       then: (schema) =>
                         schema
-                          .required('Store is required for STOCK fulfillment')
-                          .typeError('Store is required for STOCK fulfillment'),
+                          .required('Store is required for stock fulfillment')
+                          .typeError('Store is required for stock fulfillment'),
                       otherwise: (schema) => schema.nullable(),
                     })
                 : yup.number().nullable(),
@@ -784,8 +784,8 @@ function ApprovalForm({
         ) : isMaterialType ? (
           <>
             {hasImprestFulfillment && (
-              <Grid container spacing={1} sx={{ mb: 2 }}>
-                <Grid size={{ xs: 12, md: 6 }}>
+              <Grid container spacing={1} sx={{ mb: 2, mt: 1 }}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <Autocomplete
                     options={filteredImprestLedgerOptions}
                     isOptionEqualToValue={(option, value) => {

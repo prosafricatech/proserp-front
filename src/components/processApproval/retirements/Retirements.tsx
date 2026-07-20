@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import imprestRetirementServices from '../imprestRetirements/imprestRetirementServices';
 import RetirementsListItem from './RetirementsListItem';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 interface QueryParams {
   id?: string;
@@ -67,42 +68,44 @@ const Retirements = () => {
 
   return (
     <CurrencySelectProvider>
-      <JumboRqList
-        ref={listRef}
-        wrapperComponent={Card}
-        service={imprestRetirementServices.list}
-        primaryKey='id'
-        queryOptions={queryOptions}
-        itemsPerPage={10}
-        itemsPerPageOptions={[5, 8, 10, 15, 20]}
-        renderItem={renderRetirements}
-        componentElement='div'
-        wrapperSx={{
-          flex: 1,
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-        toolbar={
-          <JumboListToolbar
-            hideItemsPerPage={true}
-            action={
-              <Grid
-                container
-                columnSpacing={1}
-                rowSpacing={1}
-                justifyContent={'end'}
-              >
-                <Grid size={{ xs: 11, lg: 5.5 }}>
-                  <JumboSearch
-                    onChange={handleOnChange}
-                    value={queryOptions.queryParams.keyword}
-                  />
+      <LedgerSelectProvider>
+        <JumboRqList
+          ref={listRef}
+          wrapperComponent={Card}
+          service={imprestRetirementServices.list}
+          primaryKey='id'
+          queryOptions={queryOptions}
+          itemsPerPage={10}
+          itemsPerPageOptions={[5, 8, 10, 15, 20]}
+          renderItem={renderRetirements}
+          componentElement='div'
+          wrapperSx={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+          toolbar={
+            <JumboListToolbar
+              hideItemsPerPage={true}
+              action={
+                <Grid
+                  container
+                  columnSpacing={1}
+                  rowSpacing={1}
+                  justifyContent={'end'}
+                >
+                  <Grid size={{ xs: 11, lg: 5.5 }}>
+                    <JumboSearch
+                      onChange={handleOnChange}
+                      value={queryOptions.queryParams.keyword}
+                    />
+                  </Grid>
                 </Grid>
-              </Grid>
-            }
-          />
-        }
-      />
+              }
+            />
+          }
+        />
+      </LedgerSelectProvider>
     </CurrencySelectProvider>
   );
 };

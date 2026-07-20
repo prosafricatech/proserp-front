@@ -46,6 +46,7 @@ interface PaymentItem {
   remarks?: string;
   description?: string;
   requisition_approval_ledger_item_id?: number;
+  fulfillment_type?: string;
 }
 
 interface Payment {
@@ -94,8 +95,15 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     null
   );
   const { enqueueSnackbar } = useSnackbar();
-  const resolvedApprovedDetails= approvedDetails || prevApprovedDetails || null;
-  const isImprestPayment= approvedRequisition?.process_type === 'IMPREST' || resolvedApprovedDetails?.process_type === 'IMPREST';
+  const resolvedApprovedDetails = approvedDetails || prevApprovedDetails || null;
+  const isImprestPayment= approvedRequisition?.process_type === 'IMPREST' || resolvedApprovedDetails?.process_type === 'IMPREST' || approvedDetails?.process_type === 'MATERIAL';
+  const isMaterialPayment = React.useMemo(() => {
+    if (payment) {
+      return payment.items.some((item: any) => item.fulfillment_type === 'PURCHASE');
+    }
+    return approvedRequisition?.process_type === 'MATERIAL' || 
+           resolvedApprovedDetails?.process_type === 'MATERIAL';
+  }, [payment, approvedRequisition, resolvedApprovedDetails]);
 
   const imprestLedger =
     approvedRequisition?.requisition?.imprest_ledger ||
@@ -103,7 +111,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     resolvedApprovedDetails?.requisition?.imprest_ledger ||
     null;
 
-  const resolvedImprestCreditLedgerName= imprestLedger?.name || '';
+  const resolvedImprestCreditLedgerName = imprestLedger?.name || '';
   const isEditMode = !!payment;
 
   const buildItemDescription = useCallback(
@@ -118,7 +126,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
       const normalizedBase = base.toLowerCase();
       const normalizedDebitLabel = debitLabel.toLowerCase();
 
-      // Do not append when debit label is already part of description.
       if (normalizedBase.includes(normalizedDebitLabel)) return base;
 
       return base ? `${base} ${debitLabel}` : `${debitLabel}`;
@@ -134,46 +141,34 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           ? resolvedApprovedDetails.items
           : [];
 
-      return payment.items.map((payItem: any, index: number) => {
-        if (!isImprestPayment) {
-          const prevItem = previousItems.find(
-            (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
-          );
+return payment.items.map((payItem: any, index: number) => {
+  let prevItem = null;
 
-          return {
-            ...payItem,
-            ledger: prevItem?.ledger || {
-              id: Number(payItem?.debit_ledger_id || 0),
-              name: String(payItem?.debitLedgerName || ''),
-            },
-            debit_ledger_id: Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
-            amount: Number(payItem?.amount || 0),
-            description: buildItemDescription(
-              payItem.remarks || payItem.description || '-',
-              payItem?.ledger?.name
-            ),
-            unpaid_amount: prevItem
-              ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
-              : 0,
-            requisition_approval_ledger_item_id:
-              Number(payItem?.requisition_approval_ledger_item_id || prevItem?.id || 0) ||
-              undefined,
-          };
-        }
+  // Try to find by ledger id
+  if (payItem?.debit_ledger_id) {
+    prevItem = previousItems.find(
+      (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
+    );
+  }
 
-        const prevItemById = payItem?.requisition_approval_ledger_item_id
-          ? previousItems.find(
-              (item: any) =>
-                Number(item?.id) ===
-                Number(payItem?.requisition_approval_ledger_item_id)
-            )
-          : null;
+  if (!prevItem && payItem?.requisition_approval_ledger_item_id) {
+    prevItem = previousItems.find(
+      (item: any) => Number(item?.id) === Number(payItem?.requisition_approval_ledger_item_id)
+    );
+  }
 
-        const prevItemByLedger = previousItems.find(
-          (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
-        );
+  // NEW: IMPREST overwrites debit_ledger_id to the imprest ledger on submit,
+  // and saved payment items carry no id linking back to the approval line —
+  // so neither lookup above can match. Fall back to positional matching.
+  if (!prevItem && previousItems[index]) {
+    prevItem = previousItems[index];
+  }
 
-        const prevItem = prevItemById || prevItemByLedger || previousItems[index] || null;
+  const unpaidAmount = isMaterialPayment
+    ? 0
+    : prevItem
+      ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
+      : 0;
 
         const forcedImprestLedger = imprestLedger
           ? {
@@ -182,53 +177,77 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             }
           : null;
 
-        const fallbackLedger =
-          prevItem?.ledger ||
-          forcedImprestLedger || {
-            id: Number(payItem?.debit_ledger_id || 0),
-            name: String(payItem?.debitLedgerName || ''),
-          };
+        const ledgerName = payItem?.debitLedgerName ||
+                          payItem?.ledger?.name ||
+                          prevItem?.ledger?.name ||
+                          forcedImprestLedger?.name ||
+                          '';
 
-        const paidAmount = Number(payItem?.amount || 0);
-        const previousUnpaid = Number(prevItem?.unpaid_amount || 0);
-        const computedUnpaid = Number.isFinite(previousUnpaid)
-          ? paidAmount + previousUnpaid
-          : Number(payItem?.unpaid_amount || paidAmount || 0);
+        const ledgerId = payItem?.debit_ledger_id ||
+                        payItem?.ledger?.id ||
+                        prevItem?.ledger?.id ||
+                        forcedImprestLedger?.id ||
+                        0;
 
         return {
-          ...payItem,
-          ledger: forcedImprestLedger || fallbackLedger,
-          debit_ledger_id:
-            forcedImprestLedger?.id || Number(payItem?.debit_ledger_id || prevItem?.ledger?.id || 0),
-          amount: paidAmount,
+          id: payItem?.id,
+          debit_ledger_id: ledgerId,
+          ledger: {
+            id: ledgerId,
+            name: ledgerName,
+          },
+          amount: Number(payItem?.amount || 0),
+          unpaid_amount: unpaidAmount,
           description: buildItemDescription(
-            payItem?.description ||
-              payItem?.remarks ||
-              prevItem?.remarks ||
-              prevItem?.description ||
-              '',
-            (forcedImprestLedger || fallbackLedger)?.name
+            payItem?.description || payItem?.remarks || '',
+            ledgerName
           ),
-          unpaid_amount: Number.isFinite(computedUnpaid) ? computedUnpaid : 0,
           requisition_approval_ledger_item_id:
-            Number(
-              payItem?.requisition_approval_ledger_item_id || prevItem?.id || 0
-            ) || undefined,
+            payItem?.requisition_approval_ledger_item_id || prevItem?.id || undefined,
+          fulfillment_type: prevItem?.fulfillment_type ||
+                            (isImprestPayment ? 'IMPREST' : 'PURCHASE'),
         };
       });
-    } else if (approvedDetails) {
+    }
+    else if (approvedDetails) {
       return approvedDetails.items
-        .filter((item: any) => item.unpaid_amount > 0)
-        .map((item: any) => ({  
-          ...item,
-          debit_ledger_id: item.ledger.id,
-          amount: item.unpaid_amount,
-          description: buildItemDescription(
-            item?.description || item?.remarks || '',
-            item?.ledger?.name
-          ),
-          requisition_approval_ledger_item_id: item.id,
-        }));
+        .filter((item: any) => {
+          if (isMaterialPayment) {
+            // MATERIAL: only IMPREST-fulfillment lines are payable here; PURCHASE
+            // lines are settled via Purchase Orders, not this payment form.
+            return item.fulfillment_type === 'IMPREST';
+          }
+          // Everyone else (PAYMENT, IMPREST process types): only items with something still unpaid
+          return item.unpaid_amount > 0;
+        })
+        .map((item: any) => {
+          const ledgerId = item.ledger?.id || item.ledger_id || 0;
+          const ledgerName = item.ledger?.name || item.ledger_name || '';
+
+          // MATERIAL/IMPREST-fulfillment items don't carry unpaid_amount directly —
+          // derive the payable amount from quantity * rate (+ vat) instead.
+          const vatFactor = (item.vat_percentage || 0) * 0.01;
+          const derivedAmount = isMaterialPayment
+            ? Number(item.quantity || 0) * Number(item.rate || 0) * (1 + vatFactor)
+            : (item.unpaid_amount || 0);
+
+          return {
+            ...item,
+            debit_ledger_id: ledgerId,
+            ledger: {
+              id: ledgerId,
+              name: ledgerName,
+            },
+            amount: derivedAmount,
+            unpaid_amount: isMaterialPayment ? derivedAmount : item.unpaid_amount,
+            description: buildItemDescription(
+              item?.description || item?.remarks || '',
+              ledgerName
+            ),
+            requisition_approval_ledger_item_id: item.id,
+            fulfillment_type: item.fulfillment_type || 'PURCHASE',
+          };
+        });
     }
     return [];
   });
@@ -381,7 +400,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     const updatedData = {
       ...data,
       items: items
-        .filter((item) => item.unpaid_amount > 0)
+        .filter((item) => isMaterialPayment || item.unpaid_amount > 0)
         .map((item) => ({
           debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
           requisition_approval_ledger_item_id:
@@ -389,7 +408,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           amount: Number.isFinite(Number(item.amount))
             ? Number(item.amount)
             : 0,
-          // Keep user-entered description as-is during submit.
           description: String(item.description || item.remarks || '').trim(),
         })),
     };
@@ -555,6 +573,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             items={items}
             handleItemChange={handleItemChange}
             isImprestPayment={isImprestPayment}
+            isMaterialPayment={isMaterialPayment}
             serverError={serverError}
             payFromLedgerName={
               isImprestPayment ? resolvedImprestCreditLedgerName : undefined

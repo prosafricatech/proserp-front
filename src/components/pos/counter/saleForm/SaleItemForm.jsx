@@ -16,6 +16,7 @@ import ProductSelect from '@/components/productAndServices/products/ProductSelec
 import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
+import { useQuery } from '@tanstack/react-query';
 
 function SaleItemForm({
     setClearFormKey,
@@ -32,7 +33,8 @@ function SaleItemForm({
     salesDate,
     checkedForInstantSale,
     getLastPriceItems,
-    checkedForSuggestPrice
+    selectedCurrencyId,
+    checkedForSuggestPrice,
 }) {
     const {outlet} = useCounter();//From counter provider
     const { stores, cost_center } = outlet; //Destructure outlet to get needed content
@@ -121,6 +123,7 @@ function SaleItemForm({
             conversion_factor: item ? item.conversion_factor : 1,
             measurement_unit_id: item && item.measurement_unit_id,
             unit_symbol: item && (item.measurement_unit?.symbol ? item.measurement_unit?.symbol : item.unit_symbol),
+            currency_id: selectedCurrencyId,
         }
     });
 
@@ -134,6 +137,44 @@ function SaleItemForm({
     const measurement_unit_id = watch('measurement_unit_id');
     const store_id = watch('store_id');
     
+    // Use the same selling price query as ProformaItemForm
+    const { isFetching: isFetchingSellingPrice } = useQuery({
+        queryKey: [
+            'sellingPrice', 
+            { 
+                id: watch('product')?.id,
+                sales_outlet_id: outlet?.id,
+                currency_id: selectedCurrencyId,
+            }
+        ],
+        queryFn: async () => {
+            const product_id = watch('product')?.id;
+            if (product_id && outlet?.id && !checkedForSuggestPrice) {
+                const response = await productServices.getSellingPrices({
+                    productId: product_id,
+                    sales_outlet_id: outlet.id,
+                    currency_id: selectedCurrencyId,
+                });
+                if (response && response.price > 0) {
+                    setValue('rate', response.price, {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                    });
+                    // Store the currency_id from response if needed
+                    if (response.currency_id) {
+                        setValue('currency_id', response.currency_id);
+                    }
+                    setCanChangePrice(!response.price || !notAllowedToChangePrice);
+                    setPriceFieldKey(key => key + 1);
+                    setVatPriceFieldKey(key => key + 1);
+                }
+                return response;
+            }
+            return null;
+        },
+        enabled: !!watch('product')?.id && !!outlet?.id && !item && !checkedForSuggestPrice,
+    });
+
     useEffect(() => {
         if (!checkedForSuggestPrice && !!checkedForInstantSale && !!getLastPriceItems.stakeholder_id && !item) {
             // Clear the 'rate' field
@@ -184,15 +225,15 @@ function SaleItemForm({
         setShowForm && setShowForm(false);
     };
 
-        useEffect(() => {
-            if (submitItemForm) {
-                handleSubmit(updateItems, () => {
-                    setSubmitItemForm(false); // Reset submitItemForm if there are errors
-                })();
-            }
-            // Only run when submitItemForm changes
-            // eslint-disable-next-line react-hooks/exhaustive-deps
-        }, [submitItemForm]);
+    useEffect(() => {
+        if (submitItemForm) {
+            handleSubmit(updateItems, () => {
+                setSubmitItemForm(false); // Reset submitItemForm if there are errors
+            })();
+        }
+        // Only run when submitItemForm changes
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [submitItemForm]);
 
     const combinedUnits = product?.secondary_units.concat(product?.primary_unit);
 
@@ -206,6 +247,7 @@ function SaleItemForm({
                 as_at: salesDate,
                 productId: product.id,
                 storeIds: !!storeId ? [storeId] : storesArray.map(store => store.id),
+                currency_id: selectedCurrencyId,
                 costCenterId : cost_center?.id,
                 sales_outlet_id : outlet.id,
                 measurement_unit_id: measurement_unit_id
@@ -275,17 +317,8 @@ function SaleItemForm({
                 setValue('available_balance', 0);
             }
     
-            // Check if there is a selling price
-            const selling_price = storeBalances && storeBalances.selling_price;
-            if(!!selling_price && !checkedForSuggestPrice){
-                await setValue(`rate`, selling_price?.price, {
-                    shouldDirty: true,
-                    shouldValidate: true
-                });
-
-                setPriceFieldKey(key => key + 1)
-                setVatPriceFieldKey(key => key + 1)
-            }
+            // Check if there is a selling price (now handled by useQuery)
+            // The selling price is already set by the useQuery above
     
             if (!isRetrieving && watch(`available_balance`) && watch(`quantity`) > 0) {
                 setValue(`quantity`, watch(`quantity`), {
@@ -359,6 +392,7 @@ function SaleItemForm({
 
                                 retrieveLastPrice(newValue,newValue.primary_unit?.id);
                                 await retrieveBalances(store_id, newValue, newValue.primary_unit?.id);
+                                // The selling price will be fetched automatically by useQuery
                             } else {
                                 await setValue(`available_balance`,'N/A');
                                 await setValue(`product`,null, {
@@ -381,10 +415,10 @@ function SaleItemForm({
                                     defaultValue={item ? (Array.isArray(stores) ? stores : Object.values(stores)).find(store => store.id === (item.inventory_movement?.store_id || item?.store_id)) : (Array.isArray(stores) ? stores[0] : Object.values(stores)[0])}
                                     onChange={(newValue) => {
                                         newValue !== null && retrieveBalances(newValue.id, product, measurement_unit_id);
-                                            setValue(`store_id`, newValue && newValue.id, {
-                                                shouldValidate: true,
-                                                shouldDirty: true,
-                                            });
+                                        setValue(`store_id`, newValue && newValue.id, {
+                                            shouldValidate: true,
+                                            shouldDirty: true,
+                                        });
                                     }}
                                 />
                             </Grid>
@@ -464,7 +498,7 @@ function SaleItemForm({
                 </Grid>
                 <Grid size={{xs: 12, md: 6, lg: !!checkedForInstantSale && isInventory ? 2.5 : (!vat_factor ? 3 : 2)}}>
                     {
-                        isRetrieving ? <LinearProgress/> : 
+                        isFetchingSellingPrice ? <LinearProgress/> : 
                             <TextField
                                 label="Price"
                                 fullWidth
