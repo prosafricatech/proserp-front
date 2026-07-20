@@ -105,8 +105,6 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
            resolvedApprovedDetails?.process_type === 'MATERIAL';
   }, [payment, approvedRequisition, resolvedApprovedDetails]);
 
-  console.log(approvedDetails)
-
   const imprestLedger =
     approvedRequisition?.requisition?.imprest_ledger ||
     resolvedApprovedDetails?.imprest_ledger ||
@@ -392,15 +390,22 @@ return payment.items.map((payItem: any, index: number) => {
       ...data,
       items: items
         .filter((item) => isMaterialPayment || item.unpaid_amount > 0)
-        .map((item) => ({
-          debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
-          requisition_approval_ledger_item_id:
-            item.requisition_approval_ledger_item_id,
-          amount: Number.isFinite(Number(item.amount))
-            ? Number(item.amount)
-            : 0,
-          description: String(item.description || item.remarks || '').trim(),
-        })),
+        .map((item) => {
+          // For material payments, use requisition_approval_product_item_id
+          // For other payments, use requisition_approval_ledger_item_id
+          const itemIdKey = isMaterialPayment 
+            ? 'requisition_approval_product_item_id' 
+            : 'requisition_approval_ledger_item_id';
+          
+          return {
+            debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
+            [itemIdKey]: item.requisition_approval_ledger_item_id,
+            amount: Number.isFinite(Number(item.amount))
+              ? Number(item.amount)
+              : 0,
+            description: String(item.description || item.remarks || '').trim(),
+          };
+        }),
     };
     await savePayment(updatedData);
   };
