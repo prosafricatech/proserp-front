@@ -105,6 +105,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
            resolvedApprovedDetails?.process_type === 'MATERIAL';
   }, [payment, approvedRequisition, resolvedApprovedDetails]);
 
+  console.log(approvedDetails)
+
   const imprestLedger =
     approvedRequisition?.requisition?.imprest_ledger ||
     resolvedApprovedDetails?.imprest_ledger ||

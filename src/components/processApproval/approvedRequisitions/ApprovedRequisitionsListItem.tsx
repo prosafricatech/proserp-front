@@ -233,16 +233,6 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
-
-                {/* Material type: action tail depends on which tab is active in MaterialRequisitionTabs */}
-                {isMaterial && activeMaterialTab === MATERIAL_TAB.STORE_ISSUES &&
-                  checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE]) &&
-                  !materialRequisition.is_fully_issued && (
-                    <ApprovedIssueActionTail
-                      approvedRequisition={approvedRequisition as MaterialApprovalRequisition}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
               </Grid>
             </Grid>
           </Grid>
