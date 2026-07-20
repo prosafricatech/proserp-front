@@ -1,6 +1,6 @@
+import { DeductionType } from '@/components/humanResources/deductionTypes/DeductionType';
 import { Employee } from '@/components/humanResources/employees/EmployeesType';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
-import { DeductionType } from '@/components/humanResources/deductionTypes/DeductionType';
 
 export type LoanRequestStatus =
   | 'in_review'
@@ -55,11 +55,7 @@ export interface LoanRequestPayment {
   voucher_no: string;
 }
 
-// NOTE: the GET /loanRequests/{id} sample only sends employee_deduction_id
-// (no nested employee_deduction object, and no effective_to) — this type
-// deliberately does not include an `employee_deduction` object yet. Flag to
-// Eliya before the Summary tab tries to show "recovery ends on <date>".
-export interface LoanRequest {
+export interface LoanRequestType {
   id: number;
   employee_id: number;
   cost_center_id: number | null;

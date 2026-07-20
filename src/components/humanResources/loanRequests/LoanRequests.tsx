@@ -10,10 +10,11 @@ import { EmployeesProvider } from '../employees/EmployeesProvider';
 import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
 import LoanRequestsListItem from './LoanRequestsListItem';
-import { LoanRequest } from './LoanRequestType';
+import { LoanRequestType } from './LoanRequestType';
 
 const STATUS_OPTIONS = [
   { label: 'In Review', value: 'in_review' },
+  { label: 'On Hold', value: 'on hold' },
   { label: 'Approved', value: 'approved' },
   { label: 'Rejected', value: 'rejected' },
   { label: 'Cancelled', value: 'cancelled' },
@@ -29,7 +30,7 @@ const LoanRequests = () => {
   );
 
   const [queryOptions, setQueryOptions] = React.useState({
-    queryKey: 'leaveRequests',
+    queryKey: 'loanRequests',
     queryParams: {
       status: null,
       keyword: '',
@@ -38,9 +39,12 @@ const LoanRequests = () => {
     dataKey: 'data',
   });
 
-  const renderLoanRequests = React.useCallback((loanRequest: LoanRequest) => {
-    return <LoanRequestsListItem loanRequest={loanRequest} />;
-  }, []);
+  const renderLoanRequests = React.useCallback(
+    (loanRequest: LoanRequestType) => {
+      return <LoanRequestsListItem loanRequest={loanRequest} />;
+    },
+    []
+  );
 
   const handleOnChange = React.useCallback((keyword: string) => {
     setQueryOptions((state) => ({

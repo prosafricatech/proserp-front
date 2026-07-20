@@ -6,7 +6,7 @@ export type LoanRequestStatus =
   | 'rejected'
   | 'cancelled';
 
-export interface LoanRequest {
+export interface MyHrLoanRequestType {
   id: number;
   employee_id: number;
   cost_center_id: number | null;
@@ -37,7 +37,7 @@ export interface LoanRequest {
 }
 
 export interface LoanRequestsListResponse {
-  data: LoanRequest[];
+  data: MyHrLoanRequestType[];
   current_page: number;
   per_page: number;
   total: number;

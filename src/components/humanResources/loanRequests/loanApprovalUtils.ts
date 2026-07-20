@@ -1,4 +1,4 @@
-import { LoanRequest, LoanRequestApproval } from './LoanRequestType';
+import { LoanRequestApproval, LoanRequestType } from './LoanRequestType';
 
 export type LoanApprovalDecision = 'approved' | 'rejected' | 'on hold' | 'unknown';
 
@@ -17,7 +17,9 @@ export const getLoanApprovalDecision = (
 };
 
 // Mirrors getNextPendingLeaveLevel from LeaveApprovalDialog.tsx
-export const getNextPendingLoanLevel = (loanRequest: LoanRequest | undefined) => {
+export const getNextPendingLoanLevel = (
+  loanRequest: LoanRequestType | undefined
+) => {
   if (!loanRequest) return undefined;
 
   const levels = [...(loanRequest.approval_chain?.levels || [])].sort(

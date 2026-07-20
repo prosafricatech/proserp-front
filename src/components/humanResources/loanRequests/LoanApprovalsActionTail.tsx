@@ -1,19 +1,32 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { FactCheckOutlined } from '@mui/icons-material';
-import { ButtonGroup, IconButton, Tooltip } from '@mui/material';
-import { LoanRequest } from './LoanRequestType';
+import {
+  ButtonGroup,
+  IconButton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useState } from 'react';
+import LoanApprovalForm from './LoanApprovalForm';
+import { LoanRequestType } from './LoanRequestType';
 import { getNextPendingLoanLevel } from './loanApprovalUtils';
 
 interface LoanApprovalsActionTailProps {
-  loanRequest: LoanRequest;
+  loanRequest: LoanRequestType;
 }
 
-// PHASE 1 — visual only, mirrors LeaveApprovalsActionTail. Shown only when
-// there's no approval decision yet (approvals.length === 0), same as leave.
-const LoanApprovalsActionTail = ({ loanRequest }: LoanApprovalsActionTailProps) => {
+// Mirrors LeaveApprovalsActionTail. Shown only when there's no approval
+// decision yet (approvals.length === 0), same as leave.
+const LoanApprovalsActionTail = ({
+  loanRequest,
+}: LoanApprovalsActionTailProps) => {
+  const [openDialog, setOpenDialog] = useState(false);
   const { hasOrganizationRole } = useJumboAuth();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const pendingLevel = getNextPendingLoanLevel(loanRequest);
   const pendingRoleName = pendingLevel?.role?.name || '';
@@ -27,18 +40,27 @@ const LoanApprovalsActionTail = ({ loanRequest }: LoanApprovalsActionTailProps) 
   if (!canApprove) return null;
 
   return (
-    <ButtonGroup
-      variant='outlined'
-      size='small'
-      disableElevation
-      sx={{ '& .MuiButton-root': { px: 1 } }}
-    >
-      <Tooltip title='Approve Loan Request'>
-        <IconButton onClick={() => {}}>
-          <FactCheckOutlined />
-        </IconButton>
-      </Tooltip>
-    </ButtonGroup>
+    <>
+      <LoanApprovalForm
+        open={openDialog}
+        loanRequest={loanRequest}
+        belowLargeScreen={belowLargeScreen}
+        onClose={() => setOpenDialog(false)}
+      />
+
+      <ButtonGroup
+        variant='outlined'
+        size='small'
+        disableElevation
+        sx={{ '& .MuiButton-root': { px: 1 } }}
+      >
+        <Tooltip title='Approve Loan Request'>
+          <IconButton onClick={() => setOpenDialog(true)}>
+            <FactCheckOutlined />
+          </IconButton>
+        </Tooltip>
+      </ButtonGroup>
+    </>
   );
 };
 

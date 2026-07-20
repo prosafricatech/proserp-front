@@ -7,7 +7,6 @@ export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 

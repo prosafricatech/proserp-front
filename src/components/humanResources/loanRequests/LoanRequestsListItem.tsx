@@ -25,9 +25,9 @@ import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import LoanApprovalItemAction from './LoanApprovalItemAction';
 import LoanApprovalsActionTail from './LoanApprovalsActionTail';
-import LoanRequestItemAction from './LoanRequestItemAction';
-import { LoanRequest } from './LoanRequestType';
 import { getLoanApprovalDecision } from './loanApprovalUtils';
+import LoanRequestItemAction from './LoanRequestItemAction';
+import { LoanRequestType } from './LoanRequestType';
 
 const formatCurrency = (value?: number | null) =>
   value != null ? Number(value).toLocaleString() : '\u2014';
@@ -81,7 +81,7 @@ const SectionTitle = ({ children }: { children: React.ReactNode }) => (
 const LoanRequestsListItem = ({
   loanRequest,
 }: {
-  loanRequest: LoanRequest;
+  loanRequest: LoanRequestType;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
@@ -93,9 +93,9 @@ const LoanRequestsListItem = ({
     refetchOnWindowFocus: true,
   });
 
-  const details: LoanRequest = (loanDetails?.data ||
+  const details: LoanRequestType = (loanDetails?.data ||
     loanDetails ||
-    loanRequest) as LoanRequest;
+    loanRequest) as LoanRequestType;
 
   const approvals = details?.approvals || [];
 
@@ -318,16 +318,19 @@ const LoanRequestsListItem = ({
                       <Grid size={12}>
                         <SectionTitle>Linked Deduction</SectionTitle>
                       </Grid>
+                      <Grid size={12}>
+                        <Typography variant='subtitle2' color='text.secondary'>
+                          {details.deduction_type?.description}
+                        </Typography>
+                      </Grid>
                       <Field
                         label='Deduction Type'
                         value={details.deduction_type?.name}
                       />
                       <Field
-                        label='Employee Deduction'
+                        label='Category'
                         value={
-                          details.employee_deduction_id
-                            ? `#${details.employee_deduction_id}`
-                            : 'Not yet linked'
+                          details.deduction_type?.category ?? 'Not yet linked'
                         }
                       />
                     </Grid>
