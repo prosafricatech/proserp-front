@@ -68,7 +68,7 @@ const EditRequisition: React.FC<EditRequisitionProps> = ({
     queryFn: async () =>
       await requisitionsServices.getRequisitionDetails(requisition.id),
     refetchOnWindowFocus: true,
-    enabled: openEditDialog && !!requisition?.id,
+    enabled: !!openEditDialog,
   });
 
   if (isFetching) {
@@ -94,7 +94,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryKey: ['requisitionDetails', { id: requisition.id }],
     queryFn: async () =>
       await requisitionsServices.getRequisitionDetails(requisition.id),
-    enabled: openDocumentDialog && !!requisition?.id,
+    enabled: !!openDocumentDialog,
   });
 
   const [showOnScreen, setShowOnScreen] = useState(true);

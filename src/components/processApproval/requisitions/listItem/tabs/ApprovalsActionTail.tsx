@@ -39,8 +39,7 @@ const ApprovalsActionTail: React.FC<ApprovalsActionTailProps> = ({
     queryKey: ['requisitionDetails', { id: requisition.id }],
     queryFn: async () =>
       await requisitionsServices.getRequisitionDetails(requisition.id),
-    // enabled: !isEditAction && isExpanded && openDialog,
-    enabled: isExpanded,
+    enabled: !!isExpanded,
     refetchOnWindowFocus: true,
   });
 
