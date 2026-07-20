@@ -96,14 +96,9 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
   );
   const { enqueueSnackbar } = useSnackbar();
   const resolvedApprovedDetails = approvedDetails || prevApprovedDetails || null;
-  
-  // Determine if this is an imprest payment
   const isImprestPayment= approvedRequisition?.process_type === 'IMPREST' || resolvedApprovedDetails?.process_type === 'IMPREST' || approvedDetails?.process_type === 'MATERIAL';
-
-  // Check if this is a MATERIAL payment (should not validate against unpaid_amount)
   const isMaterialPayment = React.useMemo(() => {
     if (payment) {
-      // If editing, check if any item has PURCHASE fulfillment type
       return payment.items.some((item: any) => item.fulfillment_type === 'PURCHASE');
     }
     return approvedRequisition?.process_type === 'MATERIAL' || 
@@ -146,27 +141,34 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           ? resolvedApprovedDetails.items
           : [];
 
-      return payment.items.map((payItem: any, index: number) => {
-        let prevItem = null;
+return payment.items.map((payItem: any, index: number) => {
+  let prevItem = null;
 
-        // Try to find by ledger id
-        if (payItem?.debit_ledger_id) {
-          prevItem = previousItems.find(
-            (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
-          );
-        }
+  // Try to find by ledger id
+  if (payItem?.debit_ledger_id) {
+    prevItem = previousItems.find(
+      (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
+    );
+  }
 
-        if (!prevItem && payItem?.requisition_approval_ledger_item_id) {
-          prevItem = previousItems.find(
-            (item: any) => Number(item?.id) === Number(payItem?.requisition_approval_ledger_item_id)
-          );
-        }
+  if (!prevItem && payItem?.requisition_approval_ledger_item_id) {
+    prevItem = previousItems.find(
+      (item: any) => Number(item?.id) === Number(payItem?.requisition_approval_ledger_item_id)
+    );
+  }
 
-        const unpaidAmount = isMaterialPayment
-          ? 0
-          : prevItem
-            ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
-            : 0;
+  // NEW: IMPREST overwrites debit_ledger_id to the imprest ledger on submit,
+  // and saved payment items carry no id linking back to the approval line —
+  // so neither lookup above can match. Fall back to positional matching.
+  if (!prevItem && previousItems[index]) {
+    prevItem = previousItems[index];
+  }
+
+  const unpaidAmount = isMaterialPayment
+    ? 0
+    : prevItem
+      ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
+      : 0;
 
         const forcedImprestLedger = imprestLedger
           ? {
@@ -210,21 +212,25 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
     else if (approvedDetails) {
       return approvedDetails.items
         .filter((item: any) => {
-          
-          if (isImprestPayment) {
-            // For imprest payment: include all IMPREST items
-            return item.fulfillment_type === 'IMPREST' || item?.process_type === 'PAYMENT';
+          if (isMaterialPayment) {
+            // MATERIAL: only IMPREST-fulfillment lines are payable here; PURCHASE
+            // lines are settled via Purchase Orders, not this payment form.
+            return item.fulfillment_type === 'IMPREST';
           }
-          
-          // For material payment: include items with unpaid_amount > 0
-          // OR items with fulfillment_type === 'IMPREST' (if you want to include them)
+          // Everyone else (PAYMENT, IMPREST process types): only items with something still unpaid
           return item.unpaid_amount > 0;
         })
         .map((item: any) => {
-          // Safely get the ledger id
           const ledgerId = item.ledger?.id || item.ledger_id || 0;
           const ledgerName = item.ledger?.name || item.ledger_name || '';
-          
+
+          // MATERIAL/IMPREST-fulfillment items don't carry unpaid_amount directly —
+          // derive the payable amount from quantity * rate (+ vat) instead.
+          const vatFactor = (item.vat_percentage || 0) * 0.01;
+          const derivedAmount = isMaterialPayment
+            ? Number(item.quantity || 0) * Number(item.rate || 0) * (1 + vatFactor)
+            : (item.unpaid_amount || 0);
+
           return {
             ...item,
             debit_ledger_id: ledgerId,
@@ -232,7 +238,8 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
               id: ledgerId,
               name: ledgerName,
             },
-            amount: item.unpaid_amount || 0,
+            amount: derivedAmount,
+            unpaid_amount: isMaterialPayment ? derivedAmount : item.unpaid_amount,
             description: buildItemDescription(
               item?.description || item?.remarks || '',
               ledgerName

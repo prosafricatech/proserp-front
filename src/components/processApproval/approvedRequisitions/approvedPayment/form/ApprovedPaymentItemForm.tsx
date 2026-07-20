@@ -77,7 +77,6 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
   return (
     <React.Fragment>
       {filteredItems.map((item, itemIndex) => {
-        // For material payments, we don't need to validate against unpaid_amount
         const showUnpaidAmount = !isMaterialPayment;
         const shouldValidateUnpaid = !isMaterialPayment;
         const isAmountError = shouldValidateUnpaid && item.amount > item.unpaid_amount;
