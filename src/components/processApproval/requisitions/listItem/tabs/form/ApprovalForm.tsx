@@ -252,6 +252,8 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
 
   const isPurchaseType =
     requisition?.approval_chain?.process_type?.toLowerCase() === 'purchase';
+  const isPaymentType =
+    requisition?.approval_chain?.process_type?.toLowerCase() === 'payment';
   const isMaterialType =
     requisition?.approval_chain?.process_type?.toLowerCase() === 'material';
   const isImprestType =
@@ -1028,6 +1030,7 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
             approval={approval}
             requisition={requisition}
             errors={errors.ledger_items}
+            isPaymentType={isPaymentType}
             requisitionLedgerItem={requisitionLedgerItem}
             setRequisitionLedgerItem={setRequisitionLedgerItem}
             handleItemChange={handleItemChange}

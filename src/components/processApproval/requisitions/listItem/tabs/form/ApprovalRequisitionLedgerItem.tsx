@@ -53,6 +53,7 @@ interface ApprovalRequisitionLedgerItemProps {
   requisition: Requisition;
   errors: any;
   handleItemChange: any;
+  isPaymentType: boolean;
   requisitionLedgerItem: RequisitionItem[];
   setRequisitionLedgerItem: (items: RequisitionItem[]) => void;
 }
@@ -105,6 +106,7 @@ function ApprovalRequisitionLedgerItem({
   approval,
   requisition,
   errors,
+  isPaymentType,
   handleItemChange,
   requisitionLedgerItem,
   setRequisitionLedgerItem,
@@ -460,37 +462,39 @@ function ApprovalRequisitionLedgerItem({
               </Div>
             </Grid>
 
-            <Grid
-              textAlign="end"
-              size={{
-                xs: 2,
-                md: 1,
-                lg: 1,
-              }}
-            >
-              <Div sx={{ mt: 1.5, mb: 0.5 }}>
-                <Tooltip title="Add split allocation under this item">
-                  <IconButton
-                    size="small"
-                    color="primary"
-                    onClick={() => handleAddSplit(itemIndex)}
-                  >
-                    <CallSplitOutlinedIcon fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-                {requisitionLedgerItem.length > 1 && (
-                  <Tooltip title="Delete item">
+            {isPaymentType &&
+              <Grid
+                textAlign="end"
+                size={{
+                  xs: 2,
+                  md: 1,
+                  lg: 1,
+                }}
+              >
+                <Div sx={{ mt: 1.5, mb: 0.5 }}>
+                  <Tooltip title="Add split allocation under this item">
                     <IconButton
                       size="small"
-                      color="error"
-                      onClick={() => handleDeleteItem(itemIndex)}
+                      color="primary"
+                      onClick={() => handleAddSplit(itemIndex)}
                     >
-                      <DeleteIcon fontSize="small" />
+                      <CallSplitOutlinedIcon fontSize="small" />
                     </IconButton>
                   </Tooltip>
-                )}
-              </Div>
-            </Grid>
+                  {requisitionLedgerItem.length > 1 && (
+                    <Tooltip title="Delete item">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => handleDeleteItem(itemIndex)}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Div>
+              </Grid>
+            }
 
             {splits.length > 0 && (
               <Grid size={{ xs: 12 }} sx={{ pl: { xs: 1, md: 4 }, mt: 1 }}>
