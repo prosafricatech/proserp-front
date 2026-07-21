@@ -17,9 +17,6 @@ interface LoanApprovalItemActionProps {
   approvals: LoanRequestApproval[];
 }
 
-// Mirrors LeaveApprovalItemAction's visibility rules. No Edit/Delete here:
-// unlike leave/payroll, there's no per-approval update/delete endpoint for
-// loans yet (only loanRequestChainDecision).
 const LoanApprovalItemAction = ({
   loanRequest,
   approval,

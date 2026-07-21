@@ -3,12 +3,7 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { FactCheckOutlined } from '@mui/icons-material';
-import {
-  ButtonGroup,
-  IconButton,
-  Tooltip,
-  useMediaQuery,
-} from '@mui/material';
+import { ButtonGroup, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import { useState } from 'react';
 import LoanApprovalForm from './LoanApprovalForm';
 import { LoanRequestType } from './LoanRequestType';
@@ -18,8 +13,6 @@ interface LoanApprovalsActionTailProps {
   loanRequest: LoanRequestType;
 }
 
-// Mirrors LeaveApprovalsActionTail. Shown only when there's no approval
-// decision yet (approvals.length === 0), same as leave.
 const LoanApprovalsActionTail = ({
   loanRequest,
 }: LoanApprovalsActionTailProps) => {

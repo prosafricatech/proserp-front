@@ -23,9 +23,6 @@ interface LoanMarkDisbursedFormProps {
   onClose: () => void;
 }
 
-// No Accounts & Finance path (organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE)
-// false — see LoanRequestItemAction gating). No ledger, no ability gate — just a
-// record with an optional free-text reference (e.g. "Cash handed over, receipt #4521").
 const LoanMarkDisbursedForm = ({
   open,
   belowLargeScreen,

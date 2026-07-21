@@ -47,7 +47,6 @@ const LoanDisburseForm = ({
         queryKey: ['showLoanRequest', loanRequest.id],
       });
       queryClient.invalidateQueries({ queryKey: ['loanRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }); // see known-issues-cleanup.md
       enqueueSnackbar('Loan disbursed', { variant: 'success' });
       onClose();
     },

@@ -27,11 +27,6 @@ interface LoanDirectDecisionFormProps {
   onClose: () => void;
 }
 
-// Direct (no-chain) approve/reject — only reachable when
-// loanRequest.approval_chain_id is null. Per the handoff doc, direct approve
-// takes { amount_approved?, installments_approved?, remarks? } (all
-// optional — omitting amount/installments keeps them at the requested
-// values), direct reject takes { remarks } (required).
 const LoanDirectDecisionForm = ({
   open,
   mode,
@@ -44,9 +39,9 @@ const LoanDirectDecisionForm = ({
   const [amountApproved, setAmountApproved] = useState<number | ''>(
     loanRequest.amount
   );
-  const [installmentsApproved, setInstallmentsApproved] = useState<
-    number | ''
-  >(loanRequest.installments);
+  const [installmentsApproved, setInstallmentsApproved] = useState<number | ''>(
+    loanRequest.installments
+  );
   const [remarks, setRemarks] = useState('');
   const [amountError, setAmountError] = useState('');
   const [remarksError, setRemarksError] = useState('');
@@ -72,7 +67,6 @@ const LoanDirectDecisionForm = ({
         queryKey: ['showLoanRequest', loanRequest.id],
       });
       queryClient.invalidateQueries({ queryKey: ['loanRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }); // see known-issues-cleanup.md
       enqueueSnackbar(
         isApprove ? 'Loan request approved' : 'Loan request rejected',
         { variant: 'success' }
@@ -150,9 +144,7 @@ const LoanDirectDecisionForm = ({
                 onChange={(e: any) => {
                   setAmountError('');
                   setAmountApproved(
-                    e.target.value === ''
-                      ? ''
-                      : sanitizedNumber(e.target.value)
+                    e.target.value === '' ? '' : sanitizedNumber(e.target.value)
                   );
                 }}
               />
@@ -163,9 +155,7 @@ const LoanDirectDecisionForm = ({
                 value={installmentsApproved}
                 onChange={(e: any) =>
                   setInstallmentsApproved(
-                    e.target.value === ''
-                      ? ''
-                      : sanitizedNumber(e.target.value)
+                    e.target.value === '' ? '' : sanitizedNumber(e.target.value)
                   )
                 }
               />

@@ -8,6 +8,7 @@ import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   CancelOutlined,
   CheckCircleOutlined,
+  DeleteForeverOutlined,
   HighlightOffOutlined,
   PaidOutlined,
   PaymentsOutlined,
@@ -24,7 +25,6 @@ import LoanDisburseForm from './LoanDisburseForm';
 import LoanMarkDisbursedForm from './LoanMarkDisbursedForm';
 import { LoanRequestType } from './LoanRequestType';
 
-// PHASE 5 — Disburse wired up (two distinct actions, per org subscription).
 const LoanRequestItemAction = ({
   loanRequest,
 }: {
@@ -57,10 +57,6 @@ const LoanRequestItemAction = ({
     MODULES.ACCOUNTS_AND_FINANCE
   );
 
-  // Ability gate per the handoff doc: approving a loan and releasing real
-  // cash are different responsibilities — a user can approve without being
-  // able to disburse. Hidden entirely (not disabled) when lacking it, per
-  // Eliya. mark-disbursed (no Accounts & Finance) has no such gate.
   const canDisburseWithLedger =
     isApprovedNotDisbursed &&
     orgHasAccountsAndFinance &&
@@ -75,8 +71,24 @@ const LoanRequestItemAction = ({
         queryKey: ['showLoanRequest', loanRequest.id],
       });
       queryClient.invalidateQueries({ queryKey: ['loanRequests'] });
-      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }); // see known-issues-cleanup.md
       enqueueSnackbar('Loan request cancelled', { variant: 'success' });
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Something went wrong',
+        { variant: 'error' }
+      );
+    },
+  });
+
+  const { mutate: deleteLoanRequest, isPending: isDeleting } = useMutation({
+    mutationFn: humanResourcesServices.deleteLoanRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['showLoanRequest', loanRequest.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ['loanRequests'] });
+      enqueueSnackbar('Loan request deleted', { variant: 'success' });
     },
     onError: (error: any) => {
       enqueueSnackbar(
@@ -96,6 +108,19 @@ const LoanRequestItemAction = ({
       onYes: () => {
         hideDialog();
         cancelLoanRequest({ id: loanRequest.id });
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
+  };
+
+  const handleDelete = () => {
+    showDialog({
+      title: 'Delete Loan Request',
+      content: 'This action cannot be undone',
+      onYes: () => {
+        hideDialog();
+        deleteLoanRequest(loanRequest.id);
       },
       onNo: () => hideDialog(),
       variant: 'confirm',
@@ -173,6 +198,12 @@ const LoanRequestItemAction = ({
           </IconButton>
         </Tooltip>
       )}
+
+      <Tooltip title='Delete'>
+        <IconButton size='small' disabled={isDeleting} onClick={handleDelete}>
+          <DeleteForeverOutlined color='error' />
+        </IconButton>
+      </Tooltip>
     </>
   );
 };
