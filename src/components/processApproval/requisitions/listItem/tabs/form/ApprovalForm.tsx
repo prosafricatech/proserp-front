@@ -512,7 +512,7 @@ function ApprovalForm({
 
         return {
           requisition_ledger_item_id: item.id,
-          credit_ledger_id: (item as any).ledger_id || item.ledger?.id,
+          credit_ledger_id: null,
           quantity: item.quantity,
           rate: item.rate,
           remarks: item.remarks,
@@ -569,7 +569,7 @@ function ApprovalForm({
       // Main line without splits
       const mainLine = {
         requisition_ledger_item_id: item.requisition_ledger_item_id,
-        credit_ledger_id: item.credit_ledger_id,
+        credit_ledger_id: null,
         quantity: item.quantity,
         rate: item.rate,
         remarks: item.remarks,

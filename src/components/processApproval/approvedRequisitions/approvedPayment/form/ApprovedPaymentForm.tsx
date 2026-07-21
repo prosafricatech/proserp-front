@@ -41,12 +41,19 @@ interface PaymentItem {
     id: number;
     name: string;
   };
+  credit_ledger?: {
+    id: number;
+    name: string;
+  };
+  credit_ledger_id?: number;
   amount: number;
   unpaid_amount: number;
   remarks?: string;
   description?: string;
   requisition_approval_ledger_item_id?: number;
   fulfillment_type?: string;
+  quantity?: number;
+  rate?: number;
 }
 
 interface Payment {
@@ -140,30 +147,30 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
           ? resolvedApprovedDetails.items
           : [];
 
-return payment.items.map((payItem: any, index: number) => {
-  let prevItem = null;
+      return payment.items.map((payItem: any, index: number) => {
+        let prevItem = null;
 
-  if (payItem?.debit_ledger_id) {
-    prevItem = previousItems.find(
-      (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
-    );
-  }
+        if (payItem?.debit_ledger_id) {
+          prevItem = previousItems.find(
+            (item: any) => Number(item?.ledger?.id) === Number(payItem?.debit_ledger_id)
+          );
+        }
 
-  if (!prevItem && payItem?.requisition_approval_ledger_item_id) {
-    prevItem = previousItems.find(
-      (item: any) => Number(item?.id) === Number(payItem?.requisition_approval_ledger_item_id)
-    );
-  }
+        if (!prevItem && payItem?.requisition_approval_ledger_item_id) {
+          prevItem = previousItems.find(
+            (item: any) => Number(item?.id) === Number(payItem?.requisition_approval_ledger_item_id)
+          );
+        }
 
-  if (!prevItem && previousItems[index]) {
-    prevItem = previousItems[index];
-  }
+        if (!prevItem && previousItems[index]) {
+          prevItem = previousItems[index];
+        }
 
-  const unpaidAmount = isMaterialPayment
-    ? 0
-    : prevItem
-      ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
-      : 0;
+        const unpaidAmount = isMaterialPayment
+          ? 0
+          : prevItem
+            ? Number(payItem?.amount || 0) + Number(prevItem?.unpaid_amount || 0)
+            : 0;
 
         const forcedImprestLedger = imprestLedger
           ? {
@@ -184,6 +191,10 @@ return payment.items.map((payItem: any, index: number) => {
                         forcedImprestLedger?.id ||
                         0;
 
+        // Get credit ledger if exists
+        const creditLedgerId = payItem?.credit_ledger_id || payItem?.credit_ledger?.id || null;
+        const creditLedgerName = payItem?.credit_ledger?.name || '';
+
         return {
           id: payItem?.id,
           debit_ledger_id: ledgerId,
@@ -191,6 +202,11 @@ return payment.items.map((payItem: any, index: number) => {
             id: ledgerId,
             name: ledgerName,
           },
+          credit_ledger_id: creditLedgerId,
+          credit_ledger: creditLedgerId ? {
+            id: creditLedgerId,
+            name: creditLedgerName,
+          } : undefined,
           amount: Number(payItem?.amount || 0),
           unpaid_amount: unpaidAmount,
           description: buildItemDescription(
@@ -201,6 +217,8 @@ return payment.items.map((payItem: any, index: number) => {
             payItem?.requisition_approval_ledger_item_id || prevItem?.id || undefined,
           fulfillment_type: prevItem?.fulfillment_type ||
                             (isImprestPayment ? 'IMPREST' : 'PURCHASE'),
+          quantity: payItem?.quantity || prevItem?.quantity || 0,
+          rate: payItem?.rate || prevItem?.rate || 0,
         };
       });
     }
@@ -220,6 +238,10 @@ return payment.items.map((payItem: any, index: number) => {
             ? Number(item.quantity || 0) * Number(item.rate || 0) * (1 + vatFactor)
             : (item.unpaid_amount || 0);
 
+          // Get credit ledger if exists
+          const creditLedgerId = item.credit_ledger_id || item.credit_ledger?.id || null;
+          const creditLedgerName = item.credit_ledger?.name || '';
+
           return {
             ...item,
             debit_ledger_id: ledgerId,
@@ -227,6 +249,11 @@ return payment.items.map((payItem: any, index: number) => {
               id: ledgerId,
               name: ledgerName,
             },
+            credit_ledger_id: creditLedgerId,
+            credit_ledger: creditLedgerId ? {
+              id: creditLedgerId,
+              name: creditLedgerName,
+            } : undefined,
             amount: derivedAmount,
             unpaid_amount: isMaterialPayment ? derivedAmount : item.unpaid_amount,
             description: buildItemDescription(
@@ -235,6 +262,8 @@ return payment.items.map((payItem: any, index: number) => {
             ),
             requisition_approval_ledger_item_id: item.id,
             fulfillment_type: item.fulfillment_type || 'PURCHASE',
+            quantity: item.quantity || 0,
+            rate: item.rate || 0,
           };
         });
     }
@@ -391,14 +420,17 @@ return payment.items.map((payItem: any, index: number) => {
       items: items
         .filter((item) => isMaterialPayment || item.unpaid_amount > 0)
         .map((item) => {
-          // For material payments, use requisition_approval_product_item_id
-          // For other payments, use requisition_approval_ledger_item_id
           const itemIdKey = isMaterialPayment 
             ? 'requisition_approval_product_item_id' 
             : 'requisition_approval_ledger_item_id';
           
+          // ✅ IMPORTANT: If credit_ledger_id exists, use it as debit_ledger_id
+          const debitLedgerId = item.credit_ledger_id 
+            ? item.credit_ledger_id 
+            : (imprestLedger ? imprestLedger.id : item.debit_ledger_id);
+
           return {
-            debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
+            debit_ledger_id: debitLedgerId,
             [itemIdKey]: item.requisition_approval_ledger_item_id,
             amount: Number.isFinite(Number(item.amount))
               ? Number(item.amount)

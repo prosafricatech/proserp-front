@@ -1,5 +1,5 @@
 import React from 'react';
-import { Grid, Divider, Typography, TextField, Tooltip, IconButton } from '@mui/material';
+import { Grid, Divider, Typography, TextField, Tooltip, IconButton, Box } from '@mui/material';
 import { Div } from '@jumbo/shared';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -12,12 +12,25 @@ interface PaymentItem {
     id: number;
     name: string;
   };
+  credit_ledger?: {
+    id: number;
+    name: string;
+  };
+  credit_ledger_id?: number;
   amount: number;
   unpaid_amount: number;
   remarks?: string;
   description?: string;
   requisition_approval_ledger_item_id?: number;
   fulfillment_type?: string;
+  quantity?: number;
+  rate?: number;
+  paid_amount?: number;
+  measurement_unit?: {
+    id: number;
+    name: string;
+    symbol: string;
+  };
 }
 
 interface ApprovedPaymentItemFormProps {
@@ -44,7 +57,6 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
         if (isMaterialPayment) {
           return true; // Show all items for material payments
         }
-        // Non-material (regular PAYMENT, IMPREST, etc.): only unpaid items
         return item.unpaid_amount > 0;
       })
     : items;
@@ -84,11 +96,13 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
           ? `Debit Amount cannot exceed Unpaid Amount`
           : '';
 
+        // Check if credit ledger exists
+        const hasCreditLedger = item.credit_ledger_id || item.credit_ledger?.id;
 
         return (
           <Grid
             container
-            key={`${item.id}-${itemIndex}`}
+            key={`${item.id || itemIndex}-${itemIndex}`}
             columnSpacing={1}
             paddingBottom={2}
             paddingRight={0.5}
@@ -99,24 +113,42 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
               },
             }}
           >
-            <Grid size={{xs: 12}}>
-              <Divider/>
+            <Grid size={{ xs: 12 }}>
+              <Divider />
             </Grid>
-            <Grid size={{xs: 0.5}}>
+            
+            <Grid size={{ xs: 0.5 }}>
               <Div sx={{ mt: 2, mb: 1.7 }}>{itemIndex + 1}.</Div>
             </Grid>
-            <Grid size={{xs: 11.5, md: 4, lg: 4}}>
-              <Div sx={{ mt: 2, mb: 1.7 }}>
-                <Tooltip title="Debit">
-                  <Typography>
-                    {resolveDebitLabel(item)}
-                  </Typography>
-                </Tooltip>
+            
+            <Grid size={{ xs: 11.5, md: 4, lg: 4 }}>
+              <Div sx={{ mt: 1, mb: 0.5 }}>
+                <Box>
+                  <Tooltip title="Debit Ledger">
+                    <Typography variant="body2" fontWeight="medium">
+                      {resolveDebitLabel(item)}
+                    </Typography>
+                  </Tooltip>
+                  
+                  {/* Show Credit Ledger as secondary if it exists */}
+                  {hasCreditLedger && (
+                    <Tooltip title="Credit Ledger">
+                      <Typography 
+                        variant="caption" 
+                        color="text.secondary"
+                        sx={{ display: 'block', mt: 0.5 }}
+                      >
+                        ({item.credit_ledger?.name || item.credit_ledger_id})
+                      </Typography>
+                    </Tooltip>
+                  )}
+                </Box>
               </Div>
             </Grid>
+            
             {/* Only show Unpaid Amount for imprest payments */}
             {showUnpaidAmount && (
-              <Grid size={{xs: 6, md: 2.5, lg: 2.5}}>
+              <Grid size={{ xs: 6, md: 2.5, lg: 2.5 }}>
                 <Div sx={{ mt: 2, mb: 1.7 }}>
                   <Tooltip title="Unpaid Amount">
                     <Typography>{item.unpaid_amount?.toLocaleString()}</Typography>
@@ -124,7 +156,8 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                 </Div>
               </Grid>
             )}
-            <Grid size={{xs: 6, md: showUnpaidAmount ? 2 : 4, lg: showUnpaidAmount ? 2 : 4}}>
+            
+            <Grid size={{ xs: 6, md: showUnpaidAmount ? 2 : 4, lg: showUnpaidAmount ? 2 : 4 }}>
               <Div sx={{ mt: 1, mb: 0.5 }}>
                 <TextField
                   label="Amount"
@@ -141,12 +174,13 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                   InputProps={{
                     inputComponent: CommaSeparatedField,
                   }}
-                  error={isAmountError}
-                  helperText={amountHelperText}
+                  error={!!resolveFieldError(itemIndex, 'amount') || isAmountError}
+                  helperText={resolveFieldError(itemIndex, 'amount') || amountHelperText}
                 />
               </Div>
             </Grid>
-            <Grid size={{xs: 11, md: showUnpaidAmount ? 2.5 : 3.5, lg: showUnpaidAmount ? 2.5 : 3}}>
+            
+            <Grid size={{ xs: 11, md: showUnpaidAmount ? 2.5 : 3.5, lg: showUnpaidAmount ? 2.5 : 3 }}>
               <Div sx={{ mt: 1, mb: 0.5 }}>
                 <TextField
                   label="Description"
@@ -161,8 +195,9 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                 />
               </Div>
             </Grid>
-            {filteredItems.length > 1 &&
-              <Grid size={{xs: 1, md: 0.5}} textAlign={'end'}>
+            
+            {filteredItems.length > 1 && (
+              <Grid size={{ xs: 1, md: 0.5 }} textAlign={'end'}>
                 <Div sx={{ mt: 1, mb: 1.7 }}>
                   <Tooltip title="Remove Item">
                     <IconButton
@@ -174,7 +209,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                   </Tooltip>
                 </Div>
               </Grid>
-            }
+            )}
           </Grid>
         );
       })}

@@ -492,7 +492,6 @@ function ApprovalRequisitionLedgerItem({
               </Div>
             </Grid>
 
-            {/* Nested splits with proper error handling and improved UI */}
             {splits.length > 0 && (
               <Grid size={{ xs: 12 }} sx={{ pl: { xs: 1, md: 4 }, mt: 1 }}>
                 <Typography 
@@ -515,7 +514,6 @@ function ApprovalRequisitionLedgerItem({
                     const calculatedAmount = splitQty * splitRate;
                     const displayAmount = splitAmount || calculatedAmount;
 
-                    // Get errors for this specific split
                     const splitErrors = itemErrors?.splits?.[splitIndex] || {};
 
                     return (
@@ -534,7 +532,7 @@ function ApprovalRequisitionLedgerItem({
                         <Grid size={{ xs: 12, md: 3 }}>
                             <Div sx={{ mt: 1, mb: 1 }}>
                             <LedgerSelect
-                                label="Split Ledger (Credit)"
+                                label="Credit Ledger"
                                 frontError={splitErrors?.credit_ledger_id}
                                 defaultValue={
                                 split.credit_ledger_id
