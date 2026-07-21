@@ -502,146 +502,150 @@ function ApprovalRequisitionLedgerItem({
                     fontWeight: 'bold',
                     borderBottom: '1px dashed',
                     borderColor: 'divider',
-                    pb: 0.5
+                    pb: 0.5,
+                    mb: 1
                   }}
                 >
                   Split allocations
                 </Typography>
-                    {splits.map((split, splitIndex) => {
-                    const splitAmount = Number(split.amount || 0);
-                    const splitQty = Number(split.quantity || 0);
-                    const splitRate = Number(split.rate || 0);
-                    const calculatedAmount = splitQty * splitRate;
-                    const displayAmount = splitAmount || calculatedAmount;
+                {splits.map((split, splitIndex) => {
+                  const splitAmount = Number(split.amount || 0);
+                  const splitQty = Number(split.quantity || 0);
+                  const splitRate = Number(split.rate || 0);
+                  const calculatedAmount = splitQty * splitRate;
+                  const displayAmount = splitAmount || calculatedAmount;
 
-                    const splitErrors = itemErrors?.splits?.[splitIndex] || {};
+                  const splitErrors = itemErrors?.splits?.[splitIndex] || {};
 
-                    return (
-                        <Grid
-                        container
-                        spacing={1}
-                        key={`split-${itemIndex}-${splitIndex}`}
-                        alignItems="center"
-                        sx={{
-                            mb: 1.5,
-                            py: 1,
-                            px: 1,
-                            bgcolor: 'action.hover',
-                        }}
-                        >
-                        <Grid size={{ xs: 12, md: 3 }}>
-                            <Div sx={{ mt: 1, mb: 1 }}>
-                            <LedgerSelect
-                                label="Credit Ledger"
-                                frontError={splitErrors?.credit_ledger_id}
-                                defaultValue={
-                                split.credit_ledger_id
-                                    ? ({ id: split.credit_ledger_id, name: split.ledger?.name || '' } as any)
-                                    : null
-                                }
-                                onChange={(newValue: any) => {
-                                const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
-                                handleUpdateSplit(itemIndex, splitIndex, {
-                                    credit_ledger_id: singleValue?.id || null,
-                                    ledger: singleValue || undefined,
-                                });
-                                }}
-                            />
-                            </Div>
-                        </Grid>
+                  return (
+                    <Grid
+                      container
+                      spacing={1}
+                      key={`split-${itemIndex}-${splitIndex}`}
+                      alignItems="center"
+                      sx={{
+                        mb: 1.5,
+                        py: 1,
+                        px: 1,
+                        bgcolor: 'action.hover',
+                        borderLeft: 3,
+                        borderColor: 'secondary.main',
+                        borderRadius: 0.5,
+                      }}
+                    >
+                      <Grid size={{ xs: 12, md: 3 }}>
+                        <Div sx={{ mt: 1, mb: 1 }}>
+                          <LedgerSelect
+                            label="Credit Ledger"
+                            frontError={splitErrors?.credit_ledger_id}
+                            defaultValue={
+                              split.credit_ledger_id
+                                ? ({ id: split.credit_ledger_id, name: split.ledger?.name || '' } as any)
+                                : null
+                            }
+                            onChange={(newValue: any) => {
+                              const singleValue = Array.isArray(newValue) ? newValue[0] : newValue;
+                              handleUpdateSplit(itemIndex, splitIndex, {
+                                credit_ledger_id: singleValue?.id || null,
+                                ledger: singleValue || undefined,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
 
-                        <Grid size={{ xs: 6, md: 1.5 }}>
-                            <Div sx={{ mt: 1, mb: 1 }}>
-                            <TextField
-                                label="Qty"
-                                fullWidth
-                                size="small"
-                                value={split.quantity ?? ''}
-                                error={!!splitErrors?.quantity}
-                                helperText={splitErrors?.quantity?.message || ''}
-                                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                                onChange={(e) => {
-                                const qty = sanitizedNumber(e.target.value);
-                                handleUpdateSplit(itemIndex, splitIndex, {
-                                    quantity: qty !== undefined && !isNaN(qty) ? qty : null,
-                                });
-                                }}
-                            />
-                            </Div>
-                        </Grid>
+                      <Grid size={{ xs: 6, md: 1.5 }}>
+                        <Div sx={{ mt: 1, mb: 1 }}>
+                          <TextField
+                            label="Qty"
+                            fullWidth
+                            size="small"
+                            value={split.quantity ?? ''}
+                            error={!!splitErrors?.quantity}
+                            helperText={splitErrors?.quantity?.message || ''}
+                            InputProps={{ inputComponent: CommaSeparatedField as any }}
+                            onChange={(e) => {
+                              const qty = sanitizedNumber(e.target.value);
+                              handleUpdateSplit(itemIndex, splitIndex, {
+                                quantity: qty !== undefined && !isNaN(qty) ? qty : null,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
 
-                        <Grid size={{ xs: 6, md: 2 }}>
-                            <Div sx={{ mt: 1, mb: 1 }}>
-                            <TextField
-                                label="Rate"
-                                fullWidth
-                                size="small"
-                                value={split.rate ?? ''}
-                                error={!!splitErrors?.rate}
-                                helperText={splitErrors?.rate?.message || ''}
-                                InputProps={{ inputComponent: CommaSeparatedField as any }}
-                                onChange={(e) => {
-                                const rateVal = sanitizedNumber(e.target.value);
-                                handleUpdateSplit(itemIndex, splitIndex, {
-                                    rate: rateVal !== undefined && !isNaN(rateVal) ? rateVal : null,
-                                });
-                                }}
-                            />
-                            </Div>
-                        </Grid>
+                      <Grid size={{ xs: 6, md: 2 }}>
+                        <Div sx={{ mt: 1, mb: 1 }}>
+                          <TextField
+                            label="Rate"
+                            fullWidth
+                            size="small"
+                            value={split.rate ?? ''}
+                            error={!!splitErrors?.rate}
+                            helperText={splitErrors?.rate?.message || ''}
+                            InputProps={{ inputComponent: CommaSeparatedField as any }}
+                            onChange={(e) => {
+                              const rateVal = sanitizedNumber(e.target.value);
+                              handleUpdateSplit(itemIndex, splitIndex, {
+                                rate: rateVal !== undefined && !isNaN(rateVal) ? rateVal : null,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
 
-                        <Grid size={{ xs: 6, md: 2 }}>
-                            <Div sx={{ mt: 1, mb: 1 }}>
-                            <TextField
-                                label="Amount"
-                                fullWidth
-                                size="small"
-                                value={displayAmount > 0 ? displayAmount.toLocaleString() : ''}
-                                InputProps={{
-                                inputComponent: CommaSeparatedField as any,
-                                }}
-                                onChange={(e) => {
-                                const amount = sanitizedNumber(e.target.value);
-                                handleUpdateSplit(itemIndex, splitIndex, {
-                                    amount: amount !== undefined && !isNaN(amount) ? amount : null,
-                                });
-                                }}
-                            />
-                            </Div>
-                        </Grid>
+                      <Grid size={{ xs: 6, md: 2 }}>
+                        <Div sx={{ mt: 1, mb: 1 }}>
+                          <TextField
+                            label="Amount"
+                            fullWidth
+                            size="small"
+                            value={displayAmount > 0 ? displayAmount.toLocaleString() : ''}
+                            InputProps={{
+                              inputComponent: CommaSeparatedField as any,
+                            }}
+                            onChange={(e) => {
+                              const amount = sanitizedNumber(e.target.value);
+                              handleUpdateSplit(itemIndex, splitIndex, {
+                                amount: amount !== undefined && !isNaN(amount) ? amount : null,
+                              });
+                            }}
+                          />
+                        </Div>
+                      </Grid>
 
-                        <Grid size={{ xs: 5, md: 2.5 }}>
-                            <Div sx={{ mt: 1, mb: 1 }}>
-                            <TextField
-                                label="Remarks"
-                                fullWidth
-                                size="small"
-                                value={split.remarks || ''}
-                                onChange={(e) =>
-                                handleUpdateSplit(itemIndex, splitIndex, {
-                                    remarks: e.target.value,
-                                })
-                                }
-                            />
-                            </Div>
-                        </Grid>
+                      <Grid size={{ xs: 5, md: 2.5 }}>
+                        <Div sx={{ mt: 1, mb: 1 }}>
+                          <TextField
+                            label="Remarks"
+                            fullWidth
+                            size="small"
+                            value={split.remarks || ''}
+                            onChange={(e) =>
+                              handleUpdateSplit(itemIndex, splitIndex, {
+                                remarks: e.target.value,
+                              })
+                            }
+                          />
+                        </Div>
+                      </Grid>
 
-                        <Grid size={{ xs: 1, md: 0.5 }} textAlign="end">
-                            <Div sx={{ mt: 1 }}>
-                            <Tooltip title="Remove split">
-                                <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleRemoveSplit(itemIndex, splitIndex)}
-                                >
-                                <DeleteIcon fontSize="small" />
-                                </IconButton>
-                            </Tooltip>
-                            </Div>
-                        </Grid>
-                        </Grid>
-                    );
-                    })}
+                      <Grid size={{ xs: 1, md: 0.5 }} textAlign="end">
+                        <Div sx={{ mt: 1 }}>
+                          <Tooltip title="Remove split">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleRemoveSplit(itemIndex, splitIndex)}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Tooltip>
+                        </Div>
+                      </Grid>
+                    </Grid>
+                  );
+                })}
               </Grid>
             )}
           </Grid>

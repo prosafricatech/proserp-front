@@ -120,8 +120,14 @@ function ApprovalForm({
     }));
   };
 
-  const getInitialLedgerItems = (): RequisitionItem[] => {
-    const items = approval?.items || requisitionItems;
+const getInitialLedgerItems = (): RequisitionItem[] => {
+  const items = approval?.items || requisitionItems;
+  
+  // Check if we have an approval (meaning it's an edit or next approval)
+  const hasApproval = !!approval;
+  
+  // If there's no approval, it's a new approval
+  if (!hasApproval) {
     return items.map((item: RequisitionItem) => ({
       ...item,
       id: item.requisition_ledger_item?.id || item.id,
@@ -131,9 +137,80 @@ function ApprovalForm({
       quantity: item.quantity || 0,
       rate: item.rate || 0,
       remarks: item.remarks || '',
-      splits: (item as any).splits || [],
+      relatable: (item as any).relatable || null,
+      relatable_type: (item as any).relatable_type || null,
+      splits: [],
     }));
-  };
+  }
+  
+  // For edit mode (when approval exists), group items by requisition_ledger_item_id
+  const groupedItems: Record<number, any[]> = {};
+  
+  items.forEach((item: any) => {
+    const parentId = item.requisition_ledger_item?.id || item.requisition_ledger_item_id;
+    if (!groupedItems[parentId]) {
+      groupedItems[parentId] = [];
+    }
+    groupedItems[parentId].push(item);
+  });
+
+  // Build the structure with main items and their splits
+  const result: RequisitionItem[] = [];
+
+  Object.values(groupedItems).forEach((group: any[]) => {
+    // Find the main item (credit_ledger_id is null)
+    const mainItem = group.find((item: any) => !item.credit_ledger_id);
+    // Find all split items (credit_ledger_id is not null)
+    const splitItems = group.filter((item: any) => item.credit_ledger_id);
+
+    if (mainItem) {
+      // Create the main item with its splits
+      const mainLedgerItem = {
+        id: mainItem.requisition_ledger_item?.id || mainItem.id,
+        ledger: mainItem.requisition_ledger_item?.ledger || mainItem.ledger,
+        measurement_unit: mainItem.measurement_unit || mainItem.requisition_ledger_item?.measurement_unit,
+        quantity: mainItem.quantity || 0,
+        rate: mainItem.rate || 0,
+        remarks: mainItem.remarks || '',
+        relatable: mainItem.relatable || null,
+        relatable_type: mainItem.relatable_type || null,
+        splits: splitItems.map((split: any) => ({
+          credit_ledger_id: split.credit_ledger_id,
+          ledger: split.credit_ledger,
+          quantity: split.quantity || 0,
+          rate: split.rate || 0,
+          amount: (split.quantity || 0) * (split.rate || 0),
+          remarks: split.remarks || '',
+        })),
+      };
+      result.push(mainLedgerItem as any);
+    } else if (splitItems.length > 0) {
+      // If there's no main item, create one from the first split
+      const firstSplit = splitItems[0];
+      const mainLedgerItem = {
+        id: firstSplit.requisition_ledger_item?.id || firstSplit.id,
+        ledger: firstSplit.requisition_ledger_item?.ledger || firstSplit.ledger,
+        measurement_unit: firstSplit.measurement_unit || firstSplit.requisition_ledger_item?.measurement_unit,
+        quantity: firstSplit.quantity || 0,
+        rate: firstSplit.rate || 0,
+        remarks: firstSplit.remarks || '',
+        relatable: firstSplit.relatable || null,
+        relatable_type: firstSplit.relatable_type || null,
+        splits: splitItems.map((split: any) => ({
+          credit_ledger_id: split.credit_ledger_id,
+          ledger: split.credit_ledger,
+          quantity: split.quantity || 0,
+          rate: split.rate || 0,
+          amount: (split.quantity || 0) * (split.rate || 0),
+          remarks: split.remarks || '',
+        })),
+      };
+      result.push(mainLedgerItem as any);
+    }
+  });
+
+  return result;
+};
 
   const getInitialAdditionalCosts = () => {
     const source =
@@ -182,19 +259,33 @@ function ApprovalForm({
   const isFinal = isEdit
     ? approval?.is_final === 1
     : requisition?.next_approval_level?.is_final;
+
+  // Calculate Grand Total including splits
   const approvalDisplayValue = React.useMemo(() => {
-    const lineItemsTotal = (
-      isPurchaseType || isMaterialType
-        ? requisitionProductItem
-        : requisitionLedgerItem
-    ).reduce(
+    // For ledger items (payment type), calculate total including splits
+    if (!isPurchaseType && !isMaterialType) {
+      // Calculate total from main items and their splits
+      let total = 0;
+      requisitionLedgerItem.forEach((item) => {
+        // Main item amount
+        const mainAmount = Number(item.quantity || 0) * Number(item.rate || 0);
+        total += mainAmount;
+        
+        // Split amounts
+        const splits: any[] = (item as any).splits || [];
+        splits.forEach((split) => {
+          const splitAmount = Number(split.amount || 0) || (Number(split.quantity || 0) * Number(split.rate || 0));
+          total += splitAmount;
+        });
+      });
+      return total;
+    }
+
+    // For product items (purchase/material type)
+    const lineItemsTotal = requisitionProductItem.reduce(
       (sum, item) => sum + Number(item.quantity || 0) * Number(item.rate || 0),
       0
     );
-
-    if (!isPurchaseType && !isMaterialType) {
-      return lineItemsTotal;
-    }
 
     const vatTotal = requisitionProductItem.reduce(
       (sum, item) =>
