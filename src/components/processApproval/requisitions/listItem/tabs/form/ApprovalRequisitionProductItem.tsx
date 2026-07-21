@@ -11,13 +11,16 @@ import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Div } from '@jumbo/shared';
-import { AccountBalanceWalletOutlined, Restore } from '@mui/icons-material';
+import { AccountBalanceWalletOutlined, Restore, StorageOutlined } from '@mui/icons-material';
 import CallSplitOutlinedIcon from '@mui/icons-material/CallSplitOutlined';
 import DeleteIcon from '@mui/icons-material/Delete';
 import {
   Box,
   Button,
   Checkbox,
+  Dialog,
+  DialogContent,
+  DialogTitle,
   Divider,
   Grid,
   IconButton,
@@ -28,6 +31,14 @@ import {
   TextField,
   Tooltip,
   Typography,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Alert,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import ProductBudgetCheckDetails from './ProductBudgetCheckDetails';
@@ -48,6 +59,13 @@ interface ItemState {
   priceInclusiveVAT: number;
   priceKey: number;
   vatKey: number;
+}
+
+interface StockBalance {
+  store_id: number;
+  store_name: string;
+  balance: number;
+  product_id?: number;
 }
 
 function ApprovalRequisitionProductItem({
@@ -75,6 +93,10 @@ function ApprovalRequisitionProductItem({
   >({});
   const [fieldKeys, setFieldKeys] = useState<Record<number, ItemState>>({});
   const [openProductBudgetDialog, setOpenProductBudgetDialog] = useState(false);
+  const [openStockDialog, setOpenStockDialog] = useState(false);
+  const [selectedStockBalances, setSelectedStockBalances] = useState<StockBalance[]>([]);
+  const [selectedProductName, setSelectedProductName] = useState<string>('');
+  const [quantityErrors, setQuantityErrors] = useState<Record<number, string>>({});
   const [productDialogData, setProductDialogData] = useState<{
     productId: number;
     costCenterId: number;
@@ -150,6 +172,98 @@ function ApprovalRequisitionProductItem({
     setRequisitionProductItem(updatedItems);
   };
 
+  const handleOpenStockDialog = (stockBalances: StockBalance[], productName: string) => {
+    setSelectedStockBalances(stockBalances);
+    setSelectedProductName(productName);
+    setOpenStockDialog(true);
+  };
+
+  const handleCloseStockDialog = () => {
+    setOpenStockDialog(false);
+    setSelectedStockBalances([]);
+    setSelectedProductName('');
+  };
+
+  // Validate quantity against store balance
+  const validateQuantity = (itemIndex: number, quantity: number, storeId: number | null) => {
+    const item = requisitionProductItem[itemIndex];
+    if (!item) return;
+
+    const stockBalances = Array.isArray((item as any).stock_balances)
+      ? (item as any).stock_balances
+      : [];
+
+    // If no store selected or no stock balances, no validation needed
+    if (!storeId || stockBalances.length === 0) {
+      setQuantityErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[itemIndex];
+        return newErrors;
+      });
+      return;
+    }
+
+    // Find the selected store balance
+    const selectedStoreBalance = stockBalances.find(
+      (balance: any) => balance.store_id === storeId
+    );
+
+    if (!selectedStoreBalance) {
+      setQuantityErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[itemIndex];
+        return newErrors;
+      });
+      return;
+    }
+
+    const availableBalance = Number(selectedStoreBalance.balance || 0);
+
+    if (quantity > availableBalance) {
+      setQuantityErrors((prev) => ({
+        ...prev,
+        [itemIndex]: `Quantity ${quantity.toLocaleString()} exceeds available store balance ${availableBalance.toLocaleString()}`
+      }));
+    } else {
+      setQuantityErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[itemIndex];
+        return newErrors;
+      });
+    }
+  };
+
+  // Handle quantity change with validation
+  const handleQuantityChange = (itemIndex: number, value: any) => {
+    const sanitizedValue = sanitizedNumber(value);
+    const quantity = Number.isFinite(sanitizedValue) ? sanitizedValue : 0;
+    
+    handleItemChange({
+      index: itemIndex,
+      key: 'quantity',
+      value: quantity,
+    });
+
+    const item = requisitionProductItem[itemIndex];
+    const storeId = (item as any).store_id || null;
+    validateQuantity(itemIndex, quantity, storeId);
+  };
+
+  // Handle store change with validation
+  const handleStoreChange = (itemIndex: number, store: any) => {
+    const storeId = store?.id || null;
+    
+    handleItemChange({
+      index: itemIndex,
+      key: 'store_id',
+      value: storeId,
+    });
+
+    const item = requisitionProductItem[itemIndex];
+    const quantity = Number(item.quantity || 0);
+    validateQuantity(itemIndex, quantity, storeId);
+  };
+
   return (
     <React.Fragment>
       {requisitionProductItem.map(
@@ -161,6 +275,20 @@ function ApprovalRequisitionProductItem({
             const stockBalances = Array.isArray((item as any).stock_balances)
               ? (item as any).stock_balances
               : [];
+
+            // Determine how many stores to show inline
+            const maxStoresToShow = 2;
+            const displayedBalances = stockBalances.slice(0, maxStoresToShow);
+            const remainingCount = stockBalances.length - maxStoresToShow;
+            const hasManyStores = stockBalances.length > maxStoresToShow;
+
+            // Check if there's a quantity error for this item
+            const quantityError = quantityErrors[itemIndex];
+            const storeId = (item as any).store_id || null;
+            const selectedStoreBalance = stockBalances.find(
+              (balance: any) => balance.store_id === storeId
+            );
+            const availableBalance = selectedStoreBalance?.balance || 0;
 
             return (
               <Grid
@@ -184,17 +312,24 @@ function ApprovalRequisitionProductItem({
                 </Grid>
                 <Grid size={{ xs: 11, md: 4 }}>
                   <Div sx={{ mt: 1, mb: 1 }}>
-                    <Typography>{item.product?.name}</Typography>
-                    {stockBalances.length > 0 && (
-                      <Typography variant='caption' color='text.secondary'>
-                        {stockBalances
-                          .map(
-                            (balance: any) =>
-                              `Store ${balance.store_id}: ${Number(balance.balance || 0).toLocaleString()}`
-                          )
-                          .join(' | ')}
-                      </Typography>
-                    )}
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography>{item.product?.name}</Typography>
+                      {stockBalances.length > 0 && (
+                        <Tooltip title="View all store balances">
+                          <IconButton
+                            size="small"
+                            color="default"
+                            onClick={() => handleOpenStockDialog(
+                              stockBalances,
+                              item.product?.name || 'Product'
+                            )}
+                            sx={{ ml: 0.5 }}
+                          >
+                            <StorageOutlined fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
+                    </Box>
                   </Div>
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
@@ -203,15 +338,9 @@ function ApprovalRequisitionProductItem({
                     fullWidth
                     size='small'
                     defaultValue={item.quantity}
-                    onChange={(e) =>
-                      handleItemChange({
-                        index: itemIndex,
-                        key: 'quantity',
-                        value: sanitizedNumber(e.target.value),
-                      })
-                    }
-                    error={!!errors?.[itemIndex]?.quantity}
-                    helperText={errors?.[itemIndex]?.quantity?.message || ''}
+                    onChange={(e) => handleQuantityChange(itemIndex, e.target.value)}
+                    error={!!quantityError || !!errors?.[itemIndex]?.quantity}
+                    helperText={quantityError || errors?.[itemIndex]?.quantity?.message || ''}
                     InputProps={{
                       inputComponent: CommaSeparatedField,
                       endAdornment: (
@@ -221,6 +350,11 @@ function ApprovalRequisitionProductItem({
                       ),
                     }}
                   />
+                  {fulfillmentType === 'STOCK' && storeId && availableBalance > 0 && (
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                      Available: {Number(availableBalance).toLocaleString()}
+                    </Typography>
+                  )}
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   <TextField
@@ -253,13 +387,7 @@ function ApprovalRequisitionProductItem({
                       frontError={errors?.[itemIndex]?.store_id}
                       multiple={false}
                       defaultValue={(item as any).store || null}
-                      onChange={(store: any) => {
-                        handleItemChange({
-                          index: itemIndex,
-                          key: 'store_id',
-                          value: store?.id || null,
-                        });
-                      }}
+                      onChange={(store: any) => handleStoreChange(itemIndex, store)}
                     />
                   ) : (
                     <TextField
@@ -623,6 +751,68 @@ function ApprovalRequisitionProductItem({
             </Tooltip>
           </Box>
         )}
+
+      {/* Stock Balances Dialog */}
+      <Dialog
+        open={openStockDialog}
+        onClose={handleCloseStockDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          <Typography variant="h6">
+            Store Balances - {selectedProductName}
+          </Typography>
+        </DialogTitle>
+        <DialogContent>
+          <TableContainer component={Paper} variant="outlined">
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{fontWeight: 'bold' }}>
+                    Store Name
+                  </TableCell>
+                  <TableCell sx={{fontWeight: 'bold' }} align="right">
+                    Balance
+                  </TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {selectedStockBalances.length > 0 ? (
+                  selectedStockBalances.map((balance, index) => (
+                    <TableRow
+                      key={balance.store_id || index}
+                      sx={{
+                        '&:nth-of-type(even)': {
+                          backgroundColor: 'action.hover',
+                        },
+                      }}
+                    >
+                      <TableCell>{balance.store_name}</TableCell>
+                      <TableCell align="right">
+                        {Number(balance.balance || 0).toLocaleString()}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={2} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        No store balances available
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </DialogContent>
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 2 }}>
+          <Button variant="contained" onClick={handleCloseStockDialog}>
+            Close
+          </Button>
+        </Box>
+      </Dialog>
     </React.Fragment>
   );
 }
