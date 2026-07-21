@@ -33,7 +33,6 @@ import {
 } from './ApprovalRequisitionType';
 import { processTypeConfig } from '../utils/requisition';
 import MaterialRequisitionTabs, { MATERIAL_TAB } from './material/MaterialRequisitionTabs';
-import ApprovedIssueActionTail from './approvedIssue/ApprovedIssueActionTail';
 
 interface ApprovedRequisitionsListItemProps {
   approvedRequisition: ApprovalRequisition;
