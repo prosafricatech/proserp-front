@@ -787,8 +787,8 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
               </Typography>
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-            <Div sx={{ mt: 1 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Div sx={{ mt: 0.5 }}>
               <DateTimePicker
                 label='Approval Date'
                 readOnly={true}
@@ -822,8 +822,8 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
               />
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 4, lg: 4 }}>
-            <Div sx={{ mt: 1 }}>
+          <Grid size={{ xs: 12, md: 3 }}>
+            <Div sx={{ mt: 0.5 }}>
               <DateTimePicker
                 label='Date Required'
                 defaultValue={dateRequired}
@@ -848,6 +848,20 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
                     });
                   }
                 }}
+              />
+            </Div>
+          </Grid>
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Div sx={{ mt: 0.5 }}>
+              <TextField
+                label='Remarks'
+                fullWidth
+                defaultValue={approval?.remarks}
+                multiline={true}
+                minRows={2}
+                error={!!errors?.remarks}
+                helperText={errors?.remarks?.message}
+                {...register('remarks')}
               />
             </Div>
           </Grid>
@@ -938,7 +952,7 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
                 <Typography
                   variant='body2'
                   color='text.secondary'
-                  sx={{ mt: 1 }}
+                  sx={{ mt: 0.5 }}
                 >
                   No additional costs on this requisition.
                 </Typography>
@@ -947,7 +961,7 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
         ) : isMaterialType ? (
           <>
             {hasImprestFulfillment && (
-              <Grid container spacing={1} sx={{ mb: 2, mt: 1 }}>
+              <Grid container spacing={1} sx={{ mb: 2, mt: 0.5 }}>
                 <Grid size={{ xs: 12, md: 4 }}>
                   <Autocomplete
                     options={filteredImprestLedgerOptions}
@@ -1019,20 +1033,6 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
             handleItemChange={handleItemChange}
           />
         )}
-        <Grid size={{ xs: 12 }}>
-          <Div sx={{ mt: 1, mb: 1 }}>
-            <TextField
-              label='Remarks'
-              fullWidth
-              defaultValue={approval?.remarks}
-              multiline={true}
-              minRows={2}
-              error={!!errors?.remarks}
-              helperText={errors?.remarks?.message}
-              {...register('remarks')}
-            />
-          </Div>
-        </Grid>
       </DialogContent>
       <DialogActions>
         <Button size='small' onClick={() => toggleOpen(false)}>

@@ -436,9 +436,9 @@ function ApprovalRequisitionLedgerItem({
 
             <Grid
               size={{
-                xs: requisitionLedgerItem.length > 1 ? 10 : 12,
-                md: 10,
-                lg: 10,
+                xs: 10,
+                md: 11,
+                lg: 11,
               }}
             >
               <Div sx={{ mt: 1 }}>
@@ -464,8 +464,8 @@ function ApprovalRequisitionLedgerItem({
               textAlign="end"
               size={{
                 xs: 2,
-                md: 1.5,
-                lg: 1.5,
+                md: 1,
+                lg: 1,
               }}
             >
               <Div sx={{ mt: 1.5, mb: 0.5 }}>
@@ -594,7 +594,7 @@ function ApprovalRequisitionLedgerItem({
                         </Div>
                       </Grid>
 
-                      <Grid size={{ xs: 6, md: 2 }}>
+                      <Grid size={{ xs: 12, md: 2 }}>
                         <Div sx={{ mt: 1, mb: 1 }}>
                           <TextField
                             label="Amount"
@@ -614,11 +614,13 @@ function ApprovalRequisitionLedgerItem({
                         </Div>
                       </Grid>
 
-                      <Grid size={{ xs: 5, md: 2.5 }}>
+                      <Grid size={{ xs: 11, md: 2.5 }}>
                         <Div sx={{ mt: 1, mb: 1 }}>
                           <TextField
                             label="Remarks"
                             fullWidth
+                            multiline
+                            rows={2}
                             size="small"
                             value={split.remarks || ''}
                             onChange={(e) =>
