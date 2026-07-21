@@ -6,7 +6,10 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import costCenterservices from '@/components/masters/costCenters/cost-center-services';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import organizationServices from '@/components/organizations/organizationServices';
+import UsersSelector from '@/components/sharedComponents/UsersSelector';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
@@ -35,6 +38,12 @@ import { useDesignations } from '../designations/DesignationsProvider';
 import { Designation } from '../designations/DesignationsType';
 import humanResourcesServices from '../humanResourcesServices';
 import { Employee } from './EmployeesType';
+
+interface User {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
 
 interface EmployeeFormProps {
   setOpenDialog: (open: boolean) => void;
@@ -78,7 +87,9 @@ const EmployeeForm = ({
 }: EmployeeFormProps) => {
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
-  const { checkOrganizationPermission } = useJumboAuth();
+  const { checkOrganizationPermission, authOrganization, hasOrganizationRole } =
+    useJumboAuth();
+  const organization = authOrganization?.organization;
   const { designations, isFetching: fetchingDesignations } = useDesignations();
   const designationsData = (designations || []) as Designation[];
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -98,12 +109,29 @@ const EmployeeForm = ({
     null
   );
   const [customeName, setCustomeName] = useState(false);
+  const [defaultUser, setDefaultUser] = useState<User | null>(null);
 
   const { data: fetchedCostCenters, isLoading } = useQuery<CostCenter[]>({
     queryKey: ['allCostCenters'],
     queryFn: costCenterservices.getCostCenters,
     enabled: !!employee,
   });
+
+  const { data: rawUsers = [], isFetching: usersLoading } = useQuery<User[]>({
+    queryKey: ['users', organization?.id],
+    queryFn: () =>
+      organizationServices.getOrganizationUsers({
+        organizationId: organization?.id,
+      }),
+    enabled: !!employee?.id,
+  });
+
+  useEffect(() => {
+    if (rawUsers && rawUsers.length > 0) {
+      const linkedUser = rawUsers.find((user) => user.id === employee?.user_id);
+      linkedUser ? setDefaultUser(linkedUser) : setDefaultUser(null);
+    }
+  }, [rawUsers]);
 
   useEffect(() => {
     if (fetchedCostCenters) {
@@ -170,10 +198,14 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      console.error('err: ', err.response.data);
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        err?.response?.data?.message ||
+          getErrorMessage(err) ||
+          'Something went wrong',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -199,9 +231,14 @@ const EmployeeForm = ({
       queryClient.invalidateQueries({ queryKey: ['employees'] });
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Something went wrong', {
-        variant: 'error',
-      });
+      enqueueSnackbar(
+        err?.response?.data?.message ||
+          getErrorMessage(err) ||
+          'Something went wrong',
+        {
+          variant: 'error',
+        }
+      );
     },
   });
 
@@ -236,6 +273,7 @@ const EmployeeForm = ({
       .typeError('Basic salary must be a number'),
     contract_start_date: yup.string().nullable(),
     reason: yup.string().nullable().optional(),
+    user_id: yup.number().nullable(),
   });
 
   // Form
@@ -272,6 +310,7 @@ const EmployeeForm = ({
       basic_salary: null,
       contract_start_date: null,
       reason: '',
+      user_id: null,
     },
   });
 
@@ -323,6 +362,7 @@ const EmployeeForm = ({
       basic_salary: contractBasicSalary ?? employee.basic_salary ?? null,
       contract_start_date: normalizedContractStartDate || contractStart || null,
       reason: '',
+      user_id: employee.user_id ?? null,
     });
   }, [employee, reset]);
 
@@ -794,6 +834,35 @@ const EmployeeForm = ({
                     </Grid>
                   )
                 )}
+              </>
+            )}
+
+            {/* linked user account */}
+            {hasOrganizationRole('Administrator') && (
+              <>
+                <Grid size={12}>
+                  <Div sx={{ mt: 2, mb: 1, fontWeight: 600 }}>
+                    Linked User Account
+                  </Div>
+                </Grid>
+                <Grid size={{ xs: 12 }}>
+                  <UsersSelector
+                    label='Linked User Account'
+                    defaultValue={defaultUser}
+                    frontError={errors.user_id}
+                    onChange={(v) => {
+                      if (v && Array.isArray(v)) {
+                        setValue('user_id', v[0].id);
+                      }
+                      if (v && !Array.isArray(v)) {
+                        setValue('user_id', v.id);
+                      }
+                      if (!v || v === null) {
+                        setValue('user_id', null);
+                      }
+                    }}
+                  />
+                </Grid>
               </>
             )}
           </Grid>

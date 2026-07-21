@@ -121,74 +121,86 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Amount</Text>
               </View>
           
-          {approval.items?.map((item, index) => (
-            <React.Fragment key={item.id}>
-              <View style={pdfStyles.tableRow}>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.05 }}>
-                  {index + 1}
-                </Text>
-                <View
-                  style={{
-                    ...pdfStyles.tableCell,
-                    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 0.35,
-                    flexDirection: 'column',
-                  }}
-                >
-                  <Text>
-                    {approval.requisition.process_type?.toLowerCase() === 'purchase'
-                      ? item.requisition_product?.product?.name
-                      : item.requisition_ledger_item?.ledger?.name}
-                  </Text>
-                  {item.relatableNo && <Text>{`${item.relatableNo}`}</Text>}
-                  {item.remarks && <Text>{`(${item.remarks})`}</Text>}
-                </View>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
-                  {item.quantity?.toLocaleString()} {item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}
-                </Text>
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
-                  {item.rate?.toLocaleString()}
-                </Text>
-                {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
-                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
-                    {((item.rate * (item.vat_percentage || 0) * 0.01) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
-                  </Text>
-                )}
-                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
-                  {(item.quantity * item.rate * (1 + ((item.vat_percentage || 0) * 0.01))).toLocaleString('en-US', { 
-                    style: 'currency', 
-                    currency: approval.requisition.currency?.code 
-                  })}
-                </Text>
-              </View>
+          {approval.items?.map((item, index) => {
+            const isCreditItem = item.credit_ledger_id !== null && item.credit_ledger_id !== undefined;
+            const mainLedgerName = isPurchase
+              ? item.requisition_product?.product?.name
+              : item.requisition_ledger_item?.ledger?.name;
+            const creditLedgerName = item.credit_ledger?.name;
 
-              {Array.isArray(item?.vendors) && item.vendors.length > 0 && (
-                <React.Fragment>
-                  <View style={pdfStyles.tableRow}>
-                    <Text style={{ ...pdfStyles.tableCell, flex: 0.05 }}></Text>
-                    <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.95, textAlign: 'center' }}>
-                      Vendors
+            return (
+              <React.Fragment key={item.id}>
+                <View style={pdfStyles.tableRow}>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.05 }}>
+                    {index + 1}
+                  </Text>
+                  <View
+                    style={{
+                      ...pdfStyles.tableCell,
+                      backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
+                      flex: 0.35,
+                      flexDirection: 'column',
+                    }}
+                  >
+                    <Text>
+                      {mainLedgerName}
                     </Text>
-                  </View>
-
-                  {item.vendors?.map((vendor, i) => (
-                    <View key={vendor.id} style={{ ...pdfStyles.tableRow }}>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 0.05 }}></Text>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 0.58, paddingLeft: 10, backgroundColor: i % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                        {vendor.name}
+                    {/* Show credit ledger as secondary if exists */}
+                    {isCreditItem && creditLedgerName && (
+                      <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>
+                        ({creditLedgerName})
                       </Text>
-                      <Text style={{ ...pdfStyles.tableCell, flex: 0.42, paddingLeft: 10, backgroundColor: i % 2 === 0 ? '#FFFFFF' : lightColor }}>
-                        {vendor.remarks}
+                    )}
+                    {item.relatableNo && <Text>{`${item.relatableNo}`}</Text>}
+                    {item.remarks && <Text>{`(${item.remarks})`}</Text>}
+                  </View>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
+                    {item.quantity?.toLocaleString()} {item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
+                    {item.rate?.toLocaleString()}
+                  </Text>
+                  {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
+                    <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
+                      {((item.rate * (item.vat_percentage || 0) * 0.01) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
+                    </Text>
+                  )}
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
+                    {(item.quantity * item.rate * (1 + ((item.vat_percentage || 0) * 0.01))).toLocaleString('en-US', { 
+                      style: 'currency', 
+                      currency: approval.requisition.currency?.code 
+                    })}
+                  </Text>
+                </View>
+
+                {Array.isArray(item?.vendors) && item.vendors.length > 0 && (
+                  <React.Fragment>
+                    <View style={pdfStyles.tableRow}>
+                      <Text style={{ ...pdfStyles.tableCell, flex: 0.05 }}></Text>
+                      <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.95, textAlign: 'center' }}>
+                        Vendors
                       </Text>
                     </View>
-                  ))}
-                  <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
-                    <Text style={{ flex: 1 }}></Text>
-                  </View>
-                </React.Fragment>
-              )}
-            </React.Fragment>
-          ))}
+
+                    {item.vendors?.map((vendor, i) => (
+                      <View key={vendor.id} style={{ ...pdfStyles.tableRow }}>
+                        <Text style={{ ...pdfStyles.tableCell, flex: 0.05 }}></Text>
+                        <Text style={{ ...pdfStyles.tableCell, flex: 0.58, paddingLeft: 10, backgroundColor: i % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                          {vendor.name}
+                        </Text>
+                        <Text style={{ ...pdfStyles.tableCell, flex: 0.42, paddingLeft: 10, backgroundColor: i % 2 === 0 ? '#FFFFFF' : lightColor }}>
+                          {vendor.remarks}
+                        </Text>
+                      </View>
+                    ))}
+                    <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
+                      <Text style={{ flex: 1 }}></Text>
+                    </View>
+                  </React.Fragment>
+                )}
+              </React.Fragment>
+            );
+          })}
           </>
         </View>
 

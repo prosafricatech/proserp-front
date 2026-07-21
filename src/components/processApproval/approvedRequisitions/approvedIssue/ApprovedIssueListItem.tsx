@@ -8,15 +8,10 @@ import { MaterialApprovalRequisition } from '../ApprovalRequisitionType';
 interface ApprovedIssueListItemProps {
   approvedRequisition: MaterialApprovalRequisition;
   isExpanded: boolean;
-  showHeader?: boolean;
 }
 
 function getIssueDate(issue: any): string {
-  return issue?.issue_date || issue?.transaction_date || issue?.created_at || '';
-}
-
-function getIssueNumber(issue: any): string {
-  return issue?.voucherNo || issue?.issueNo || issue?.reference || `#${issue?.id}`;
+  return issue?.consumption_date;
 }
 
 function getIssueAmount(issue: any): number {
@@ -33,7 +28,6 @@ function getIssueAmount(issue: any): number {
 function ApprovedIssueListItem({
   approvedRequisition,
   isExpanded,
-  showHeader = true,
 }: ApprovedIssueListItemProps) {
   const { data: approvedIssues, isFetching, error } = useQuery({
     queryKey: ['approvedIssues', { id: approvedRequisition.id }],
@@ -63,13 +57,11 @@ function ApprovedIssueListItem({
 
   return (
     <>
-      {showHeader && (
-        <Typography variant='subtitle1' gutterBottom>
-          Store Issues
-        </Typography>
-      )}
       {approvedIssues.map((issue: any) => {
-        const issueAmount = getIssueAmount(issue);
+        const storeName = issue?.store?.name || 'N/A';
+        const issueNo = issue?.consumptionNo || '';
+        const narration = issue?.narration || '';
+
         return (
           <Grid
             key={issue.id}
@@ -77,6 +69,7 @@ function ApprovedIssueListItem({
             sx={{
               paddingLeft: 1,
               paddingRight: 1,
+              py: 1,
               cursor: 'pointer',
               borderTop: 1,
               borderColor: 'divider',
@@ -85,37 +78,31 @@ function ApprovedIssueListItem({
               },
             }}
           >
-            <Grid size={{ xs: 6, md: 3 }}>
-              <Tooltip title='Issue Reference'>
-                <Typography>{getIssueNumber(issue)}</Typography>
+            <Grid size={{ xs: 6, md: 4 }}>
+              <Tooltip title='Issue No.'>
+                <Typography variant='body2' fontWeight='medium'>
+                  {issueNo}
+                </Typography>
               </Tooltip>
               <Tooltip title='Issue Date'>
-                <Typography variant='caption'>
+                <Typography variant='caption' color='text.secondary' display='block'>
                   {readableDate(getIssueDate(issue))}
                 </Typography>
               </Tooltip>
             </Grid>
 
-            <Grid size={{ xs: 6, md: 5 }}>
-              <Tooltip title='Narration'>
-                <Typography>{issue?.narration || '-'}</Typography>
+            <Grid size={{ xs: 6, md: 3 }}>
+              <Tooltip title='Store'>
+                <Typography variant='body2'>
+                  {storeName}
+                </Typography>
               </Tooltip>
             </Grid>
 
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'flex-end',
-              }}
-            >
-              <Tooltip title='Issued Amount'>
-                <Typography>
-                  {issueAmount.toLocaleString('en-US', {
-                    style: 'currency',
-                    currency: approvedRequisition.currency?.code || 'USD',
-                  })}
+            <Grid size={{ xs: 12, md: 5 }}>
+              <Tooltip title='Narration'>
+                <Typography variant='body2'>
+                  {narration}
                 </Typography>
               </Tooltip>
             </Grid>

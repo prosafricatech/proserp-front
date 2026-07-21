@@ -7,13 +7,14 @@ import { DisabledByDefault } from '@mui/icons-material';
 import {
   Divider,
   Grid,
+  Checkbox,
+  FormControlLabel,
   IconButton,
   TextField,
   Tooltip,
   Typography,
   Chip,
   Box,
-  InputAdornment,
 } from '@mui/material';
 import React from 'react';
 
@@ -38,7 +39,6 @@ function RFQPurchaseOrderItemForm({
   const quantity = Number(item.quantity) || 0;
   const rate = Number(item.rate) || 0;
   const amount = quantity * rate;
-  const amountWithVat = amount * (1 + vat_factor);
 
   // Get RFQ item details if available
   const rfqItem = rfqDetails?.items?.find((rfqItem: any) => 
@@ -62,9 +62,6 @@ function RFQPurchaseOrderItemForm({
         py: 1,
       }}
     >
-      <Grid size={12}>
-        <Divider />
-      </Grid>
       
       {/* Index */}
       <Grid size={{ xs: 1, md: 0.5 }}>
@@ -118,8 +115,29 @@ function RFQPurchaseOrderItemForm({
         </Div>
       </Grid>
 
+      {/* VAT */}
+      <Grid size={{ xs: 6, md: 0.5 }}>
+        <Div sx={{ mt: 1, mb: 0.5 }}>
+          <FormControlLabel
+            control={
+              <Checkbox
+                checked={(item.vat_percentage || 0) > 0}
+                disabled
+                size="small"
+              />
+            }
+            label={'VAT'}
+            sx={{
+              '& .MuiFormControlLabel-label': {
+                fontSize: '0.8rem',
+              },
+            }}
+          />
+        </Div>
+      </Grid>
+
       {/* Rate / Price */}
-      <Grid size={{ xs: 6, md: 3 }}>
+      <Grid size={{ xs: 6, md: totalItems > 0 ? 2.5 : 3 }}>
         <Div sx={{ mt: 1, mb: 0.5 }}>
           <TextField
             label="Rate"
@@ -139,7 +157,7 @@ function RFQPurchaseOrderItemForm({
       </Grid>
 
       {/* Amount - Readonly TextField */}
-      <Grid size={{ xs: 6, md: 2.5 }}>
+      <Grid size={{ xs: 6, md: 2 }}>
         <Div sx={{ mt: 1, mb: 0.5 }}>
           <TextField
             label="Amount"
@@ -155,8 +173,8 @@ function RFQPurchaseOrderItemForm({
 
       {/* Remove button */}
       {totalItems > 1 && (
-        <Grid size={{ xs: 12, md: vat_factor > 0 ? 0.5 : 1 }} textAlign={'end'}>
-          <Div sx={{ mt: 1, mb: 1.7 }}>
+        <Grid size={{ xs: 12, md: 0.5}} textAlign={'end'}>
+          <Div sx={{ mt: 1, mb: 0.5 }}>
             <Tooltip title="Remove Item">
               <IconButton
                 size="small"

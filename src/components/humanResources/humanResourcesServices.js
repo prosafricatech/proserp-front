@@ -592,6 +592,52 @@ humanResourcesServices.deleteLeaveRequest = async (id) => {
 }
 
 // ============================================
+// LOAN REQUESTS
+// ============================================
+humanResourcesServices.getLoanRequestsList = async (params = {}) => {
+    const { page = 1, limit = 20, ...queryParams } = params;
+    const { data } = await axios.get('/api/humanResources/loanRequests', {
+        params: { page, limit, ...queryParams }
+    });
+    return data;
+};
+
+humanResourcesServices.showLoanRequest = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/loanRequests/${id}`);
+    return data;
+}
+
+humanResourcesServices.approveLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/directApproval`, payload);
+    return data;
+}
+
+humanResourcesServices.rejectLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/reject`, payload);
+    return data;
+}
+
+humanResourcesServices.loanRequestChainDecision = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/chainDecision`, payload);
+    return data;
+}
+
+humanResourcesServices.cancelLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/cancel`, payload);
+    return data;
+}
+
+humanResourcesServices.disburseLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/disburse`, payload);
+    return data;
+}
+
+humanResourcesServices.markLoanRequestDisbursed = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/markDisbursed`, payload);
+    return data;
+}
+
+// ============================================
 // PAYE TAX BANDS
 // ============================================
 humanResourcesServices.getPayeTaxBandsList = async (params = {}) => {
@@ -808,6 +854,96 @@ humanResourcesServices.getPayslipsList = async (params = {}) => {
 humanResourcesServices.showPayslip = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payslips/${id}`);
     return data?.data || data;
+}
+
+// ============================================
+// MY HR
+// ============================================
+
+// --- Profile tab ---
+humanResourcesServices.myHrProfile = async () => {
+    const { data } = await axios.get(`/api/humanResources/myHr/profile`);
+    return data;
+};
+
+// --- Payslips tab ---
+humanResourcesServices.myHrPayslipsList = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/payslips', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.myHrPayslip = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/payslips/${id}`);
+    return data;
+};
+
+// --- contractstab ---
+humanResourcesServices.myHrContracts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/contracts', {
+        params,
+    });
+    return data;
+};
+
+// --- next of kin tab ---
+humanResourcesServices.myHrNextOfKin = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/nextOfKin', {
+        params,
+    });
+    return data;
+};
+
+// --- account statemtnt tab ---
+humanResourcesServices.myHrAccountStatement = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/accountStatement', {
+        params,
+    });
+    return data;
+};
+
+// --- imprest accounts tab ---
+humanResourcesServices.myHrImprestAccounts = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/imprestAccounts', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.myHrImprestAccountStatement = async (id, params = {}) => {
+    const { data } = await axios.get(`/api/humanResources/myHr/imprestAccounts/${id}`, { params });
+    return data;
+};
+
+// ===== LEAVES TAB ===== //
+// ---Leave requests ---
+humanResourcesServices.myHrLeaveRequests = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveRequests', {
+        params,
+    });
+    return data;
+};
+// ---Leave balances ---
+humanResourcesServices.myHrLeaveBalances = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leave/leaveBalances', {
+        params,
+    });
+    return data;
+};
+
+//  ===== LOANS TAB ===== //
+// --- laon reuqests --- 
+humanResourcesServices.myHrLoanRequests = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/myHr/leaveRequests', {
+        params,
+    });
+    return data;
+};
+// --- add loan request ---
+humanResourcesServices.myHrAddLoanRequests = async (loan) => {
+    const { data } = await axios.post(`/api/humanResources/myHr/leaveRequests/add`, loan)
+    return data;
 }
 
 // ============================================

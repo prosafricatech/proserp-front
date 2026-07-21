@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState } from 'react';
 import {
   Accordion,
@@ -30,8 +32,7 @@ import {
   PurchaseApprovalRequisition,
 } from './ApprovalRequisitionType';
 import { processTypeConfig } from '../utils/requisition';
-import MaterialRequisitionTabs from './material/MaterialRequisitionTabs';
-import ApprovedIssueActionTail from './approvedIssue/ApprovedIssueActionTail';
+import MaterialRequisitionTabs, { MATERIAL_TAB } from './material/MaterialRequisitionTabs';
 
 interface ApprovedRequisitionsListItemProps {
   approvedRequisition: ApprovalRequisition;
@@ -40,6 +41,7 @@ interface ApprovedRequisitionsListItemProps {
 const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> = ({ approvedRequisition }) => {
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const [activeImprestTab, setActiveImprestTab] = useState(0);
+  const [activeMaterialTab, setActiveMaterialTab] = useState<number>(MATERIAL_TAB.PURCHASE_ORDERS);
   const { checkOrganizationPermission } = useJumboAuth();
 
   const handleChange = (id: number) => {
@@ -78,6 +80,8 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
     ? isFullyPaid
     : (approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered;
   const hasProcessItems = paymentsOrPurchasesCount > 0 || issuesCount > 0;
+
+  const materialRequisition = approvedRequisition as MaterialApprovalRequisition;
 
   return (
     <Accordion
@@ -211,6 +215,7 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                 <ApprovalItemAction approval={approvedRequisition as any} hideOtherActions />
               </Grid>
               <Grid>
+                {/* Non-material types: unchanged, always shown */}
                 {isPurchase &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) &&
                   !(approvedRequisition as PurchaseApprovalRequisition).is_fully_ordered && (
@@ -219,35 +224,11 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
-                {isMaterial &&
-                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE]) &&
-                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_ordered && (
-                    <ApprovedPurchaseActionTail
-                      approvedRequisition={approvedRequisition as any}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
                 {(!isImprest && isPayment) &&
                   checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
                   !isFullyPaid && (
                     <ApprovedPaymentActionTail
                       approvedRequisition={approvedRequisition as PaymentApprovalRequisition}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
-                {isMaterial &&
-                  checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY]) &&
-                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_paid && (
-                    <ApprovedPaymentActionTail
-                      approvedRequisition={approvedRequisition}
-                      isExpanded={expanded[approvedRequisition.id]}
-                    />
-                  )}
-                {isMaterial &&
-                  checkOrganizationPermission([PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE]) &&
-                  !(approvedRequisition as MaterialApprovalRequisition).is_fully_issued && (
-                    <ApprovedIssueActionTail
-                      approvedRequisition={approvedRequisition as MaterialApprovalRequisition}
                       isExpanded={expanded[approvedRequisition.id]}
                     />
                   )}
@@ -266,6 +247,8 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
             ) : isMaterial ? (
               <MaterialRequisitionTabs
                 approvedRequisition={approvedRequisition as MaterialApprovalRequisition}
+                activeTab={activeMaterialTab}
+                setActiveTab={setActiveMaterialTab}
                 isExpanded={expanded[approvedRequisition.id]}
               />
             ) : isPayment ? (

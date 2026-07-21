@@ -96,6 +96,7 @@ interface OrderItem {
   measurement_unit: MeasurementUnit;
   vat_percentage: number;
   unordered_quantity: number;
+  fulfillment_type?: string;
 }
 
 interface FormValues {
@@ -233,51 +234,59 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
     AdditionalCostItem[]
   >([]);
 
-  // const [totalAddtionalCostReached, aetTotalAdditionalCostReached] =
-  //   useState(false);
-
-  // useEffect(() => {
-  //   const totalApprovedCost = approvedAdditionalCostsSource.reduce(
-  //     (sum: number, itm: any) => {
-  //       return sum + Number(itm.amount);
-  //     },
-  //     0
-  //   );
-  //   const totalAddtionalCost = additionalCosts.reduce((sum, cost) => {
-  //     return sum + Number(cost.amount);
-  //   }, 0);
-  //   aetTotalAdditionalCostReached(
-  //     totalAddtionalCost >= totalApprovedCost && !order
-  //   );
-  // }, [additionalCosts]);
-
-  const [items, setItems] = useState(() => {
+  // Initialize items - ONLY PURCHASE type
+  const [items, setItems] = useState<OrderItem[]>(() => {
+    // If editing an existing order
     if (order?.purchase_order_items) {
-      return order.purchase_order_items.map((orderItem) => {
-        const prevItem = prevApprovedDetails?.items?.find(
-          (prevItem: any) =>
-            prevItem.id === orderItem.requisition_approval_product_item_id
-        );
+      return order.purchase_order_items
+        .filter((orderItem: any) => {
+          // Check if the item was from a PURCHASE fulfillment
+          // If we have prevApprovedDetails, check the original fulfillment_type
+          if (prevApprovedDetails?.items) {
+            const prevItem = prevApprovedDetails.items.find(
+              (prev: any) => 
+                prev.id === orderItem.requisition_approval_product_item_id
+            );
+            return prevItem?.fulfillment_type === 'PURCHASE' || approvedDetails?.process_type === 'PURCHASE';
+          }
+          // If no prevApprovedDetails, check the order item's data
+          // The order item might have a flag or we assume it's from previous filter
+          return true;
+        })
+        .map((orderItem: any) => {
+          const prevItem = prevApprovedDetails?.items?.find(
+            (prevItem: any) =>
+              prevItem.id === orderItem.requisition_approval_product_item_id
+          );
 
-        return {
-          ...orderItem,
-          quantity: sanitizedNumber(orderItem.quantity),
-          unordered_quantity: prevItem
-            ? orderItem.quantity + prevItem.unordered_quantity
-            : 0,
-          requisition_approval_product_item_id:
-            orderItem.requisition_approval_product_item_id,
-        };
-      });
-    } else if (approvedDetails?.items) {
-      return approvedDetails.items
-        .filter((item: any) => item.unordered_quantity > 0)
-        .map((item: any) => ({
-          ...item,
-          quantity: item.unordered_quantity,
-          vat_percentage: item.vat_percentage,
-          requisition_approval_product_item_id: item.id,
-        }));
+          return {
+            ...orderItem,
+            quantity: sanitizedNumber(orderItem.quantity),
+            unordered_quantity: prevItem
+              ? orderItem.quantity + prevItem.unordered_quantity
+              : 0,
+            requisition_approval_product_item_id:
+              orderItem.requisition_approval_product_item_id,
+            fulfillment_type: 'PURCHASE',
+          };
+        });
+    } 
+    // If creating a new order from approvedDetails
+    else if (approvedDetails?.items) {
+      // Filter only PURCHASE items with unordered_quantity > 0
+      const purchaseItems = approvedDetails.items.filter(
+        (item: any) => 
+          item.unordered_quantity > 0 && 
+          item.fulfillment_type === 'PURCHASE' || approvedDetails?.process_type === 'PURCHASE'
+      );
+      
+      return purchaseItems.map((item: any) => ({
+        ...item,
+        quantity: item.unordered_quantity,
+        vat_percentage: item.vat_percentage || 0,
+        requisition_approval_product_item_id: item.id,
+        fulfillment_type: 'PURCHASE',
+      }));
     }
     return [];
   });
@@ -507,57 +516,64 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
   const handleItemChange = (index: number, key: string, value: any) => {
     if (key === 'delete' && value === true) {
       setItems(
-        items.filter((_: string, itemIndex: number) => itemIndex !== index)
+        items.filter((_: OrderItem, itemIndex: number) => itemIndex !== index)
       );
     } else {
       const updatedItems = [...items];
-      updatedItems[index][key] = value;
+      updatedItems[index] = { ...updatedItems[index], [key]: value };
       setItems(updatedItems);
     }
   };
 
+  // useEffect to handle stakeholder filtering - maintain PURCHASE filter
   useEffect(() => {
-    const currentItems = (
-      approvedDetails?.items ||
-      order?.purchase_order_items ||
-      []
-    ).map((item: any) => {
-      if (order) {
+    let sourceItems: any[] = [];
+
+    if (order?.purchase_order_items) {
+      sourceItems = order.purchase_order_items.map((orderItem: any) => {
         const prevItem = prevApprovedDetails?.items?.find(
           (prevItem: any) =>
-            prevItem.id === item.requisition_approval_product_item_id
+            prevItem.id === orderItem.requisition_approval_product_item_id
         );
 
         return {
-          ...item,
-          vendors: prevItem?.vendors,
-          quantity: sanitizedNumber(item.quantity),
+          ...orderItem,
+          quantity: sanitizedNumber(orderItem.quantity),
           unordered_quantity: prevItem
-            ? item.quantity + prevItem.unordered_quantity
+            ? orderItem.quantity + prevItem.unordered_quantity
             : 0,
           requisition_approval_product_item_id:
-            item.requisition_approval_product_item_id,
+            orderItem.requisition_approval_product_item_id,
+          fulfillment_type: 'PURCHASE',
         };
-      } else {
-        return {
+      });
+    } else if (approvedDetails?.items) {
+      sourceItems = approvedDetails.items
+        .filter((item: any) => item.fulfillment_type === 'PURCHASE' || approvedDetails?.process_type === 'PURCHASE')
+        .map((item: any) => ({
           ...item,
           quantity: sanitizedNumber(item.unordered_quantity),
           unordered_quantity: item.unordered_quantity,
           requisition_approval_product_item_id: item.id,
-        };
-      }
-    });
+          fulfillment_type: 'PURCHASE',
+        }));
+    }
 
-    const filteredItems = stakeholder_id
-      ? currentItems?.filter(
-          (item: any) =>
-            item.vendors?.some((vendor: any) => vendor.id === stakeholder_id) ||
-            item.vendors?.length === 0
-        )
-      : currentItems;
+    // Apply stakeholder filter if needed
+    let filteredItems = sourceItems;
+    if (stakeholder_id) {
+      filteredItems = sourceItems.filter(
+        (item: any) =>
+          item.vendors?.some((vendor: any) => vendor.id === stakeholder_id) ||
+          item.vendors?.length === 0
+      );
+    }
 
-    setItems(filteredItems || []);
-  }, [stakeholder_id]);
+    // Only update if we have items
+    if (filteredItems.length > 0 || sourceItems.length > 0) {
+      setItems(filteredItems);
+    }
+  }, [stakeholder_id, approvedDetails, order, prevApprovedDetails]);
 
   const saveMutation = useMemo(() => {
     return order ? updatePurchaseOrder.mutate : addPurchaseOrder.mutate;
@@ -668,7 +684,7 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
             )}
             <ApprovedPurchaseItemForm
               approvedDetails={approvedDetails}
-              items={items}
+              items={items as any}
               prevApprovedDetails={prevApprovedDetails}
               handleItemChange={handleItemChange}
             />
@@ -770,13 +786,6 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
             No additional costs found on this approved requisition.
           </Alert>
         )}
-
-        {/* {activeTab === 1 && totalAddtionalCostReached && (
-          <Alert severity='info'>
-            Total additional costs amount has already reached its limit. Please
-            modify other orders' additional costs amount to add more.
-          </Alert>
-        )} */}
 
         {/* ===== OTHER ADDTIONAL COSTS */}
         {activeTab === 1 && otherAddtionalCosts.length > 0 && (
@@ -949,19 +958,17 @@ const ApprovedPurchaseForm: React.FC<ApprovedPurchaseFormProps> = ({
                       })()}
                     </Grid>
                     <Grid size={{ xs: 12, md: 1 }}>
-                      <Tooltip title='Resstore Additional Cost'>
+                      <Tooltip title='Restore Additional Cost'>
                         <IconButton
                           size='small'
                           onClick={() => {
                             setAdditionalCosts((additionalCosts: any) => {
                               const newItems = [...additionalCosts];
-                              // newItems.splice(index, 1);
                               newItems.push(cost);
                               return newItems;
                             });
                             setRemovedAdditionalCosts((prevItems: any) => {
                               const newItems = [...prevItems];
-                              // newItems.push(additionalCosts[index]);
                               newItems.splice(index, 1);
                               return newItems;
                             });

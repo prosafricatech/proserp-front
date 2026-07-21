@@ -294,166 +294,194 @@ function ApprovalOnScreen({
                   </TableHead>
                   <TableBody>
                     {approval?.items?.map(
-                      (item: RequisitionItem, index: number) => (
-                        <React.Fragment key={item.id}>
-                          <TableRow
-                            sx={{
-                              backgroundColor: theme.palette.background.paper,
-                              '&:nth-of-type(even)': {
-                                backgroundColor: theme.palette.action.hover,
-                              },
-                            }}
-                          >
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>
-                              <Box>
-                                <Typography variant='body2'>
-                                  {isPurchase
-                                    ? item.requisition_product?.product?.name
-                                    : item.requisition_ledger_item?.ledger
-                                        ?.name}
-                                </Typography>
-                                {item.remarks && (
-                                  <Typography
-                                    variant='body2'
-                                    color='text.secondary'
-                                    sx={{ fontSize: '0.875rem', mt: 0.5 }}
-                                  >
-                                    ({item.remarks})
+                      (item: RequisitionItem, index: number) => {
+                        const isCreditItem = item.credit_ledger_id !== null && item.credit_ledger_id !== undefined;
+                        const mainLedgerName = isPurchase
+                          ? item.requisition_product?.product?.name
+                          : item.requisition_ledger_item?.ledger?.name;
+                        const creditLedgerName = item.credit_ledger?.name;
+
+                        return (
+                          <React.Fragment key={item.id}>
+                            <TableRow
+                              sx={{
+                                backgroundColor: theme.palette.background.paper,
+                                '&:nth-of-type(even)': {
+                                  backgroundColor: theme.palette.action.hover,
+                                },
+                              }}
+                            >
+                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>
+                                <Box>
+                                  <Typography variant='body2'>
+                                    {mainLedgerName}
                                   </Typography>
-                                )}
-                                {!!item.relatable && (
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 1,
-                                      mt: 0.5,
-                                    }}
-                                  >
-                                    <Tooltip title='Related to'>
+                                  {/* Show credit ledger as secondary with tooltip */}
+                                  {isCreditItem && creditLedgerName && (
+                                    <Tooltip 
+                                      title={`Split to: ${creditLedgerName}`}
+                                      placement="top"
+                                      arrow
+                                    >
                                       <Typography
-                                        variant='body2'
-                                        component='span'
-                                        color='primary.main'
+                                        variant='caption'
+                                        color='text.secondary'
+                                        sx={{ 
+                                          display: 'block', 
+                                          mt: 0.5,
+                                          cursor: 'help',
+                                          '&:hover': {
+                                            color: 'primary.main',
+                                          }
+                                        }}
                                       >
-                                        {item.relatableNo ||
-                                          readableDate(
-                                            item.relatable?.certificate_date,
-                                            false
-                                          )}
+                                        ({creditLedgerName})
                                       </Typography>
                                     </Tooltip>
-                                    <Tooltip
-                                      title={`View ${item?.relatable_type === 'purchase' ? 'Purchase Order' : 'Certificate'}`}
+                                  )}
+                                  {item.remarks && (
+                                    <Typography
+                                      variant='body2'
+                                      color='text.secondary'
+                                      sx={{ fontSize: '0.875rem', mt: 0.5 }}
                                     >
-                                      <IconButton
-                                        size='small'
-                                        onClick={() => {
-                                          setSelectedRelated(item.relatable);
-                                          setOpenViewDialog(true);
-                                        }}
-                                        sx={{
-                                          color: 'primary.main',
-                                          '&:hover': {
-                                            backgroundColor:
-                                              'rgba(25, 118, 210, 0.04)',
-                                          },
-                                        }}
+                                      ({item.remarks})
+                                    </Typography>
+                                  )}
+                                  {!!item.relatable && (
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 1,
+                                        mt: 0.5,
+                                      }}
+                                    >
+                                      <Tooltip title='Related to'>
+                                        <Typography
+                                          variant='body2'
+                                          component='span'
+                                          color='primary.main'
+                                        >
+                                          {item.relatableNo ||
+                                            readableDate(
+                                              item.relatable?.certificate_date,
+                                              false
+                                            )}
+                                        </Typography>
+                                      </Tooltip>
+                                      <Tooltip
+                                        title={`View ${item?.relatable_type === 'purchase' ? 'Purchase Order' : 'Certificate'}`}
                                       >
-                                        <VisibilityOutlined fontSize='small' />
-                                      </IconButton>
-                                    </Tooltip>
-                                  </Box>
-                                )}
-                              </Box>
-                            </TableCell>
-                            <TableCell
-                              align='right'
-                              sx={{ fontFamily: 'monospace' }}
-                            >
-                              {`${item.quantity?.toLocaleString()} ${item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}`}
-                            </TableCell>
-                            <TableCell
-                              align='right'
-                              sx={{ fontFamily: 'monospace' }}
-                            >
-                              {formatNumber(item.rate)}
-                            </TableCell>
-                            {isPurchase && approval.vat_amount > 0 && (
+                                        <IconButton
+                                          size='small'
+                                          onClick={() => {
+                                            setSelectedRelated(item.relatable);
+                                            setOpenViewDialog(true);
+                                          }}
+                                          sx={{
+                                            color: 'primary.main',
+                                            '&:hover': {
+                                              backgroundColor:
+                                                'rgba(25, 118, 210, 0.04)',
+                                            },
+                                          }}
+                                        >
+                                          <VisibilityOutlined fontSize='small' />
+                                        </IconButton>
+                                      </Tooltip>
+                                    </Box>
+                                  )}
+                                </Box>
+                              </TableCell>
                               <TableCell
                                 align='right'
                                 sx={{ fontFamily: 'monospace' }}
                               >
-                                {formatNumber(
-                                  item.rate * (item.vat_percentage ?? 0) * 0.01
+                                {`${item.quantity?.toLocaleString()} ${item.measurement_unit?.symbol || item.requisition_ledger_item?.measurement_unit?.symbol}`}
+                              </TableCell>
+                              <TableCell
+                                align='right'
+                                sx={{ fontFamily: 'monospace' }}
+                              >
+                                {formatNumber(item.rate)}
+                              </TableCell>
+                              {isPurchase && approval.vat_amount > 0 && (
+                                <TableCell
+                                  align='right'
+                                  sx={{ fontFamily: 'monospace' }}
+                                >
+                                  {formatNumber(
+                                    item.rate * (item.vat_percentage ?? 0) * 0.01
+                                  )}
+                                </TableCell>
+                              )}
+                              <TableCell
+                                align='right'
+                                sx={{ fontFamily: 'monospace' }}
+                              >
+                                {formatCurrency(
+                                  item.quantity *
+                                    item.rate *
+                                    (1 + (item.vat_percentage ?? 0) * 0.01)
                                 )}
                               </TableCell>
-                            )}
-                            <TableCell
-                              align='right'
-                              sx={{ fontFamily: 'monospace' }}
-                            >
-                              {formatCurrency(
-                                item.quantity *
-                                  item.rate *
-                                  (1 + (item.vat_percentage ?? 0) * 0.01)
-                              )}
-                            </TableCell>
-                          </TableRow>
+                            </TableRow>
 
-                          {/* Vendors Section */}
-                          {Array.isArray(item?.vendors) &&
-                            item.vendors.length > 0 && (
-                              <React.Fragment>
-                                <TableRow>
-                                  <TableCell
-                                    colSpan={
-                                      isPurchase && approval.vat_amount > 0
-                                        ? 6
-                                        : 5
-                                    }
-                                    sx={{
-                                      textAlign: 'center',
-                                      backgroundColor:
-                                        theme.palette.background.default,
-                                      fontSize: '0.875rem',
-                                      borderBottom: `1px solid ${theme.palette.divider}`,
-                                    }}
-                                  >
-                                    Vendors
-                                  </TableCell>
-                                </TableRow>
-                                {item.vendors?.map((vendor, i) => (
-                                  <TableRow
-                                    key={vendor.id}
-                                    sx={{
-                                      backgroundColor:
-                                        theme.palette.background.paper,
-                                      '&:nth-of-type(even)': {
-                                        backgroundColor:
-                                          theme.palette.action.hover,
-                                      },
-                                    }}
-                                  >
-                                    <TableCell colSpan={2}>
-                                      {vendor.name}
-                                    </TableCell>
+                            {/* Vendors Section */}
+                            {Array.isArray(item?.vendors) &&
+                              item.vendors.length > 0 && (
+                                <React.Fragment>
+                                  <TableRow>
                                     <TableCell
                                       colSpan={
                                         isPurchase && approval.vat_amount > 0
-                                          ? 4
-                                          : 3
+                                          ? 6
+                                          : 5
                                       }
+                                      sx={{
+                                        textAlign: 'center',
+                                        backgroundColor:
+                                          theme.palette.background.default,
+                                        fontSize: '0.875rem',
+                                        borderBottom: `1px solid ${theme.palette.divider}`,
+                                      }}
                                     >
-                                      {vendor.remarks}
+                                      Vendors
                                     </TableCell>
                                   </TableRow>
-                                ))}
-                              </React.Fragment>
-                            )}
-                        </React.Fragment>
-                      )
+                                  {item.vendors?.map((vendor, i) => (
+                                    <TableRow
+                                      key={vendor.id}
+                                      sx={{
+                                        backgroundColor:
+                                          theme.palette.background.paper,
+                                        '&:nth-of-type(even)': {
+                                          backgroundColor:
+                                            theme.palette.action.hover,
+                                        },
+                                      }}
+                                    >
+                                      <TableCell colSpan={2}>
+                                        {vendor.name}
+                                      </TableCell>
+                                      <TableCell
+                                        colSpan={
+                                          isPurchase && approval.vat_amount > 0
+                                            ? 4
+                                            : 3
+                                        }
+                                      >
+                                        {vendor.remarks}
+                                      </TableCell>
+                                    </TableRow>
+                                  ))}
+                                </React.Fragment>
+                              )}
+                          </React.Fragment>
+                        );
+                      }
                     )}
                   </TableBody>
                 </Table>

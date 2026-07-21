@@ -7,6 +7,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
   TextField,
   Typography,
@@ -51,11 +52,13 @@ function ApprovedIssueForm({
       )
       .map((item: any) => ({
         ...item,
+        product: item?.product,
         issue_quantity: Number(item?.unissued_quantity || 0),
       }));
   }, [approvedDetails]);
 
   const [items, setItems] = React.useState<any[]>(stockItems);
+  console.log(items, 'items')
 
   React.useEffect(() => {
     setItems(stockItems);
@@ -107,7 +110,7 @@ function ApprovedIssueForm({
 
     if (invalidItem) {
       enqueueSnackbar(
-        `Issue quantity for ${invalidItem?.requisition_product?.product?.name || 'selected item'} exceeds unissued quantity`,
+        `Issue quantity for ${invalidItem?.product?.name || 'selected item'} exceeds unissued quantity`,
         { variant: 'error' }
       );
       return;
@@ -127,10 +130,10 @@ function ApprovedIssueForm({
       <DialogContent>
         {items.length === 0 ? (
           <Alert variant='outlined' severity='info'>
-            No STOCK lines with remaining unissued quantity.
+            No stock lines with remaining unissued quantity.
           </Alert>
         ) : (
-          <Grid container spacing={1} sx={{ mt: 0.5 }}>
+          <Grid container spacing={1} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12, md: 4 }}>
               <DateTimePicker
                 label='Issue Date'
@@ -165,18 +168,23 @@ function ApprovedIssueForm({
 
             {items.map((item, index) => (
               <React.Fragment key={item.id}>
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant='body2' sx={{ mt: 1.2 }}>
+                <Grid size={12}>
+                  <Divider/>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant='body2'>
                     {index + 1}.{' '}
-                    {item?.requisition_product?.product?.name || 'Product'}
+                    {item?.product?.name}
                   </Typography>
-                  <Typography variant='caption' color='text.secondary'>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Typography variant='caption'>
                     Unissued:{' '}
                     {Number(item?.unissued_quantity || 0).toLocaleString()}{' '}
                     {item?.measurement_unit?.symbol || ''}
                   </Typography>
                 </Grid>
-                <Grid size={{ xs: 12, md: 3 }}>
+                <Grid size={{ xs: 12, md: 4 }}>
                   <TextField
                     label='Issue Quantity'
                     fullWidth

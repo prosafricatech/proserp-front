@@ -5,6 +5,7 @@ import {
   faUsersGear,
 } from '@fortawesome/free-solid-svg-icons';
 import {
+  AccessibilityNewOutlined,
   AccountBalanceOutlined,
   AccountTreeOutlined,
   AssessmentOutlined,
@@ -23,6 +24,7 @@ import {
   Inventory2Outlined,
   LocalGasStation,
   ManageAccountsOutlined,
+  PaidOutlined,
   PeopleAltOutlined,
   PointOfSaleOutlined,
   QrCode,
@@ -83,6 +85,8 @@ export const ICONS = {
   editAttributes: EditAttributesOutlined,
   accountTree: AccountTreeOutlined,
   employees: PeopleAltOutlined,
+  loan_requests: PaidOutlined,
+  myHr: AccessibilityNewOutlined,
   employee_contracts: ContactPage,
   businessCenter: BusinessCenterOutlined,
 } as const;

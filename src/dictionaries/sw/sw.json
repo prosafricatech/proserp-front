@@ -80,8 +80,10 @@
       "deduction_types": "Aina za makato",
       "employee_allowances": "Marupurupu ya waajiriwa",
       "employee_deductions": "Makato ya waajiriwa",
+      "myHr": "HR yangu",
       "leave_allocations": "Mgawo wa likizo",
       "leave_requests": "Maombi ya likizo",
+      "loan_requests": "Maombi ya mkopo",
       "paye_tax_bands": "Viwango vya kodi ya PAYE",
       "payroll_periods": "Vipindi vya Mishahara",
       "payroll_runs": "Uendeshaji wa Mishahara"
