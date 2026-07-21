@@ -148,15 +148,10 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryKey: ['proformaDetails', { id: proforma.id }],
     queryFn: () => proformaServices.getProformaDetails(proforma.id),
   });
-  // const [selectedTab, setSelectedTab] = useState(0);
   const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
-  // const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-  //   setSelectedTab(newValue);
-  // };
 
   if (isPending) {
     return (
@@ -194,28 +189,6 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     >
       <DialogContent>
         <Box>
-          {/* <Grid container alignItems='center' justifyContent='space-between'>
-              <Grid size={{ xs: 11, md: 11 }}>
-                <Tabs value={selectedTab} onChange={handleTabChange}>
-                  <Tab label='On Screen' />
-                  <Tab label='PDF' />
-                </Tabs>
-              </Grid>
-
-              {belowLargeScreen && (
-                <Grid size={{ xs: 1 }} textAlign='right'>
-                  <Tooltip title='Close'>
-                    <IconButton
-                      size='small'
-                      color='primary'
-                      onClick={() => setOpenDocumentDialog(false)}
-                    >
-                      <HighlightOff color='primary' />
-                    </IconButton>
-                  </Tooltip>
-                </Grid>
-              )}
-            </Grid> */}
           <PreviewTopBar
             fileExportGrid={
               <FileExportGrid
