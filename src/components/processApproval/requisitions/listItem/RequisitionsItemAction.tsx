@@ -145,11 +145,11 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
             <FileExportGrid
               exportExcel
               handlExcelExport={() => handlExcelExport(exportedData)}
+              exportingExcel={isExporting}
               exportPdf
               handlePdf={() => {
                 setShowOnScreen((prev) => !prev);
               }}
-              exportingExcel={isExporting}
             />
           }
           closeButton={

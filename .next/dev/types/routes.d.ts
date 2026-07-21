@@ -744,3 +744,16 @@ declare global {
     params: Promise<ParamMap[AppRouteHandlerRoute]>
   }
 }
+ers
+   * @example
+   * ```tsx
+   * export async function GET(request: NextRequest, context: RouteContext<'/api/users/[id]'>) {
+   *   const { id } = await context.params
+   *   return Response.json({ id })
+   * }
+   * ```
+   */
+  interface RouteContext<AppRouteHandlerRoute extends AppRouteHandlerRoutes> {
+    params: Promise<ParamMap[AppRouteHandlerRoute]>
+  }
+}

@@ -4,6 +4,8 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
 import PDFContent from '@/components/pdf/PDFContent';
 import projectsServices from '@/components/projectManagement/projects/project-services';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { Organization } from '@/types/auth-types';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
@@ -23,13 +25,9 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
-  LinearProgress,
   Skeleton,
   Stack,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -62,7 +60,7 @@ const DocumentDialog: React.FC<{
     enabled: open,
   });
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [openDetails, setOpenDetails] = useState(false);
@@ -77,9 +75,24 @@ const DocumentDialog: React.FC<{
       <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
         <DialogContent>
           <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+            <Skeleton
+              variant='text'
+              width={180}
+              height={32}
+              style={{ borderRadius: 4, marginLeft: 'auto' }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={48}
+              style={{ borderRadius: 4 }}
+            />
+            <Skeleton
+              variant='rectangular'
+              width='100%'
+              height={32}
+              style={{ borderRadius: 4 }}
+            />
           </div>
         </DialogContent>
       </Dialog>
@@ -91,10 +104,10 @@ const DocumentDialog: React.FC<{
       open={open}
       onClose={onClose}
       fullScreen={belowLargeScreen}
-      maxWidth='md'
+      maxWidth={showOnScreen ? 'lg' : 'md'}
       fullWidth
     >
-      {(!belowLargeScreen || activeTab === 1) && (
+      {!showOnScreen && (
         <DialogTitle>
           <Stack
             direction={'row'}
@@ -107,30 +120,23 @@ const DocumentDialog: React.FC<{
         </DialogTitle>
       )}
       <DialogContent>
-        {belowLargeScreen && (
-          <Grid
-            container
-            alignItems='center'
-            justifyContent='space-between'
-            mb={2}
-          >
-            <Grid size={11}>
-              <Tabs value={activeTab} onChange={(_, tab) => setActiveTab(tab)}>
-                <Tab label='ONSCREEN' />
-                <Tab label='PDF' />
-              </Tabs>
-            </Grid>
-            <Grid size={1} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton size='small' onClick={onClose}>
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
-        )}
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton size='small' onClick={onClose}>
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
 
-        {belowLargeScreen && activeTab === 0 ? (
+        {showOnScreen ? (
           <CertificateOnScreen
             certificate={certificateDetails}
             organization={organization as Organization}
@@ -174,11 +180,27 @@ const EditCertificate: React.FC<{
     queryFn: () => projectsServices.getCertificateDetails(certificate.id),
   });
 
-  if (isFetching)     return (
+  if (isFetching)
+    return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
 
