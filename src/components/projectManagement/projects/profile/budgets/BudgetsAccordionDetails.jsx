@@ -3,11 +3,9 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import LedgerStatementDialogContent from '@/components/accounts/ledgers/list/ledgerStatement/LedgerStatementDialogContent';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import PDFContent from '@/components/pdf/PDFContent';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { HighlightOff, VisibilityOutlined } from '@mui/icons-material';
-import { LoadingButton } from '@mui/lab';
 import {
   Alert,
   Box,
@@ -24,8 +22,6 @@ import {
   Skeleton,
   Stack,
   Switch,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -47,20 +43,18 @@ function BudgetsDocumentDialog({
 }) {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const canShowOnScreen = belowLargeScreen;
-  const [tab, setTab] = useState(forceWithDetails && canShowOnScreen ? 0 : belowLargeScreen ? 1 : 0);
   const [withDetails, setWithDetails] = useState(forceWithDetails);
   const [groupingMode, setGroupingMode] = useState('default');
   const [pdfKey, setPdfKey] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { project } = useProjectProfile();
 
   useEffect(() => {
     if (forceWithDetails) {
       setWithDetails(true);
-      setTab(canShowOnScreen ? 0 : 0);
     }
-  }, [forceWithDetails, canShowOnScreen]);
+  }, [forceWithDetails]);
 
   const {
     data: timelineActivitiesData,
@@ -197,7 +191,9 @@ function BudgetsDocumentDialog({
                     checked={groupingMode === 'task'}
                     onChange={(e) => {
                       handleGroupingModeChange({
-                        target: { value: e.target.checked ? 'task' : 'default' },
+                        target: {
+                          value: e.target.checked ? 'task' : 'default',
+                        },
                       });
                     }}
                     slotProps={{ input: { 'aria-label': 'group by task' } }}
@@ -206,68 +202,34 @@ function BudgetsDocumentDialog({
               </FormControl>
             )}
           </Box>
-          {belowLargeScreen ? (
-            <Box display='flex' alignItems='center' gap={1}>
-              {!forceWithDetails && (
-                <LoadingButton
-                  size='small'
-                  onClick={() => handleExcelExport(exportedData)}
-                  color='success'
-                  variant='contained'
-                  loading={isExporting}
-                  startIcon={<FontAwesomeIcon icon={faFileExcel} />}
-                >
-                  Excel
-                </LoadingButton>
-              )}
+          <Box display='flex' alignItems='center' gap={1}>
+            {!forceWithDetails && (
+              <>
+                <FileExportGrid
+                  exportExcel
+                  handlExcelExport={() => handleExcelExport(exportedData)}
+                  exportingExcel={isExporting}
+                  exportPdf
+                  handlePdf={() => {
+                    setShowOnScreen((prev) => !prev);
+                  }}
+                />
+              </>
+            )}
+            {belowLargeScreen && (
               <Tooltip title='Close'>
                 <IconButton size='small' onClick={onClose}>
                   <HighlightOff color='primary' />
                 </IconButton>
               </Tooltip>
-            </Box>
-          ) : (
-            !forceWithDetails && (
-              <LoadingButton
-                size='small'
-                onClick={() => handleExcelExport(exportedData)}
-                color='success'
-                variant='contained'
-                loading={isExporting}
-                startIcon={<FontAwesomeIcon icon={faFileExcel} />}
-                sx={{ ml: 2 }}
-              >
-                Excel
-              </LoadingButton>
-            )
-          )}
+            )}
+          </Box>
         </Box>
       </DialogTitle>
 
-      {/* Tabs Row */}
-      <Grid container alignItems='center' sx={{ px: 3, pb: 1 }}>
-        <Grid item>
-          {canShowOnScreen && (
-            <Tabs value={tab} onChange={(_, v) => setTab(v)}>
-              {forceWithDetails ? (
-                [
-                  <Tab key='onscreen' label='On Screen' />,
-                  <Tab key='pdf' label='PDF' />,
-                ]
-              ) : (
-                [
-                  <Tab key='pdf' label='PDF' />,
-                  <Tab key='onscreen' label='On Screen' />,
-                ]
-              )}
-            </Tabs>
-          )}
-        </Grid>
-      </Grid>
-
       <DialogContent>
         {forceWithDetails ? (
-          canShowOnScreen && tab === 0 ? (
+          showOnScreen ? (
             <BudgetsOnscreen
               allTasks={allTasks}
               organization={organization}
@@ -294,7 +256,7 @@ function BudgetsDocumentDialog({
               }
             />
           )
-        ) : tab === 0 ? (
+        ) : !showOnScreen ? (
           <PDFContent
             key={pdfKey}
             fileName='Budgets'
@@ -311,7 +273,6 @@ function BudgetsDocumentDialog({
             }
           />
         ) : (
-          canShowOnScreen && (
           <BudgetsOnscreen
             allTasks={allTasks}
             organization={organization}
@@ -321,7 +282,6 @@ function BudgetsDocumentDialog({
             groupingMode={withDetails ? groupingMode : 'default'}
             hideSummary={forceWithDetails}
           />
-          )
         )}
       </DialogContent>
       {!belowLargeScreen && (
@@ -393,14 +353,16 @@ function BudgetsAccordionDetails({ budget, expanded }) {
       );
 
       const normalizeBudgetDetails = (payload, fallbackName) => {
-        const rawPayload = payload?.budgetDetails || payload?.budget_details || payload;
+        const rawPayload =
+          payload?.budgetDetails || payload?.budget_details || payload;
 
         if (Array.isArray(rawPayload)) {
           const hasSubcontractItems = rawPayload.some(
             (entry) => entry?.project_task_id || entry?.expense_ledger_id
           );
           const hasProductItems = rawPayload.some(
-            (entry) => entry?.product_name || entry?.product || entry?.unit_symbol
+            (entry) =>
+              entry?.product_name || entry?.product || entry?.unit_symbol
           );
 
           if (hasSubcontractItems) {
@@ -645,9 +607,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                               ? 'unbudgeted'
                               : `${percentageSpent.toFixed(2)}%`
                           }
-                          color={
-                            getPercentageColor(percentageSpent)
-                          }
+                          color={getPercentageColor(percentageSpent)}
                           size='small'
                         />
                       </Tooltip>
@@ -662,21 +622,20 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                                 ? 100
                                 : percentageSpent
                             }
-                            color={
-                              getPercentageColor(percentageSpent)
-                            }
+                            color={getPercentageColor(percentageSpent)}
                             sx={{
                               height: 15,
                               borderRadius: 5,
-                              ...(percentageSpent === Infinity || percentageSpent >= 100
+                              ...(percentageSpent === Infinity ||
+                              percentageSpent >= 100
                                 ? {
-                                backgroundColor: (theme) =>
-                                  theme.palette.error.main,
-                                '& .MuiLinearProgress-bar': {
-                                  backgroundColor: (theme) =>
-                                    theme.palette.error.main,
-                                },
-                              }
+                                    backgroundColor: (theme) =>
+                                      theme.palette.error.main,
+                                    '& .MuiLinearProgress-bar': {
+                                      backgroundColor: (theme) =>
+                                        theme.palette.error.main,
+                                    },
+                                  }
                                 : {}),
                             }}
                           />

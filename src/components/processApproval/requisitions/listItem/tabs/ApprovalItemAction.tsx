@@ -126,6 +126,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryKey: ['retrieveApprovalDetails', { id: approval.id }],
     queryFn: async () =>
       await requisitionsServices.retrieveApprovalDetails(approval.id),
+    enabled: !!openDocumentDialog,
   });
 
   const [selectedTab, setSelectedTab] = useState(0);

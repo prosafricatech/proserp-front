@@ -2,6 +2,9 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
 import projectsServices from '@/components/projectManagement/projects/project-services';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -20,13 +23,9 @@ import {
   Dialog,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
-  LinearProgress,
   Skeleton,
   Stack,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -37,7 +36,6 @@ import React, { useState } from 'react';
 import ClaimOnscreen from './ClaimOnscreen';
 import ClaimPDF from './ClaimPDF';
 import ProjectClaimsForm from './form/ProjectClaimsForm';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 interface DocumentDialogProps {
   open: boolean;
@@ -67,7 +65,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     enabled: open && !!claimId,
   });
 
-  const [activeTab, setActiveTab] = useState<number>(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const [openDetails, setOpenDetails] = useState(false);
@@ -81,9 +79,24 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     return (
       <Dialog open fullWidth fullScreen={belowLargeScreen} maxWidth='md'>
         <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
         </div>
       </Dialog>
     );
@@ -94,10 +107,10 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       open={open}
       onClose={onClose}
       fullWidth
-      maxWidth='md'
+      maxWidth={showOnScreen ? 'lg' : 'md'}
       fullScreen={belowLargeScreen}
     >
-      {(!belowLargeScreen || activeTab === 1) && (
+      {!showOnScreen && (
         <DialogTitle>
           <Stack
             direction={'row'}
@@ -111,31 +124,23 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
       )}
 
       <DialogContent>
-        {belowLargeScreen && (
-          <Grid
-            container
-            alignItems='center'
-            justifyContent='space-between'
-            mb={2}
-          >
-            <Grid size={11}>
-              <Tabs value={activeTab} onChange={(_, tab) => setActiveTab(tab)}>
-                <Tab label='ONSCREEN' />
-                <Tab label='PDF' />
-              </Tabs>
-            </Grid>
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton size='small' onClick={onClose}>
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
 
-            <Grid size={1} textAlign='right'>
-              <Tooltip title='Close'>
-                <IconButton size='small' onClick={onClose}>
-                  <HighlightOff color='primary' />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
-        )}
-
-        {belowLargeScreen && activeTab === 0 ? (
+        {showOnScreen ? (
           <ClaimOnscreen claim={claimDetails} organization={organization} />
         ) : (
           <PDFContent
@@ -169,14 +174,29 @@ const EditClaim: React.FC<EditClaimProps> = ({ claim, setOpenDialog }) => {
     enabled: !!claim?.id,
   });
 
-  if (isFetching) 
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+  if (isFetching)
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
+      </div>
+    );
 
   return (
     <ProjectClaimsForm claim={claimDetails} setOpenDialog={setOpenDialog} />
@@ -218,7 +238,9 @@ const ProjectClaimItemAction: React.FC<ProjectClaimItemActionProps> = ({
   const menuItems = [
     { icon: <VisibilityOutlined />, title: 'View', action: 'view' },
     checkOrganizationPermission(PERMISSIONS.PROJECT_CLAIMS_UPDATE) && {
-      icon: <EditOutlined />, title: 'Edit', action: 'edit'
+      icon: <EditOutlined />,
+      title: 'Edit',
+      action: 'edit',
     },
     checkOrganizationPermission(PERMISSIONS.PROJECT_CLAIMS_DELETE) && {
       icon: <DeleteOutlined color='error' />,
