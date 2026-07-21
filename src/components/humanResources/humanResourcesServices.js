@@ -627,6 +627,11 @@ humanResourcesServices.cancelLoanRequest = async ({ id, ...payload }) => {
     return data;
 }
 
+humanResourcesServices.deleteLoanRequest = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/loanRequests/${id}/delete`);
+    return data;
+}
+
 humanResourcesServices.disburseLoanRequest = async ({ id, ...payload }) => {
     const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/disburse`, payload);
     return data;

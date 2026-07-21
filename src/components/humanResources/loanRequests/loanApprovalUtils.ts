@@ -1,8 +1,11 @@
 import { LoanRequestApproval, LoanRequestType } from './LoanRequestType';
 
-export type LoanApprovalDecision = 'approved' | 'rejected' | 'on hold' | 'unknown';
+export type LoanApprovalDecision =
+  | 'approved'
+  | 'rejected'
+  | 'on hold'
+  | 'unknown';
 
-// Mirrors getLeaveApprovalDecision from LeaveApprovalDialog.tsx
 export const getLoanApprovalDecision = (
   approval: LoanRequestApproval | undefined
 ): LoanApprovalDecision => {
@@ -16,7 +19,6 @@ export const getLoanApprovalDecision = (
   return 'unknown';
 };
 
-// Mirrors getNextPendingLeaveLevel from LeaveApprovalDialog.tsx
 export const getNextPendingLoanLevel = (
   loanRequest: LoanRequestType | undefined
 ) => {

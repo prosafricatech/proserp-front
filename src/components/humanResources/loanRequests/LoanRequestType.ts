@@ -1,6 +1,7 @@
 import { DeductionType } from '@/components/humanResources/deductionTypes/DeductionType';
 import { Employee } from '@/components/humanResources/employees/EmployeesType';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
+import { Currency } from '@/components/organizations/profile/subscriptions/SubscriptionTypes';
 
 export type LoanRequestStatus =
   | 'in_review'
@@ -52,7 +53,15 @@ export interface LoanRequestApproval {
 
 export interface LoanRequestPayment {
   id: number;
-  voucher_no: string;
+  amount: number;
+  cost_centers: CostCenter[];
+  created_at: string;
+  creator: { id: number; name: string; email: string; phone: string };
+  credit_ledger_id: number;
+  currency: Currency;
+  voucherNo: string;
+  narration: string;
+  reference: string;
 }
 
 export interface LoanRequestType {
@@ -74,7 +83,12 @@ export interface LoanRequestType {
   reviewed_at: string | null;
   payment_id: number | null;
   disbursed_at: string | null;
-  disbursed_by: number | null;
+  disbursed_by: {
+    id: number;
+    name: string;
+    email: string;
+    phone: string;
+  } | null;
   disbursement_reference: string | null;
   created_by: number;
   created_at: string;

@@ -1,6 +1,8 @@
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import organizationServices from '@/components/organizations/organizationServices';
 import { PaidOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -21,13 +23,19 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import LoanApprovalItemAction from './LoanApprovalItemAction';
 import LoanApprovalsActionTail from './LoanApprovalsActionTail';
 import { getLoanApprovalDecision } from './loanApprovalUtils';
 import LoanRequestItemAction from './LoanRequestItemAction';
 import { LoanRequestType } from './LoanRequestType';
+
+interface User {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
 
 const formatCurrency = (value?: number | null) =>
   value != null ? Number(value).toLocaleString() : '\u2014';
@@ -54,7 +62,7 @@ const Field = ({
   label: string;
   value?: React.ReactNode;
 }) => (
-  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
     <Card
       variant='outlined'
       elevation={0}
@@ -83,19 +91,36 @@ const LoanRequestsListItem = ({
 }: {
   loanRequest: LoanRequestType;
 }) => {
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization && authOrganization?.organization;
+
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
   const { data: loanDetails, isLoading } = useQuery({
     queryKey: ['showLoanRequest', loanRequest.id],
     queryFn: () => humanResourcesServices.showLoanRequest(loanRequest.id),
-    enabled: expanded,
+    enabled: !!expanded,
     refetchOnWindowFocus: true,
+  });
+  const { data: rawUsers = [] } = useQuery<User[]>({
+    queryKey: ['users', organization?.id],
+    queryFn: () =>
+      organizationServices.getOrganizationUsers({
+        organizationId: organization?.id,
+      }),
+    enabled: !!organization?.id,
   });
 
   const details: LoanRequestType = (loanDetails?.data ||
     loanDetails ||
     loanRequest) as LoanRequestType;
+
+  const reviewedBy = useMemo(() => {
+    return rawUsers.find(
+      (user) => Number(user.id) === Number(details.reviewed_by)
+    )?.name;
+  }, [rawUsers, details]);
 
   const approvals = details?.approvals || [];
 
@@ -292,7 +317,7 @@ const LoanRequestsListItem = ({
                         label='Reviewed By'
                         value={
                           details.reviewed_by
-                            ? `User #${details.reviewed_by}`
+                            ? (reviewedBy ?? `User #${details.reviewed_by}`)
                             : undefined
                         }
                       />
@@ -341,7 +366,7 @@ const LoanRequestsListItem = ({
                   <CardContent>
                     <Grid container spacing={2}>
                       <Grid size={12}>
-                        <SectionTitle>Disbursement</SectionTitle>
+                        <SectionTitle>Disbursement & Payment</SectionTitle>
                       </Grid>
                       <Field
                         label='Disbursed At'
@@ -355,7 +380,7 @@ const LoanRequestsListItem = ({
                         label='Disbursed By'
                         value={
                           details.disbursed_by
-                            ? `User #${details.disbursed_by}`
+                            ? `${details.disbursed_by.name}`
                             : undefined
                         }
                       />
@@ -365,8 +390,31 @@ const LoanRequestsListItem = ({
                       />
                       <Field
                         label='Payment Voucher'
-                        value={details.payment?.voucher_no}
+                        value={details.payment?.voucherNo}
                       />
+                      <Grid size={{ xs: 12, sm: 6, md: 8, lg: 9 }}>
+                        <Card
+                          variant='outlined'
+                          elevation={0}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1,
+                            p: 2,
+                          }}
+                        >
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            display='block'
+                          >
+                            Payment Narration
+                          </Typography>
+                          <Typography variant='body2' fontWeight={500}>
+                            {details.payment?.narration ?? '-'}
+                          </Typography>
+                        </Card>
+                      </Grid>
                     </Grid>
                   </CardContent>
                 </Card>

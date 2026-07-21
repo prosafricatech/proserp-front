@@ -2162,6 +2162,18 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+<<<<<<< HEAD
+=======
+// Validate ../../../src/app/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+>>>>>>> origin/hr-development
 // Validate ../../../src/app/api/humanResources/employees/[id]/movements/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/movements">> = Specific
