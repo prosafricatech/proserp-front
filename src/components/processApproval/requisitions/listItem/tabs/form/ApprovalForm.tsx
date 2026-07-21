@@ -131,6 +131,7 @@ function ApprovalForm({
       quantity: item.quantity || 0,
       rate: item.rate || 0,
       remarks: item.remarks || '',
+      splits: (item as any).splits || [],
     }));
   };
 
@@ -344,6 +345,24 @@ function ApprovalForm({
                 .required('Quantity is required')
                 .positive('Quantity is required')
                 .typeError('Quantity is required'),
+              splits: yup.array().of(
+                yup.object().shape({
+                  credit_ledger_id: yup
+                    .number()
+                    .nullable()
+                    .required('Ledger is required'),
+                  quantity: yup
+                    .number()
+                    .required('Quantity is required')
+                    .positive('Quantity must be positive')
+                    .typeError('Quantity must be a number'),
+                  rate: yup
+                    .number()
+                    .required('Rate is required')
+                    .positive('Rate must be positive')
+                    .typeError('Rate must be a number'),
+                })
+              ),
             })
           )
         : yup.array().nullable(),
@@ -451,6 +470,7 @@ function ApprovalForm({
     });
   };
 
+  // This useEffect sets the form values for validation - keeps splits nested
   useEffect(() => {
     if (isPurchaseType || isMaterialType) {
       const product_items = requisitionProductItem?.map((item) => ({
@@ -486,13 +506,26 @@ function ApprovalForm({
         });
       }
     } else if (!isMaterialType) {
-      const ledger_items = requisitionLedgerItem?.map((item) => ({
-        requisition_ledger_item_id: item.id,
-        quantity: item.quantity,
-        rate: item.rate,
-        remarks: item.remarks,
-        measurement_unit_id: item.measurement_unit?.id,
-      }));
+      // Keep splits nested for validation
+      const ledger_items = requisitionLedgerItem?.map((item) => {
+        const splits: any[] = (item as any).splits || [];
+
+        return {
+          requisition_ledger_item_id: item.id,
+          credit_ledger_id: (item as any).ledger_id || item.ledger?.id,
+          quantity: item.quantity,
+          rate: item.rate,
+          remarks: item.remarks,
+          measurement_unit_id: item.measurement_unit?.id,
+          splits: splits.map((split: any) => ({
+            credit_ledger_id: split.credit_ledger_id,
+            quantity: split.quantity,
+            rate: split.rate,
+            amount: split.amount,
+            remarks: split.remarks,
+          })),
+        };
+      });
 
       setValue('ledger_items', ledger_items, {
         shouldValidate: true,
@@ -524,8 +557,45 @@ function ApprovalForm({
   const watchedImprestLedgerId = watch('imprest_ledger_id');
   const watchedApprovalDate = watch('approval_date');
 
+  // Flatten splits for submission
+  const flattenLedgerItems = (items: any[]) => {
+    if (!items) return [];
+    
+    const result: any[] = [];
+    
+    items.forEach((item) => {
+      const splits = item.splits || [];
+      
+      // Main line without splits
+      const mainLine = {
+        requisition_ledger_item_id: item.requisition_ledger_item_id,
+        credit_ledger_id: item.credit_ledger_id,
+        quantity: item.quantity,
+        rate: item.rate,
+        remarks: item.remarks,
+        measurement_unit_id: item.measurement_unit_id,
+      };
+      result.push(mainLine);
+      
+      // Split lines
+      splits.forEach((split: any) => {
+        result.push({
+          requisition_ledger_item_id: item.requisition_ledger_item_id,
+          credit_ledger_id: split.credit_ledger_id,
+          quantity: split.quantity,
+          rate: split.rate,
+          remarks: split.remarks,
+          measurement_unit_id: item.measurement_unit_id,
+          is_split: true,
+        });
+      });
+    });
+    
+    return result;
+  };
+
   const onSubmit: SubmitHandler<FormValues> = (formData) => {
-    const payload = {
+    let payload: any = {
       ...formData,
       product_items:
         isPurchaseType || isMaterialType ? formData.product_items : undefined,
@@ -534,12 +604,14 @@ function ApprovalForm({
         isMaterialType && hasImprestFulfillment
           ? formData.imprest_ledger_id
           : undefined,
-      ledger_items:
-        !isPurchaseType && !isMaterialType && !isLeaveType
-          ? formData.ledger_items
-          : undefined,
     };
-    saveMutation(payload as FormValues);
+
+    // Flatten ledger_items for submission
+    if (!isPurchaseType && !isMaterialType && !isLeaveType) {
+      payload.ledger_items = flattenLedgerItems(formData.ledger_items as any);
+    }
+
+    saveMutation(payload);
   };
 
   return (
