@@ -1,21 +1,30 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   CancelOutlined,
   CheckCircleOutlined,
   HighlightOffOutlined,
+  PaidOutlined,
   PaymentsOutlined,
 } from '@mui/icons-material';
 import { IconButton, Tooltip, useMediaQuery } from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useSnackbar } from 'notistack';
 import { useState } from 'react';
+import humanResourcesServices from '../humanResourcesServices';
 import LoanDirectDecisionForm, {
   LoanDirectDecisionMode,
 } from './LoanDirectDecisionForm';
+import LoanDisburseForm from './LoanDisburseForm';
+import LoanMarkDisbursedForm from './LoanMarkDisbursedForm';
 import { LoanRequestType } from './LoanRequestType';
 
-// PHASE 3 — direct (no-chain) approve/reject wired up. Cancel/Disburse are
-// still visual-only placeholders, see notes below and known-issues-cleanup.md.
+// PHASE 5 — Disburse wired up (two distinct actions, per org subscription).
 const LoanRequestItemAction = ({
   loanRequest,
 }: {
@@ -23,19 +32,75 @@ const LoanRequestItemAction = ({
 }) => {
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
+  const { showDialog, hideDialog } = useJumboDialog();
+  const { enqueueSnackbar } = useSnackbar();
+  const queryClient = useQueryClient();
+
   const [decisionMode, setDecisionMode] =
     useState<LoanDirectDecisionMode | null>(null);
+  const [openDisburseDialog, setOpenDisburseDialog] = useState(false);
+  const [openMarkDisbursedDialog, setOpenMarkDisbursedDialog] = useState(false);
 
   const isDirectFlow = !loanRequest.approval_chain_id;
-
   const canDirectDecide = isDirectFlow && loanRequest.status === 'in_review';
 
   const canCancel =
     ['in_review', 'approved'].includes(loanRequest.status) &&
     !loanRequest.disbursed_at;
 
-  const canDisburse =
+  const isApprovedNotDisbursed =
     loanRequest.status === 'approved' && !loanRequest.disbursed_at;
+
+  const orgHasAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
+
+  // Ability gate per the handoff doc: approving a loan and releasing real
+  // cash are different responsibilities — a user can approve without being
+  // able to disburse. Hidden entirely (not disabled) when lacking it, per
+  // Eliya. mark-disbursed (no Accounts & Finance) has no such gate.
+  const canDisburseWithLedger =
+    isApprovedNotDisbursed &&
+    orgHasAccountsAndFinance &&
+    checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE);
+
+  const canMarkDisbursed = isApprovedNotDisbursed && !orgHasAccountsAndFinance;
+
+  const { mutate: cancelLoanRequest, isPending: isCancelling } = useMutation({
+    mutationFn: humanResourcesServices.cancelLoanRequest,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: ['showLoanRequest', loanRequest.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ['loanRequests'] });
+      queryClient.invalidateQueries({ queryKey: ['leaveRequests'] }); // see known-issues-cleanup.md
+      enqueueSnackbar('Loan request cancelled', { variant: 'success' });
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(
+        error?.response?.data?.message || 'Something went wrong',
+        { variant: 'error' }
+      );
+    },
+  });
+
+  const handleCancel = () => {
+    showDialog({
+      title: 'Cancel Loan Request',
+      content:
+        loanRequest.status === 'approved'
+          ? 'This stops all future recovery from payroll. Installments already deducted are not refunded. Continue?'
+          : 'Are you sure you want to cancel this loan request?',
+      onYes: () => {
+        hideDialog();
+        cancelLoanRequest({ id: loanRequest.id });
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
+  };
 
   return (
     <>
@@ -48,6 +113,20 @@ const LoanRequestItemAction = ({
           onClose={() => setDecisionMode(null)}
         />
       )}
+
+      <LoanDisburseForm
+        open={openDisburseDialog}
+        loanRequest={loanRequest}
+        belowLargeScreen={belowLargeScreen}
+        onClose={() => setOpenDisburseDialog(false)}
+      />
+
+      <LoanMarkDisbursedForm
+        open={openMarkDisbursedDialog}
+        loanRequest={loanRequest}
+        belowLargeScreen={belowLargeScreen}
+        onClose={() => setOpenMarkDisbursedDialog(false)}
+      />
 
       {canDirectDecide && (
         <>
@@ -64,17 +143,32 @@ const LoanRequestItemAction = ({
         </>
       )}
 
-      {canDisburse && (
+      {canDisburseWithLedger && (
         <Tooltip title='Disburse'>
-          <IconButton size='small' onClick={() => {}}>
+          <IconButton size='small' onClick={() => setOpenDisburseDialog(true)}>
             <PaymentsOutlined color='success' />
+          </IconButton>
+        </Tooltip>
+      )}
+
+      {canMarkDisbursed && (
+        <Tooltip title='Mark as Disbursed'>
+          <IconButton
+            size='small'
+            onClick={() => setOpenMarkDisbursedDialog(true)}
+          >
+            <PaidOutlined color='success' />
           </IconButton>
         </Tooltip>
       )}
 
       {canCancel && (
         <Tooltip title='Cancel'>
-          <IconButton size='small' onClick={() => {}}>
+          <IconButton
+            size='small'
+            disabled={isCancelling}
+            onClick={handleCancel}
+          >
             <CancelOutlined color='warning' />
           </IconButton>
         </Tooltip>

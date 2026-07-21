@@ -44,9 +44,9 @@ const LoanDirectDecisionForm = ({
   const [amountApproved, setAmountApproved] = useState<number | ''>(
     loanRequest.amount
   );
-  const [installmentsApproved, setInstallmentsApproved] = useState<number | ''>(
-    loanRequest.installments
-  );
+  const [installmentsApproved, setInstallmentsApproved] = useState<
+    number | ''
+  >(loanRequest.installments);
   const [remarks, setRemarks] = useState('');
   const [amountError, setAmountError] = useState('');
   const [remarksError, setRemarksError] = useState('');
@@ -139,7 +139,7 @@ const LoanDirectDecisionForm = ({
                 label='Amount Approved'
                 size='small'
                 fullWidth
-                value={amountApproved.toLocaleString('en-US')}
+                value={amountApproved}
                 error={!!amountError}
                 helperText={
                   amountError ||
@@ -150,7 +150,9 @@ const LoanDirectDecisionForm = ({
                 onChange={(e: any) => {
                   setAmountError('');
                   setAmountApproved(
-                    e.target.value === '' ? '' : sanitizedNumber(e.target.value)
+                    e.target.value === ''
+                      ? ''
+                      : sanitizedNumber(e.target.value)
                   );
                 }}
               />
@@ -161,7 +163,9 @@ const LoanDirectDecisionForm = ({
                 value={installmentsApproved}
                 onChange={(e: any) =>
                   setInstallmentsApproved(
-                    e.target.value === '' ? '' : sanitizedNumber(e.target.value)
+                    e.target.value === ''
+                      ? ''
+                      : sanitizedNumber(e.target.value)
                   )
                 }
               />
