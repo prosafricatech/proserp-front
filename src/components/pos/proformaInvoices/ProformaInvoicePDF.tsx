@@ -126,7 +126,7 @@ function ProformaInvoicePDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 0.3,
+                width: '5%',
               }}
             >
               S/N
@@ -136,7 +136,8 @@ function ProformaInvoicePDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 3,
+                // flex: 3,
+                width: '35%',
               }}
             >
               Product/Service
@@ -146,7 +147,8 @@ function ProformaInvoicePDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 0.5,
+                // flex: 0.5,
+                width: '10%',
               }}
             >
               Unit
@@ -156,7 +158,8 @@ function ProformaInvoicePDF({
                 ...pdfStyles.tableHeader,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 0.8,
+                // flex: 0.8,
+                width: '10%',
               }}
             >
               Quantity
@@ -168,7 +171,8 @@ function ProformaInvoicePDF({
                 ...pdfStyles.midInfo,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1.2,
+                // flex: 1.2,
+                width: proforma?.vat_percentage > 0 ? '16%' : '21%',
               }}
             >
               Price {proforma?.vat_percentage ? ' (Excl. )' : ''}
@@ -181,7 +185,8 @@ function ProformaInvoicePDF({
                   ...pdfStyles.midInfo,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 1,
+                  // flex: 1,
+                  width: '10%',
                 }}
               >
                 VAT
@@ -194,7 +199,8 @@ function ProformaInvoicePDF({
                 ...pdfStyles.midInfo,
                 backgroundColor: mainColor,
                 color: contrastText,
-                flex: 1.5,
+                // flex: 1.5,
+                width: proforma?.vat_percentage > 0 ? '14%' : '19%',
               }}
             >
               Amount {proforma?.vat_percentage ? ' (Incl. )' : ''}
@@ -207,7 +213,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 0.3,
+                  width: '5%',
                 }}
               >
                 {index + 1}
@@ -216,7 +222,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 3,
+                  width: '35%',
                   flexDirection: 'row',
                   alignItems: 'flex-start',
                   gap: 4,
@@ -244,7 +250,9 @@ function ProformaInvoicePDF({
                   >
                     <Text>{proformaItem.product.name}</Text>
                     {proformaItem.product.description && (
-                      <Text style={{ fontSize: 9, color: '#888', marginTop: 2 }}>
+                      <Text
+                        style={{ fontSize: 9, color: '#888', marginTop: 2 }}
+                      >
                         {' ('}
                         {proformaItem.product.description}
                         {')'}
@@ -262,7 +270,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 0.5,
+                  width: '10%',
                 }}
               >
                 {proformaItem.measurement_unit.symbol}
@@ -271,7 +279,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 0.8,
+                  width: '10%',
                   textAlign: 'right',
                 }}
               >
@@ -281,7 +289,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.2,
+                  width: proforma?.vat_percentage > 0 ? '16%' : '21%',
                   textAlign: 'right',
                 }}
               >
@@ -295,7 +303,7 @@ function ProformaInvoicePDF({
                   style={{
                     ...pdfStyles.tableCell,
                     backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                    flex: 1,
+                    width: '10%',
                     textAlign: 'right',
                   }}
                 >
@@ -312,7 +320,7 @@ function ProformaInvoicePDF({
                 style={{
                   ...pdfStyles.tableCell,
                   backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.5,
+                  width: proforma?.vat_percentage > 0 ? '14%' : '19%',
                   textAlign: 'right',
                 }}
               >
@@ -338,8 +346,8 @@ function ProformaInvoicePDF({
               ...pdfStyles.tableHeader,
               backgroundColor: mainColor,
               color: contrastText,
-              flex: 2,
-              textAlign: 'right',
+              width: proforma?.vat_percentage > 0 ? '26%' : '21%',
+              textAlign: 'left',
             }}
           >
             Total
@@ -349,7 +357,7 @@ function ProformaInvoicePDF({
               ...pdfStyles.tableHeader,
               backgroundColor: mainColor,
               color: contrastText,
-              flex: 2.2,
+              width: proforma?.vat_percentage > 0 ? '24%' : '19%',
               textAlign: 'right',
             }}
           >
@@ -369,8 +377,8 @@ function ProformaInvoicePDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 2,
-                  textAlign: 'right',
+                  width: proforma?.vat_percentage > 0 ? '26%' : '21%',
+                  textAlign: 'left',
                 }}
               >
                 VAT
@@ -380,7 +388,7 @@ function ProformaInvoicePDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 2.2,
+                  width: proforma?.vat_percentage > 0 ? '24%' : '19%',
                   textAlign: 'right',
                 }}
               >
@@ -397,8 +405,8 @@ function ProformaInvoicePDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 2,
-                  textAlign: 'right',
+                  width: proforma?.vat_percentage > 0 ? '26%' : '21%',
+                  textAlign: 'left',
                 }}
               >
                 Grand Total (VAT Incl.)
@@ -408,7 +416,7 @@ function ProformaInvoicePDF({
                   ...pdfStyles.tableHeader,
                   backgroundColor: mainColor,
                   color: contrastText,
-                  flex: 2.2,
+                  width: proforma?.vat_percentage > 0 ? '24%' : '19%',
                   textAlign: 'right',
                 }}
               >
