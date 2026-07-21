@@ -17,6 +17,7 @@ interface PaymentItem {
     name: string;
   };
   credit_ledger_id?: number;
+  debitLedgerName?: string
   amount: number;
   unpaid_amount: number;
   remarks?: string;
@@ -138,7 +139,7 @@ const ApprovedPaymentItemForm: React.FC<ApprovedPaymentItemFormProps> = ({
                         color="text.secondary"
                         sx={{ display: 'block', mt: 0.5 }}
                       >
-                        ({item.credit_ledger?.name || item.credit_ledger_id})
+                        ({item.credit_ledger?.name || item.debitLedgerName})
                       </Typography>
                     </Tooltip>
                   )}

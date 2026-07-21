@@ -203,6 +203,7 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             name: ledgerName,
           },
           credit_ledger_id: creditLedgerId,
+          debitLedgerName: payItem.debitLedgerName,
           credit_ledger: creditLedgerId ? {
             id: creditLedgerId,
             name: creditLedgerName,
