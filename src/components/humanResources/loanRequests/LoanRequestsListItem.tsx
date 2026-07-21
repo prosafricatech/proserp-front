@@ -1,6 +1,8 @@
 'use client';
 
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import organizationServices from '@/components/organizations/organizationServices';
 import { PaidOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -21,13 +23,19 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import LoanApprovalItemAction from './LoanApprovalItemAction';
 import LoanApprovalsActionTail from './LoanApprovalsActionTail';
 import { getLoanApprovalDecision } from './loanApprovalUtils';
 import LoanRequestItemAction from './LoanRequestItemAction';
 import { LoanRequestType } from './LoanRequestType';
+
+interface User {
+  id: number;
+  name: string;
+  [key: string]: any;
+}
 
 const formatCurrency = (value?: number | null) =>
   value != null ? Number(value).toLocaleString() : '\u2014';
@@ -83,19 +91,36 @@ const LoanRequestsListItem = ({
 }: {
   loanRequest: LoanRequestType;
 }) => {
+  const { authOrganization } = useJumboAuth();
+  const organization = authOrganization && authOrganization?.organization;
+
   const [expanded, setExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
 
   const { data: loanDetails, isLoading } = useQuery({
     queryKey: ['showLoanRequest', loanRequest.id],
     queryFn: () => humanResourcesServices.showLoanRequest(loanRequest.id),
-    enabled: expanded,
+    enabled: !!expanded,
     refetchOnWindowFocus: true,
+  });
+  const { data: rawUsers = [] } = useQuery<User[]>({
+    queryKey: ['users', organization?.id],
+    queryFn: () =>
+      organizationServices.getOrganizationUsers({
+        organizationId: organization?.id,
+      }),
+    enabled: !!organization?.id,
   });
 
   const details: LoanRequestType = (loanDetails?.data ||
     loanDetails ||
     loanRequest) as LoanRequestType;
+
+  const reviewedBy = useMemo(() => {
+    return rawUsers.find(
+      (user) => Number(user.id) === Number(details.reviewed_by)
+    )?.name;
+  }, [rawUsers, details]);
 
   const approvals = details?.approvals || [];
 
@@ -292,7 +317,7 @@ const LoanRequestsListItem = ({
                         label='Reviewed By'
                         value={
                           details.reviewed_by
-                            ? `User #${details.reviewed_by}`
+                            ? (reviewedBy ?? `User #${details.reviewed_by}`)
                             : undefined
                         }
                       />
