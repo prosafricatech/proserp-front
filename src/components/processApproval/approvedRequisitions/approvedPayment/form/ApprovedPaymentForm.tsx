@@ -424,19 +424,20 @@ const ApprovedPaymentForm: React.FC<ApprovedPaymentFormProps> = ({
             ? 'requisition_approval_product_item_id' 
             : 'requisition_approval_ledger_item_id';
           
-          // ✅ IMPORTANT: If credit_ledger_id exists, use it as debit_ledger_id
-          const debitLedgerId = item.credit_ledger_id 
-            ? item.credit_ledger_id 
-            : (imprestLedger ? imprestLedger.id : item.debit_ledger_id);
-
-          return {
-            debit_ledger_id: debitLedgerId,
+          const result: any = {
+            debit_ledger_id: imprestLedger ? imprestLedger.id : item.debit_ledger_id,
             [itemIdKey]: item.requisition_approval_ledger_item_id,
             amount: Number.isFinite(Number(item.amount))
               ? Number(item.amount)
               : 0,
             description: String(item.description || item.remarks || '').trim(),
           };
+
+          if (item.credit_ledger_id) {
+            result.credit_ledger_id = item.credit_ledger_id;
+          }
+
+          return result;
         }),
     };
     await savePayment(updatedData);
