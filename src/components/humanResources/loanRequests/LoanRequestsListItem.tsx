@@ -62,7 +62,7 @@ const Field = ({
   label: string;
   value?: React.ReactNode;
 }) => (
-  <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+  <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
     <Card
       variant='outlined'
       elevation={0}
@@ -366,7 +366,7 @@ const LoanRequestsListItem = ({
                   <CardContent>
                     <Grid container spacing={2}>
                       <Grid size={12}>
-                        <SectionTitle>Disbursement</SectionTitle>
+                        <SectionTitle>Disbursement & Payment</SectionTitle>
                       </Grid>
                       <Field
                         label='Disbursed At'
@@ -380,7 +380,7 @@ const LoanRequestsListItem = ({
                         label='Disbursed By'
                         value={
                           details.disbursed_by
-                            ? `User #${details.disbursed_by}`
+                            ? `${details.disbursed_by.name}`
                             : undefined
                         }
                       />
@@ -390,8 +390,31 @@ const LoanRequestsListItem = ({
                       />
                       <Field
                         label='Payment Voucher'
-                        value={details.payment?.voucher_no}
+                        value={details.payment?.voucherNo}
                       />
+                      <Grid size={{ xs: 12, sm: 6, md: 8, lg: 9 }}>
+                        <Card
+                          variant='outlined'
+                          elevation={0}
+                          sx={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: 1,
+                            p: 2,
+                          }}
+                        >
+                          <Typography
+                            variant='caption'
+                            color='text.secondary'
+                            display='block'
+                          >
+                            Payment Narration
+                          </Typography>
+                          <Typography variant='body2' fontWeight={500}>
+                            {details.payment?.narration ?? '-'}
+                          </Typography>
+                        </Card>
+                      </Grid>
                     </Grid>
                   </CardContent>
                 </Card>
