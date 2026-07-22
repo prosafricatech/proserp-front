@@ -56,6 +56,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/[lang]/(common)/accounts/approvedPayrollRuns/page.tsx
+{
+  type __IsExpected<Specific extends AppPageConfig<"/[lang]/accounts/approvedPayrollRuns">> = Specific
+  const handler = {} as typeof import("../../../src/app/[lang]/(common)/accounts/approvedPayrollRuns/page.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/[lang]/(common)/accounts/budgets/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/accounts/budgets">> = Specific
@@ -146,10 +155,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> origin/junior-development
 // Validate ../../../src/app/[lang]/(common)/fuelStations/dippings/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/fuelStations/dippings">> = Specific
@@ -348,11 +353,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-<<<<<<< HEAD
-=======
->>>>>>> origin/junior-development
-=======
->>>>>>> origin/junior-development
 // Validate ../../../src/app/[lang]/(common)/invitations/page.tsx
 {
   type __IsExpected<Specific extends AppPageConfig<"/[lang]/invitations">> = Specific
@@ -1865,6 +1865,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../../src/app/api/humanResources/approvedPayrollRuns/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/approvedPayrollRuns">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/humanResources/approvedPayrollRuns/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../../src/app/api/humanResources/deductionTypes/[id]/delete/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/deductionTypes/[id]/delete">> = Specific
@@ -2162,11 +2171,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/junior-development
 // Validate ../../../src/app/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history">> = Specific
@@ -2176,10 +2180,6 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
-<<<<<<< HEAD
->>>>>>> origin/hr-development
-=======
->>>>>>> origin/junior-development
 // Validate ../../../src/app/api/humanResources/employees/[id]/movements/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/movements">> = Specific
@@ -6377,49 +6377,3 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   // @ts-ignore
   type __Unused = __Check
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> origin/junior-development
-@ts-ignore
-  type __Unused = __Check
-}
-
-
-
-
-
-// Validate ../../../src/app/[lang]/(common)/layout.tsx
-{
-  type __IsExpected<Specific extends LayoutConfig<"/[lang]">> = Specific
-  const handler = {} as typeof import("../../../src/app/[lang]/(common)/layout.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/[lang]/(solo)/layout.tsx
-{
-  type __IsExpected<Specific extends LayoutConfig<"/[lang]">> = Specific
-  const handler = {} as typeof import("../../../src/app/[lang]/(solo)/layout.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-
-// Validate ../../../src/app/[lang]/layout.tsx
-{
-  type __IsExpected<Specific extends LayoutConfig<"/[lang]">> = Specific
-  const handler = {} as typeof import("../../../src/app/[lang]/layout.js")
-  type __Check = __IsExpected<typeof handler>
-  // @ts-ignore
-  type __Unused = __Check
-}
-<<<<<<< HEAD
->>>>>>> origin/junior-development
-=======
->>>>>>> origin/junior-development
-=======
->>>>>>> origin/junior-development

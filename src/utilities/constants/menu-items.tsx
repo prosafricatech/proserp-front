@@ -213,6 +213,12 @@ export async function getMenus(locale: string) {
           icon: icon('approvedPayments'),
         },
         {
+          uri: `/${locale}/accounts/approvedPayrollRuns`,
+          label: sidebar.menuItem.approvedPayrollRuns,
+          type: 'nav-item',
+          icon: icon('approvedPayrollRuns'),
+        },
+        {
           uri: `/${locale}/accounts/transactions`,
           label: sidebar.menuItem.transactions,
           type: 'nav-item',
@@ -279,7 +285,7 @@ export async function getMenus(locale: string) {
           uri: `/${locale}/procurement/rfqs`,
           label: 'RFQs',
           type: 'nav-item',
-          icon: icon('requisitions'),
+          icon: icon('rfq'),
         },
         {
           uri: `/${locale}/procurement/consumptions`,
@@ -342,7 +348,7 @@ export async function getMenus(locale: string) {
         {
           label: sidebar.menuItem.payroll,
           type: 'collapsible',
-          icon: icon('reports'),
+          icon: icon('payrollRuns'),
           children: [
             {
               uri: `/${locale}/humanResources/payroll-runs`,
