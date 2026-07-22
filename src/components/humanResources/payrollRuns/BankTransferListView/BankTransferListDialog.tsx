@@ -105,7 +105,6 @@ const BankTransferListDialog = ({
     }
   };
 
-  console.log('bankTransfer: ', bankTransfer);
   return (
     <Dialog
       open={open}
@@ -258,7 +257,17 @@ const BankTransferListDialog = ({
                           textWrap: 'nowrap',
                         }}
                       >
-                        Name
+                        Employee No.
+                      </TableCell>
+                      <TableCell
+                        colSpan={3}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                      >
+                        Employee Name
                       </TableCell>
                       <TableCell
                         colSpan={1}
@@ -267,7 +276,7 @@ const BankTransferListDialog = ({
                           color: contrastText,
                           textWrap: 'nowrap',
                         }}
-                        align='right'
+                        align='left'
                       >
                         Bank Name
                       </TableCell>
@@ -278,7 +287,7 @@ const BankTransferListDialog = ({
                           color: contrastText,
                           textWrap: 'nowrap',
                         }}
-                        align='right'
+                        align='left'
                       >
                         Branch
                       </TableCell>
@@ -289,9 +298,9 @@ const BankTransferListDialog = ({
                           color: contrastText,
                           textWrap: 'nowrap',
                         }}
-                        align='right'
+                        align='left'
                       >
-                        Account Name
+                        Account Number
                       </TableCell>
                       <TableCell
                         colSpan={1}
@@ -300,9 +309,9 @@ const BankTransferListDialog = ({
                           color: contrastText,
                           textWrap: 'nowrap',
                         }}
-                        align='right'
+                        align='left'
                       >
-                        Account Number
+                        Account Name
                       </TableCell>
                       <TableCell
                         colSpan={1}
@@ -330,18 +339,21 @@ const BankTransferListDialog = ({
                           }}
                         >
                           <TableCell colSpan={1}>{index + 1}</TableCell>
+                          <TableCell colSpan={3}>
+                            {row.employee_number ?? '-'}
+                          </TableCell>
                           <TableCell colSpan={3}>{row.name ?? '-'}</TableCell>
-                          <TableCell colSpan={1} align='right'>
+                          <TableCell colSpan={1} align='left'>
                             {row.bank_name ?? '-'}
                           </TableCell>
-                          <TableCell colSpan={1} align='right'>
+                          <TableCell colSpan={1} align='left'>
                             {row.branch ?? '-'}
                           </TableCell>
-                          <TableCell colSpan={1} align='right'>
-                            {row.account_name ?? '-'}
-                          </TableCell>
-                          <TableCell colSpan={1} align='right'>
+                          <TableCell colSpan={1} align='left'>
                             {row.account_number ?? '-'}
+                          </TableCell>
+                          <TableCell colSpan={1} align='left'>
+                            {row.account_name ?? '-'}
                           </TableCell>
                           <TableCell colSpan={1} align='right'>
                             {row.net_salary.toLocaleString('en-US', {
