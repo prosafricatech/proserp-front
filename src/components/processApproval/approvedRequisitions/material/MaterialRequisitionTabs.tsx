@@ -40,25 +40,64 @@ function MaterialRequisitionTabs({
   const isFullyOrdered = approvedRequisition?.is_fully_ordered === true;
   const isFullyPaid = approvedRequisition?.is_fully_paid === true;
   const isFullyIssued = approvedRequisition?.is_fully_issued === true;
+  const isFullyFulfilled = approvedRequisition?.is_fully_fulfilled === true;
+
+  // Determine which tabs to show based on fulfillment status
+  // Hide Purchase Orders tab when fully ordered
+  const showPurchaseOrdersTab = !isFullyOrdered;
+  // Always show payments tab
+  const showPaymentsTab = true;
+  // Show retirements if can retire and not fully fulfilled
+  const showRetirementsTab = canRetire && !isFullyFulfilled;
+  // Hide Store Issues tab when fully issued
+  const showStoreIssuesTab = !isFullyIssued;
+
+  // Auto-switch to appropriate tab if current tab is hidden
+  React.useEffect(() => {
+    const availableTabs = [];
+    if (showPurchaseOrdersTab) availableTabs.push(MATERIAL_TAB.PURCHASE_ORDERS);
+    if (showPaymentsTab) availableTabs.push(MATERIAL_TAB.PAYMENTS);
+    if (showRetirementsTab) availableTabs.push(MATERIAL_TAB.RETIREMENTS);
+    if (showStoreIssuesTab) availableTabs.push(MATERIAL_TAB.STORE_ISSUES);
+
+    if (availableTabs.length > 0 && !availableTabs.includes(activeTab)) {
+      setActiveTab(availableTabs[0]);
+    }
+  }, [activeTab, showPurchaseOrdersTab, showPaymentsTab, showRetirementsTab, showStoreIssuesTab, setActiveTab]);
+
+  // Get the next available tab index
+  const getNextAvailableTab = (currentTab: number): number => {
+    const tabs = [];
+    if (showPurchaseOrdersTab) tabs.push(MATERIAL_TAB.PURCHASE_ORDERS);
+    if (showPaymentsTab) tabs.push(MATERIAL_TAB.PAYMENTS);
+    if (showRetirementsTab) tabs.push(MATERIAL_TAB.RETIREMENTS);
+    if (showStoreIssuesTab) tabs.push(MATERIAL_TAB.STORE_ISSUES);
+    
+    // If current tab is not in the list, return first available
+    if (!tabs.includes(currentTab)) {
+      return tabs[0] || MATERIAL_TAB.PURCHASE_ORDERS;
+    }
+    return currentTab;
+  };
 
   return (
     <Grid container spacing={1}>
       <Grid size={{ xs: 12 }}>
         <Tabs
-          value={activeTab}
+          value={getNextAvailableTab(activeTab)}
           onChange={(_, value) => setActiveTab(value)}
           variant='scrollable'
           scrollButtons='auto'
           allowScrollButtonsMobile
         >
-          <Tab label='Purchase Orders' />
-          <Tab label='Payments' />
-          {canRetire && <Tab label='Retirements' />}
-          <Tab label='Store Issues' />
+          {showPurchaseOrdersTab && <Tab label='Purchase Orders' />}
+          {showPaymentsTab && <Tab label='Payments' />}
+          {showRetirementsTab && <Tab label='Retirements' />}
+          {showStoreIssuesTab && <Tab label='Store Issues' />}
         </Tabs>
       </Grid>
       <Grid size={{ xs: 12 }}>
-        {activeTab === MATERIAL_TAB.PURCHASE_ORDERS && (
+        {activeTab === MATERIAL_TAB.PURCHASE_ORDERS && showPurchaseOrdersTab && (
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} justifyContent='flex-end' mb={1}>
               <Grid size={{ xs: 12 }} textAlign='right'>
@@ -81,7 +120,7 @@ function MaterialRequisitionTabs({
           </Grid>
         )}
 
-        {activeTab === MATERIAL_TAB.PAYMENTS && (
+        {activeTab === MATERIAL_TAB.PAYMENTS && showPaymentsTab && (
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} justifyContent='flex-end' mb={1}>
               <Grid size={{ xs: 12 }} textAlign='right'>
@@ -105,7 +144,7 @@ function MaterialRequisitionTabs({
           </Grid>
         )}
 
-        {canRetire && activeTab === MATERIAL_TAB.RETIREMENTS && (
+        {activeTab === MATERIAL_TAB.RETIREMENTS && showRetirementsTab && (
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} justifyContent='flex-end' mb={1}>
               <Grid size={{ xs: 12 }} textAlign='right'>
@@ -124,7 +163,7 @@ function MaterialRequisitionTabs({
           </Grid>
         )}
 
-        {activeTab === MATERIAL_TAB.STORE_ISSUES && (
+        {activeTab === MATERIAL_TAB.STORE_ISSUES && showStoreIssuesTab && (
           <Grid size={{ xs: 12 }}>
             <Grid container spacing={1} justifyContent='flex-end' mb={1}>
               <Grid size={{ xs: 12 }} textAlign='right'>
