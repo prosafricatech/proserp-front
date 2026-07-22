@@ -213,6 +213,12 @@ export async function getMenus(locale: string) {
           icon: icon('approvedPayments'),
         },
         {
+          uri: `/${locale}/accounts/approvedPayrollRuns`,
+          label: sidebar.menuItem.approvedPayrollRuns,
+          type: 'nav-item',
+          icon: icon('approvedPayrollRuns'),
+        },
+        {
           uri: `/${locale}/accounts/transactions`,
           label: sidebar.menuItem.transactions,
           type: 'nav-item',

@@ -26,7 +26,11 @@ import PayrollRunActionTail from './PayrollRunActionTail';
 import PayrollRunsListItem from './PayrollRunsListItem';
 import { PayrollRunType } from './PayrollRunType';
 
-const PayrollRuns = () => {
+interface PayrollRunsProps {
+  defaultStatus?: string;
+}
+
+const PayrollRuns = ({ defaultStatus }: PayrollRunsProps) => {
   const params = useParams<{ keyword?: string }>();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
@@ -76,6 +80,18 @@ const PayrollRuns = () => {
     countKey: 'total',
     dataKey: 'data',
   });
+
+  useEffect(() => {
+    if (defaultStatus) {
+      setQueryOptions((state) => ({
+        ...state,
+        queryParams: {
+          ...state.queryParams,
+          status: defaultStatus,
+        },
+      }));
+    }
+  }, [defaultStatus, setQueryOptions]);
 
   const renderPayrollRuns = React.useCallback((payrollRun: PayrollRunType) => {
     return <PayrollRunsListItem payrollRun={payrollRun} />;
@@ -132,7 +148,7 @@ const PayrollRuns = () => {
       <LedgerGroupProvider>
         <EmployeesProvider>
           <Typography variant={'h4'} mb={2}>
-            Payroll Runs
+            {defaultStatus ? 'Approved Payroll Runs' : 'Payroll Runs'}
           </Typography>
           <Grid container spacing={2} mb={2} mt={2} justifyContent='center'>
             <Grid size={{ xs: 12, md: 4 }}>
