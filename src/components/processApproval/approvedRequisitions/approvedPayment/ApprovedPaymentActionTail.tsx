@@ -1,19 +1,19 @@
-'use client'
-import { CreditScoreOutlined } from "@mui/icons-material";
-import { 
-  ButtonGroup, 
-  Dialog, 
-  IconButton, 
-  LinearProgress, 
-  Tooltip, 
-  useMediaQuery 
-} from "@mui/material";
-import React, { useState } from "react";
-import requisitionsServices from "../../requisitionsServices";
-import ApprovedPaymentForm from "./form/ApprovedPaymentForm";
-import { useJumboTheme } from "@jumbo/components/JumboTheme/hooks";
-import { useQuery } from "@tanstack/react-query";
-import { ApprovalRequisition } from "../ApprovalRequisitionType";
+'use client';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { MonetizationOnOutlined } from '@mui/icons-material';
+import {
+  ButtonGroup,
+  Dialog,
+  IconButton,
+  LinearProgress,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useQuery } from '@tanstack/react-query';
+import React, { useState } from 'react';
+import requisitionsServices from '../../requisitionsServices';
+import { ApprovalRequisition } from '../ApprovalRequisitionType';
+import ApprovedPaymentForm from './form/ApprovedPaymentForm';
 
 interface ApprovedPaymentActionTailProps {
   approvedRequisition: ApprovalRequisition;
@@ -21,20 +21,19 @@ interface ApprovedPaymentActionTailProps {
 }
 
 const ApprovedPaymentActionTail: React.FC<ApprovedPaymentActionTailProps> = ({
-  approvedRequisition, 
-  isExpanded
+  approvedRequisition,
+  isExpanded,
 }) => {
   const { theme } = useJumboTheme();
   const [openDialog, setOpenDialog] = useState(false);
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  const { 
-    data: approvedRequisitionDetails, 
-    isFetching 
-  } = useQuery({
+  const { data: approvedRequisitionDetails, isFetching } = useQuery({
     queryKey: ['requisitionDetails', { id: approvedRequisition.id }],
-    queryFn: async () => 
-      requisitionsServices.getApprovedRequisitionDetails(approvedRequisition.id),
+    queryFn: async () =>
+      requisitionsServices.getApprovedRequisitionDetails(
+        approvedRequisition.id
+      ),
     enabled: !!isExpanded && !!openDialog,
   });
 
@@ -44,30 +43,30 @@ const ApprovedPaymentActionTail: React.FC<ApprovedPaymentActionTailProps> = ({
 
   return (
     <React.Fragment>
-      <Dialog 
-        maxWidth="lg" 
-        scroll={belowLargeScreen ? 'body' : 'paper'} 
-        fullWidth 
-        fullScreen={belowLargeScreen} 
+      <Dialog
+        maxWidth='lg'
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+        fullWidth
+        fullScreen={belowLargeScreen}
         open={openDialog}
         onClose={() => setOpenDialog(false)}
       >
-        <ApprovedPaymentForm 
-          toggleOpen={setOpenDialog} 
-          approvedDetails={approvedRequisitionDetails} 
+        <ApprovedPaymentForm
+          toggleOpen={setOpenDialog}
+          approvedDetails={approvedRequisitionDetails}
           approvedRequisition={approvedRequisition}
         />
       </Dialog>
 
-      <ButtonGroup 
-        variant="outlined" 
-        size="small" 
-        disableElevation 
+      <ButtonGroup
+        variant='outlined'
+        size='small'
+        disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        <Tooltip title="Pay">
+        <Tooltip title='Pay'>
           <IconButton onClick={() => setOpenDialog(true)}>
-            <CreditScoreOutlined/>
+            <MonetizationOnOutlined />
           </IconButton>
         </Tooltip>
       </ButtonGroup>

@@ -4,10 +4,9 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { MODULES } from '@/utilities/constants/modules';
 import {
-  CheckCircleOutline,
   DeleteOutlined,
   DoneAllOutlined,
-  PaidOutlined,
+  MonetizationOnOutlined,
   PreviewOutlined,
   ReceiptLongOutlined,
   SendOutlined,
@@ -328,7 +327,7 @@ export const PayrollRunActions = ({
             {isLoadingSalarySheet ? (
               <CircularProgress size={18} />
             ) : (
-              <PreviewOutlined fontSize='small' />
+              <PreviewOutlined fontSize='medium' />
             )}
           </IconButton>
         </Tooltip>
@@ -345,7 +344,7 @@ export const PayrollRunActions = ({
               {isSubmitting ? (
                 <CircularProgress size={18} />
               ) : (
-                <SendOutlined fontSize='small' />
+                <SendOutlined fontSize='medium' />
               )}
             </IconButton>
           </Tooltip>
@@ -372,7 +371,7 @@ export const PayrollRunActions = ({
               {isPosting ? (
                 <CircularProgress size={18} color='inherit' />
               ) : (
-                <ReceiptLongOutlined fontSize='small' />
+                <ReceiptLongOutlined fontSize='medium' />
               )}
             </IconButton>
           </Tooltip>
@@ -387,19 +386,13 @@ export const PayrollRunActions = ({
               disabled={isPaying}
               color='success'
               sx={{
-                bgcolor: 'success.main',
-                color: 'white',
-                '&:hover': { bgcolor: 'success.dark' },
-                '&.Mui-disabled': {
-                  bgcolor: 'action.disabledBackground',
-                  color: 'action.disabled',
-                },
+                color: 'sucess',
               }}
             >
               {isPaying ? (
-                <CircularProgress size={18} color='inherit' />
+                <CircularProgress size={18} />
               ) : (
-                <PaidOutlined fontSize='small' />
+                <MonetizationOnOutlined fontSize='medium' />
               )}
             </IconButton>
           </Tooltip>
@@ -423,15 +416,6 @@ export const PayrollRunActions = ({
           </Tooltip>
         )}
 
-        {/* 6. PAID - Status indicator */}
-        {isPaid && (
-          <Tooltip title='Paid'>
-            <IconButton size='small' color='success' disabled>
-              <PaidOutlined fontSize='small' />
-            </IconButton>
-          </Tooltip>
-        )}
-
         {/* 7. DELETE - For draft runs */}
         {isDraft && (
           <Tooltip title='Delete Run'>
@@ -444,7 +428,7 @@ export const PayrollRunActions = ({
               {isDeleting ? (
                 <CircularProgress size={18} />
               ) : (
-                <DeleteOutlined fontSize='small' />
+                <DeleteOutlined fontSize='medium' />
               )}
             </IconButton>
           </Tooltip>

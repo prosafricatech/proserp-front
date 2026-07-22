@@ -285,7 +285,7 @@ export async function getMenus(locale: string) {
           uri: `/${locale}/procurement/rfqs`,
           label: 'RFQs',
           type: 'nav-item',
-          icon: icon('requisitions'),
+          icon: icon('rfq'),
         },
         {
           uri: `/${locale}/procurement/consumptions`,
@@ -348,7 +348,7 @@ export async function getMenus(locale: string) {
         {
           label: sidebar.menuItem.payroll,
           type: 'collapsible',
-          icon: icon('reports'),
+          icon: icon('payrollRuns'),
           children: [
             {
               uri: `/${locale}/humanResources/payroll-runs`,

@@ -146,7 +146,11 @@ const PayrollRunsListItem = ({
       setTabValue(3);
     }
 
-    if (previousHasPayslips.current === true && hasPayslips === false && tabValue === 3) {
+    if (
+      previousHasPayslips.current === true &&
+      hasPayslips === false &&
+      tabValue === 3
+    ) {
       setTabValue(2);
     }
 
@@ -367,14 +371,14 @@ const PayrollRunsListItem = ({
                     textTransform: 'capitalize',
                     color:
                       chipColor === 'default'
-                        ? theme.palette.secondary.contrastText
+                        ? theme.palette.info.contrastText
                         : chipColor === 'info'
                           ? theme.palette.info.contrastText
                           : chipColor === 'warning'
                             ? theme.palette.warning.contrastText
                             : chipColor === 'success'
                               ? theme.palette.success.contrastText
-                              : theme.palette.error.contrastText,
+                              : theme.palette.secondary.contrastText,
                   }}
                 />
               </Box>
