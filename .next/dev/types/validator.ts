@@ -2163,7 +2163,10 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/junior-development
 // Validate ../../../src/app/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/employee-contracts/[contractId]/salary-history">> = Specific
@@ -2173,7 +2176,10 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+<<<<<<< HEAD
 >>>>>>> origin/hr-development
+=======
+>>>>>>> origin/junior-development
 // Validate ../../../src/app/api/humanResources/employees/[id]/movements/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/humanResources/employees/[id]/movements">> = Specific
@@ -3852,6 +3858,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/masters/products/[id]/photos/[photoId]">> = Specific
   const handler = {} as typeof import("../../../src/app/api/masters/products/[id]/photos/[photoId]/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../../src/app/api/masters/products/[id]/photos/[photoId]/set-main/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/masters/products/[id]/photos/[photoId]/set-main">> = Specific
+  const handler = {} as typeof import("../../../src/app/api/masters/products/[id]/photos/[photoId]/set-main/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check
@@ -6364,6 +6379,7 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 }
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 =======
 >>>>>>> origin/junior-development
@@ -6402,6 +6418,8 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 <<<<<<< HEAD
+>>>>>>> origin/junior-development
+=======
 >>>>>>> origin/junior-development
 =======
 >>>>>>> origin/junior-development

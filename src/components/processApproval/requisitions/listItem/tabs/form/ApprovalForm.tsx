@@ -321,15 +321,15 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
     [isMaterialType, requisitionProductItem]
   );
 
-  const { data: myLedgersResponse } = useQuery({
-    queryKey: ['my-ledgers'],
-    queryFn: userLedgerServices.getMyLedgers,
+  const { data: creatorLedgers } = useQuery({
+    queryKey: ['creator-ledgers', requisition?.creator?.id],
+    queryFn: () => userLedgerServices.getUserLedgers(requisition?.creator?.id),
     enabled: isMaterialType,
   });
 
   const imprestLedgerOptions = React.useMemo(
-    () => extractList(myLedgersResponse) as ImprestLedgerOption[],
-    [myLedgersResponse]
+    () => extractList(creatorLedgers) as ImprestLedgerOption[],
+    [creatorLedgers]
   );
 
   const filteredImprestLedgerOptions = React.useMemo(

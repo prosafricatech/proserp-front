@@ -67,9 +67,9 @@ const STATUS_OPTIONS = [
 ];
 
 const PurchasesManifestReport = ({
-  toggleOpen,
+  setOpenDialog,
 }: {
-  toggleOpen: (value: boolean) => {};
+  setOpenDialog: (value: boolean) => {};
 }) => {
   const { authOrganization, authUser } = useJumboAuth();
   const user = authUser?.user;
@@ -178,7 +178,7 @@ const PurchasesManifestReport = ({
                     <IconButton
                       size='small'
                       sx={{ mb: 1 }}
-                      onClick={() => toggleOpen(false)}
+                      onClick={() => setOpenDialog(false)}
                     >
                       <HighlightOff color='primary' />
                     </IconButton>
