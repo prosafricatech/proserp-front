@@ -113,6 +113,8 @@ function ApprovalOnScreen({
       : organization.settings?.main_color || '#2113AD';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
 
+  const isMaterial = 
+    approval.requisition?.process_type?.toLowerCase() === 'material';
   const isPurchase =
     approval.requisition?.process_type?.toLowerCase() === 'purchase';
   const isImprest =
@@ -177,11 +179,14 @@ function ApprovalOnScreen({
               }}
             >
               <Typography variant='h4' sx={{ color: headerColor }}>
-                {isPurchase
-                  ? 'PURCHASE REQUISITION APPROVAL'
+                {isMaterial
+                  ? 'Material Requisition Approval'
+                  : isPurchase
+                    ? 'Purchase Requisition Approval'
                   : isImprest
-                    ? 'IMPREST REQUISITION APPROVAL'
-                    : 'PAYMENT REQUISITION APPROVAL'}
+                    ? 'Imprest Requisition Approval'
+                    : 'Payment Requisition Approval'
+                }
               </Typography>
               <Typography variant='h6'>
                 {approval.requisition?.requisitionNo}
@@ -246,7 +251,7 @@ function ApprovalOnScreen({
                           fontSize: '0.875rem',
                         }}
                       >
-                        {isPurchase ? 'Product' : 'Ledger'}
+                        {(isPurchase || isMaterial) ? 'Product' :  'Ledger'}
                       </TableCell>
                       <TableCell
                         sx={{
@@ -296,7 +301,7 @@ function ApprovalOnScreen({
                     {approval?.items?.map(
                       (item: RequisitionItem, index: number) => {
                         const isCreditItem = item.credit_ledger_id !== null && item.credit_ledger_id !== undefined;
-                        const mainLedgerName = isPurchase
+                        const mainLedgerName = (isPurchase || isMaterial)
                           ? item.requisition_product?.product?.name
                           : item.requisition_ledger_item?.ledger?.name;
                         const creditLedgerName = item.credit_ledger?.name;
@@ -311,13 +316,12 @@ function ApprovalOnScreen({
                                 },
                               }}
                             >
-                              <TableCell>{index + 1}</TableCell>
+                              <TableCell>{index + 1}.</TableCell>
                               <TableCell>
                                 <Box>
                                   <Typography variant='body2'>
                                     {mainLedgerName}
                                   </Typography>
-                                  {/* Show credit ledger as secondary with tooltip */}
                                   {isCreditItem && creditLedgerName && (
                                     <Tooltip 
                                       title={`Split to: ${creditLedgerName}`}

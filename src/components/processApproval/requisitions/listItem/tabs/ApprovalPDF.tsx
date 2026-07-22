@@ -85,7 +85,8 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
                   ? 'Purchase Requisition Approval'
                 : isImprest
                   ? 'Imprest Requisition Approval'
-                  : 'Payment Requisition Approval'}
+                  : 'Payment Requisition Approval'
+              }
             </Text>
             <Text style={{ ...pdfStyles.midInfo }}>{approval.requisition.requisitionNo}</Text>
           </View>
@@ -111,11 +112,11 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
               <View style={pdfStyles.tableRow}>
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.05 }}>S/N</Text>
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.35 }}>
-                    {approval.requisition.process_type?.toLowerCase() === 'purchase' ? 'Product' : 'Ledger'}
+                    {(isPurchase || isMaterial) ? 'Product' :  'Ledger'}
                 </Text>
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Quantity</Text>
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Rate</Text>
-                {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
+                {isPurchase && approval.vat_amount > 0 && (
                     <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>VAT</Text>
                 )}
                 <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 0.2 }}>Amount</Text>
@@ -123,7 +124,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           
           {approval.items?.map((item, index) => {
             const isCreditItem = item.credit_ledger_id !== null && item.credit_ledger_id !== undefined;
-            const mainLedgerName = isPurchase
+            const mainLedgerName = (isPurchase || isMaterial)
               ? item.requisition_product?.product?.name
               : item.requisition_ledger_item?.ledger?.name;
             const creditLedgerName = item.credit_ledger?.name;
@@ -132,7 +133,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
               <React.Fragment key={item.id}>
                 <View style={pdfStyles.tableRow}>
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.05 }}>
-                    {index + 1}
+                    {index + 1}.
                   </Text>
                   <View
                     style={{
@@ -145,7 +146,6 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
                     <Text>
                       {mainLedgerName}
                     </Text>
-                    {/* Show credit ledger as secondary if exists */}
                     {isCreditItem && creditLedgerName && (
                       <Text style={{ fontSize: 8, color: '#666', marginTop: 2 }}>
                         ({creditLedgerName})
@@ -160,7 +160,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
                   <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
                     {item.rate?.toLocaleString()}
                   </Text>
-                  {approval.requisition.process_type?.toLowerCase() === 'purchase' && approval.vat_amount > 0 && (
+                  {isPurchase && approval.vat_amount > 0 && (
                     <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 0.2, textAlign: 'right' }}>
                       {((item.rate * (item.vat_percentage || 0) * 0.01) || 0).toLocaleString('en-US', { maximumFractionDigits: 2 })}
                     </Text>
@@ -246,7 +246,7 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
           );
         })}
         
-        {approval.requisition.process_type?.toLowerCase() === 'purchase' && (totalVAT > 0 || totalAdditionalCosts > 0) && (
+        {isPurchase && (totalVAT > 0 || totalAdditionalCosts > 0) && (
           <>
             {totalVAT > 0 && (
               <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
