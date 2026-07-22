@@ -1,0 +1,369 @@
+'use client';
+
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { HighlightOff } from '@mui/icons-material';
+import {
+  Box,
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  Grid,
+  IconButton,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
+import { useSnackbar } from 'notistack';
+import { useState } from 'react';
+import humanResourcesServices from '../../humanResourcesServices';
+import { SalarySheetType } from '../salarySheetType';
+
+interface BankTransferListDialogProps {
+  bankTransfer: SalarySheetType;
+  open: boolean;
+  setOpen: (val: boolean) => void;
+}
+
+const BankTransferListDialog = ({
+  bankTransfer,
+  open = false,
+  setOpen,
+}: BankTransferListDialogProps) => {
+  const { enqueueSnackbar } = useSnackbar();
+  const theme = useTheme();
+  const { theme: jumboTheme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(jumboTheme.breakpoints.down('lg'));
+  const authObject = useJumboAuth() as any;
+  const organization = authObject?.authOrganization?.organization;
+
+  const mainColor = organization.settings?.main_color || '#2113AD';
+  const headerColor =
+    theme.type === 'dark'
+      ? '#29f096'
+      : organization.settings?.main_color || '#2113AD';
+  const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+
+  const [showOnScreen, setShowOnScreen] = useState(false);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const payrollRun = bankTransfer.run;
+  const monthNames = [
+    'January',
+    'February',
+    'March',
+    'April',
+    'May',
+    'June',
+    'July',
+    'August',
+    'September',
+    'October',
+    'November',
+    'December',
+  ];
+  const monthNo = bankTransfer.run.period.month;
+  const year = bankTransfer.run.period.year;
+  const monthName = monthNames[monthNo - 1];
+  const payrollPeriod = `${year} - ${monthName}`;
+
+  const costCenter = bankTransfer.run.cost_center;
+  const rows = bankTransfer.rows;
+
+  const exportedData = {};
+  const handlExcelExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await humanResourcesServices.bankTransferListExcel(
+        bankTransfer.run.id
+      );
+
+      // Create download link
+      const url = window.URL.createObjectURL(response);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Salary Sheet-${payrollPeriod}.xlsx`); // or use response headers
+      document.body.appendChild(link);
+      link.click();
+      // Cleanup
+      link.remove();
+      window.URL.revokeObjectURL(url);
+      setIsExporting(false);
+    } catch (error) {
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+      setIsExporting(false);
+    }
+  };
+
+  console.log('bankTransfer: ', bankTransfer);
+  return (
+    <Dialog
+      open={open}
+      onClose={() => setOpen(false)}
+      maxWidth={'lg'}
+      fullWidth
+      fullScreen={belowLargeScreen}
+    >
+      <DialogTitle>
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportExcel
+              handlExcelExport={() => handlExcelExport()}
+              exportingExcel={isExporting}
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpen(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
+        <Grid container>
+          <Grid size={12} sx={{ mb: 3 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+                width: '100%',
+              }}
+            >
+              <Typography variant='h4' sx={{ color: headerColor }}>
+                Salary Sheet (Bank Transfer List)
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+        <Grid container rowSpacing={2}>
+          {costCenter && (
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Box>
+                <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                  Cost Center
+                </Typography>
+                <Typography variant='body1'>
+                  {costCenter?.name ?? '-'}
+                </Typography>
+              </Box>
+            </Grid>
+          )}
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                Payroll Period
+              </Typography>
+              <Typography variant='body1'>{payrollPeriod}</Typography>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                Payroll Status
+              </Typography>
+              <Typography variant='body1'>{payrollRun.status}</Typography>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                Employees without bank accounts
+              </Typography>
+              <Typography variant='body1'>
+                {bankTransfer.employees_without_bank_account}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                Total EMployess
+              </Typography>
+              <Typography variant='body1'>
+                {bankTransfer.total_employees}
+              </Typography>
+            </Box>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 4 }}>
+            <Box>
+              <Typography variant='subtitle2' sx={{ color: headerColor }}>
+                Net Salary
+              </Typography>
+              <Typography variant='body1'>
+                {bankTransfer.total_net_salary.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Typography>
+            </Box>
+          </Grid>
+        </Grid>
+
+        {/* ===== MAIN TABLE ===== */}
+        <Grid container mt={4}>
+          <Grid size={12}>
+            <TableContainer
+              component={Paper}
+              sx={{
+                boxShadow: theme.shadows[2],
+                '& .MuiTableRow-root:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <Table>
+                <>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                      >
+                        S/N
+                      </TableCell>
+                      <TableCell
+                        colSpan={3}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                      >
+                        Name
+                      </TableCell>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                        align='right'
+                      >
+                        Bank Name
+                      </TableCell>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                        align='right'
+                      >
+                        Branch
+                      </TableCell>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                        align='right'
+                      >
+                        Account Name
+                      </TableCell>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                        align='right'
+                      >
+                        Account Number
+                      </TableCell>
+                      <TableCell
+                        colSpan={1}
+                        sx={{
+                          backgroundColor: mainColor,
+                          color: contrastText,
+                          textWrap: 'nowrap',
+                        }}
+                        align='right'
+                      >
+                        Net Pay
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {rows?.map((row, index: number) => {
+                      return (
+                        <TableRow
+                          key={index}
+                          sx={{
+                            backgroundColor: theme.palette.background.paper,
+                            '&:nth-of-type(even)': {
+                              backgroundColor: theme.palette.action.hover,
+                            },
+                          }}
+                        >
+                          <TableCell colSpan={1}>{index + 1}</TableCell>
+                          <TableCell colSpan={3}>{row.name ?? '-'}</TableCell>
+                          <TableCell colSpan={1} align='right'>
+                            {row.bank_name ?? '-'}
+                          </TableCell>
+                          <TableCell colSpan={1} align='right'>
+                            {row.branch ?? '-'}
+                          </TableCell>
+                          <TableCell colSpan={1} align='right'>
+                            {row.account_name ?? '-'}
+                          </TableCell>
+                          <TableCell colSpan={1} align='right'>
+                            {row.account_number ?? '-'}
+                          </TableCell>
+                          <TableCell colSpan={1} align='right'>
+                            {row.net_salary.toLocaleString('en-US', {
+                              minimumFractionDigits: 2,
+                              maximumFractionDigits: 2,
+                            }) ?? 0}
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </>
+              </Table>
+            </TableContainer>
+          </Grid>
+        </Grid>
+      </DialogTitle>
+      <DialogContent>
+        <Box>{showOnScreen && <Box sx={{ p: 2 }}></Box>}</Box>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
+export default BankTransferListDialog;

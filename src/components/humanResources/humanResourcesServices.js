@@ -846,13 +846,15 @@ humanResourcesServices.completePayrollRun = async (id) => {
 }
 
 // salary sheet (Bnk transfer list)
-humanResourcesServices.payPayrollRun = async (id) => {
+humanResourcesServices.bankTransferList = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
     return data;
 }
 
-humanResourcesServices.payPayrollRun = async (id) => {
-    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
+humanResourcesServices.bankTransferListExcel = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/salary-sheet`, {}, {
+        responseType: 'blob',
+    });
     return data;
 }
 

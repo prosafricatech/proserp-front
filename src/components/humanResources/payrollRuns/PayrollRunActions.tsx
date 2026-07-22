@@ -3,6 +3,7 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { MODULES } from '@/utilities/constants/modules';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import {
   DeleteOutlined,
   DoneAllOutlined,
@@ -29,18 +30,9 @@ import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
+import BankTransferListDialog from './BankTransferListView/BankTransferListDialog';
 import { getPayslipCalculations, PayslipComputed } from './payslipCalculations';
-
-const getErrorMessage = (error: any) => {
-  const validationErrors = error?.response?.data?.validation_errors;
-  if (validationErrors && typeof validationErrors === 'object') {
-    const first = Object.values(validationErrors)[0] as any;
-    return Array.isArray(first) ? first[0] : String(first);
-  }
-  return (
-    error?.response?.data?.message || error?.message || 'Something went wrong'
-  );
-};
+import { SalarySheetType } from './salarySheetType';
 
 interface PayrollRunActionsProps {
   isDraft: boolean;
@@ -133,6 +125,10 @@ export const PayrollRunActions = ({
   const [payForm, setPayForm] = useState<PayFormData>({
     credit_ledger_id: 0,
   });
+  const [bankTransferList, setBankTransferList] =
+    useState<SalarySheetType | null>(null);
+  const [loadingBankTransfer, setLoadingBankTransfer] = useState(false);
+  const [openBanktransferList, setOpenBanktransferList] = useState(false);
 
   const [confirmDialog, setConfirmDialog] = useState<ConfirmDialogState>({
     open: false,
@@ -222,11 +218,31 @@ export const PayrollRunActions = ({
     }
   };
 
+  const handleOpenBankTransferList = async () => {
+    setLoadingBankTransfer(true);
+    try {
+      const response = await humanResourcesServices.bankTransferList(
+        payrollRun.id ?? payrollRunId
+      );
+
+      if (response) {
+        setBankTransferList(response);
+      }
+      setLoadingBankTransfer(false);
+      setOpenBanktransferList(true);
+    } catch (error) {
+      enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
+      setLoadingBankTransfer(false);
+    }
+  };
+
   const handleActionClick = (action: string) => {
     switch (action) {
       case 'preview':
-        // setOpenSalarySheetDialog(true);
         handleOpenSalarySheet();
+        break;
+      case 'bankTransfer':
+        handleOpenBankTransferList();
         break;
       case 'submit':
         setConfirmDialog({
@@ -301,9 +317,8 @@ export const PayrollRunActions = ({
 
   const isPayFormValid = payForm.credit_ledger_id > 0;
 
-  // Prepare salary sheet data - use previewRows if available, otherwise use runDetails
-  const salarySheetRows: SalarySheetRow[] = [];
-  let periodLabel = '';
+  const canViewBankTransferList =
+    payrollRun?.status === 'paid' || 'approved' || 'finalized';
 
   return (
     <>
@@ -331,6 +346,23 @@ export const PayrollRunActions = ({
             )}
           </IconButton>
         </Tooltip>
+
+        {/* Salaray sheet (basic transfer list) */}
+        {canViewBankTransferList && (
+          <Tooltip title='View Bank Transfer List'>
+            <IconButton
+              size='small'
+              onClick={() => handleActionClick('bankTransfer')}
+              disabled={loadingBankTransfer}
+            >
+              {loadingBankTransfer ? (
+                <CircularProgress size={18} />
+              ) : (
+                <ReceiptLongOutlined fontSize='medium' />
+              )}
+            </IconButton>
+          </Tooltip>
+        )}
 
         {/* 2. SUBMIT - For draft runs */}
         {isDraft && (
@@ -453,6 +485,20 @@ export const PayrollRunActions = ({
             isLoading={isLoadingSalarySheet}
           />
         )
+      )}
+
+      {!loadingBankTransfer ? (
+        bankTransferList && (
+          <BankTransferListDialog
+            bankTransfer={bankTransferList}
+            open={openBanktransferList}
+            setOpen={setOpenBanktransferList}
+          />
+        )
+      ) : (
+        <Dialog open fullWidth>
+          <LinearProgress />
+        </Dialog>
       )}
 
       {/* Confirmation Dialog */}

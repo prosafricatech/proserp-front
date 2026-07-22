@@ -97,7 +97,7 @@ const EmployeeOnboardingDialog = ({
     onSuccess: (response: any) => {
       setImportResult(response);
       queryClient.invalidateQueries({ queryKey: ['employees'] });
-      
+
       if (response.errors && response.errors.length > 0) {
         enqueueSnackbar(
           `${response.message}. ${response.errors.length} error(s) found. Check the details below.`,
@@ -115,7 +115,8 @@ const EmployeeOnboardingDialog = ({
         );
       } else {
         enqueueSnackbar(
-          response.message || 'No employees were imported. Please check the errors below.',
+          response.message ||
+            'No employees were imported. Please check the errors below.',
           { variant: 'error' }
         );
       }
@@ -631,7 +632,9 @@ const EmployeeOnboardingDialog = ({
                   {/* Summary Alert */}
                   <Alert
                     severity={
-                      (importResult.errors || []).length > 0 ? 'warning' : 'success'
+                      (importResult.errors || []).length > 0
+                        ? 'warning'
+                        : 'success'
                     }
                     icon={
                       importResult.errors?.length > 0 ? (
@@ -645,7 +648,9 @@ const EmployeeOnboardingDialog = ({
                       '& .MuiAlert-icon': {
                         alignItems: 'center',
                       },
-                      bgcolor: isDark ? 'background.paper' : 'background.default',
+                      bgcolor: isDark
+                        ? 'background.paper'
+                        : 'background.default',
                     }}
                   >
                     <Typography
@@ -655,7 +660,9 @@ const EmployeeOnboardingDialog = ({
                     >
                       Import Summary
                     </Typography>
-                    <Box sx={{ display: 'flex', gap: 4, mt: 1, flexWrap: 'wrap' }}>
+                    <Box
+                      sx={{ display: 'flex', gap: 4, mt: 1, flexWrap: 'wrap' }}
+                    >
                       <Box>
                         <Typography
                           variant='caption'
@@ -717,7 +724,8 @@ const EmployeeOnboardingDialog = ({
                           color={isDark ? 'text.primary' : 'text.primary'}
                           fontWeight={700}
                         >
-                          {(importResult.imported ?? 0) + (importResult.skipped ?? 0)}
+                          {(importResult.imported ?? 0) +
+                            (importResult.skipped ?? 0)}
                         </Typography>
                       </Box>
                     </Box>
@@ -743,9 +751,10 @@ const EmployeeOnboardingDialog = ({
                         sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                       >
                         <ErrorOutline fontSize='small' color='warning' />
-                        Skipped Rows ({importResult.errors.length} row{importResult.errors.length > 1 ? 's' : ''})
+                        Skipped Rows ({importResult.errors.length} row
+                        {importResult.errors.length > 1 ? 's' : ''})
                       </Typography>
-                      
+
                       <Box
                         sx={{
                           bgcolor: isDark
@@ -824,7 +833,9 @@ const EmployeeOnboardingDialog = ({
                               p: 1.5,
                             }}
                           >
-                            <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                            <Box
+                              sx={{ display: 'flex', alignItems: 'flex-start' }}
+                            >
                               <Typography
                                 variant='body2'
                                 color='warning.main'
@@ -847,19 +858,25 @@ const EmployeeOnboardingDialog = ({
                                   gap: 1,
                                 }}
                               >
-                                <span style={{ 
-                                  color: isDark ? alpha(theme.palette.common.white, 0.9) : 'inherit',
-                                }}>
+                                <span
+                                  style={{
+                                    color: isDark
+                                      ? alpha(theme.palette.common.white, 0.9)
+                                      : 'inherit',
+                                  }}
+                                >
                                   {item.error || item.message}
                                 </span>
                               </Typography>
                               {item.rowData && (
                                 <Typography
                                   variant='caption'
-                                  color={isDark ? 'text.secondary' : 'text.secondary'}
-                                  sx={{ 
-                                    display: 'block', 
-                                    mt: 0.5, 
+                                  color={
+                                    isDark ? 'text.secondary' : 'text.secondary'
+                                  }
+                                  sx={{
+                                    display: 'block',
+                                    mt: 0.5,
                                     ml: 3.5,
                                     bgcolor: isDark
                                       ? alpha(theme.palette.common.white, 0.03)
@@ -877,7 +894,7 @@ const EmployeeOnboardingDialog = ({
                           </Box>
                         ))}
                       </Box>
-                      
+
                       <Box
                         sx={{
                           mt: 1.5,
@@ -898,28 +915,32 @@ const EmployeeOnboardingDialog = ({
                           sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                         >
                           <span style={{ fontSize: '1.2rem' }}>💡</span>
-                          <strong>Tip:</strong> Correct the errors above and re-upload the Excel file to import these employees.
+                          <strong>Tip:</strong> Correct the errors above and
+                          re-upload the Excel file to import these employees.
                         </Typography>
                       </Box>
                     </Box>
                   )}
 
                   {/* Success Message for Fully Successful Import */}
-                  {(!importResult.errors || importResult.errors.length === 0) && importResult.imported > 0 && (
-                    <Alert 
-                      severity='success' 
-                      sx={{ 
-                        borderRadius: 2,
-                        bgcolor: isDark
-                          ? alpha(theme.palette.success.main, 0.1)
-                          : undefined,
-                      }}
-                    >
-                      <Typography variant='body2'>
-                        ✅ All {importResult.imported} employee{importResult.imported > 1 ? 's' : ''} were imported successfully!
-                      </Typography>
-                    </Alert>
-                  )}
+                  {(!importResult.errors || importResult.errors.length === 0) &&
+                    importResult.imported > 0 && (
+                      <Alert
+                        severity='success'
+                        sx={{
+                          borderRadius: 2,
+                          bgcolor: isDark
+                            ? alpha(theme.palette.success.main, 0.1)
+                            : undefined,
+                        }}
+                      >
+                        <Typography variant='body2'>
+                          ✅ All {importResult.imported} employee
+                          {importResult.imported > 1 ? 's' : ''} were imported
+                          successfully!
+                        </Typography>
+                      </Alert>
+                    )}
                 </Stack>
               </Paper>
             )}
@@ -928,10 +949,10 @@ const EmployeeOnboardingDialog = ({
       </DialogContent>
 
       <DialogActions
-        sx={{ 
-          px: 3, 
-          py: 2, 
-          borderTop: 1, 
+        sx={{
+          px: 3,
+          py: 2,
+          borderTop: 1,
           borderColor: isDark ? alpha(theme.palette.divider, 0.2) : 'divider',
         }}
       >
@@ -944,11 +965,17 @@ const EmployeeOnboardingDialog = ({
             textTransform: 'none',
             fontWeight: 500,
             minWidth: 100,
-            borderColor: isDark ? alpha(theme.palette.common.white, 0.15) : undefined,
+            borderColor: isDark
+              ? alpha(theme.palette.common.white, 0.15)
+              : undefined,
             color: isDark ? theme.palette.common.white : undefined,
             '&:hover': {
-              borderColor: isDark ? alpha(theme.palette.common.white, 0.3) : undefined,
-              bgcolor: isDark ? alpha(theme.palette.common.white, 0.05) : undefined,
+              borderColor: isDark
+                ? alpha(theme.palette.common.white, 0.3)
+                : undefined,
+              bgcolor: isDark
+                ? alpha(theme.palette.common.white, 0.05)
+                : undefined,
             },
           }}
         >
