@@ -148,6 +148,7 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       queryClient.invalidateQueries({ queryKey: ['rfqs'] });
       if (rfq?.id) {
         queryClient.invalidateQueries({ queryKey: ['rfq', rfq.id] });
+        queryClient.invalidateQueries({ queryKey: ['rfqDetails', rfq.id] });
         queryClient.invalidateQueries({ queryKey: ['rfqComparison', rfq.id] });
       }
       toggleOpen(false);
@@ -160,9 +161,7 @@ function RFQDialogFormContent({ toggleOpen, rfq }: RFQDialogFormProps) {
       enqueueSnackbar(
         error?.response?.data?.message ||
           'Please check the information you submitted',
-        {
-          variant: 'error',
-        }
+        { variant: 'error' }
       );
     },
   });
