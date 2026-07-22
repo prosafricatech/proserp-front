@@ -24,23 +24,24 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     // ---- Column layout (1-based) ----
     const COL_SN = 1;
     const COL_ORDER_NO = 2;
-    const COL_ORDER_DATE = 3;
-    const COL_DATE_REQUIRED = 4;
-    const COL_SKU = 5;
-    const COL_BRAND = 6;
-    const COL_ITEM_NAME = 7;
-    const COL_MODEL = 8;
-    const COL_SPECIFICATIONS = 9;
-    const COL_DESCRIPTION = 10;
-    const COL_STATUS = 11;
-    const COL_VENDOR = 12;
-    const COL_QTY_ORDERED = 13;
-    const COL_QTY_RECEIVED = 14;
-    const COL_QTY_PENDING = 15;
-    const COL_RATE = 16;
-    const COL_ORDERED_AMOUNT = 17;
-    const COL_RECEIVED_AMOUNT = 18;
-    const COL_PENDING_AMOUNT = 19;
+    const COL_REFERENCE = 3;
+    const COL_ORDER_DATE = 4;
+    const COL_DATE_REQUIRED = 5;
+    const COL_SKU = 6;
+    const COL_BRAND = 7;
+    const COL_ITEM_NAME = 8;
+    const COL_MODEL = 9;
+    const COL_SPECIFICATIONS = 10;
+    const COL_DESCRIPTION = 11;
+    const COL_STATUS = 12;
+    const COL_VENDOR = 13;
+    const COL_QTY_ORDERED = 14;
+    const COL_QTY_RECEIVED = 15;
+    const COL_QTY_PENDING = 16;
+    const COL_RATE = 17;
+    const COL_ORDERED_AMOUNT = 18;
+    const COL_RECEIVED_AMOUNT = 19;
+    const COL_PENDING_AMOUNT = 20;
     const TOTAL_COLS = COL_PENDING_AMOUNT;
 
     // ---- Per-currency summary totals ----
@@ -68,6 +69,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     // ---- Column widths ----
     ws.getColumn(getExcelColumnName(COL_SN)).width = 6;
     ws.getColumn(getExcelColumnName(COL_ORDER_NO)).width = 16;
+    ws.getColumn(getExcelColumnName(COL_REFERENCE)).width = 18;
     ws.getColumn(getExcelColumnName(COL_ORDER_DATE)).width = 16;
     ws.getColumn(getExcelColumnName(COL_DATE_REQUIRED)).width = 16;
     ws.getColumn(getExcelColumnName(COL_SKU)).width = 14;
@@ -180,6 +182,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
     [
       COL_SN,
       COL_ORDER_NO,
+      COL_REFERENCE,
       COL_ORDER_DATE,
       COL_DATE_REQUIRED,
       COL_STATUS,
@@ -209,6 +212,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
 
     setHdr(COL_SN, 'S/N');
     setHdr(COL_ORDER_NO, 'Order No.');
+    setHdr(COL_REFERENCE, 'Reference');
     setHdr(COL_ORDER_DATE, 'Order Date');
     setHdr(COL_DATE_REQUIRED, 'Date Required');
     setHdr(COL_SKU, 'SKU');
@@ -267,6 +271,7 @@ export async function exportPurchaseManifestReportToExcel(exportedData: any) {
 
       setTxt(COL_SN, String(index + 1));
       setTxt(COL_ORDER_NO, item.orderNo || '-');
+      setTxt(COL_REFERENCE, item.reference || '-');
       setDate(COL_ORDER_DATE, item.order_date);
       setDate(COL_DATE_REQUIRED, item.date_required);
       setTxt(COL_SKU, item.product?.sku || '-');

@@ -158,7 +158,9 @@ function ProcurementReports() {
                 textAlign={'center'}
                 onClick={() => {
                   setReportName('PurchasesManifestReport');
-                  setReport(<PurchasesManifestReport />);
+                  setReport(
+                    <PurchasesManifestReport setOpenDialog={setOpenDialog} />
+                  );
                   setOpenDialog(true);
                 }}
               >
