@@ -184,7 +184,7 @@ function ApprovalRequisitionProductItem({
     setSelectedProductName('');
   };
 
-  // Validate quantity against store balance
+  // Updated: Validate quantity against store balance - if store not in balances, balance is 0
   const validateQuantity = (itemIndex: number, quantity: number, storeId: number | null) => {
     const item = requisitionProductItem[itemIndex];
     if (!item) return;
@@ -193,8 +193,8 @@ function ApprovalRequisitionProductItem({
       ? (item as any).stock_balances
       : [];
 
-    // If no store selected or no stock balances, no validation needed
-    if (!storeId || stockBalances.length === 0) {
+    // If no store selected, clear any errors
+    if (!storeId) {
       setQuantityErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[itemIndex];
@@ -203,12 +203,16 @@ function ApprovalRequisitionProductItem({
       return;
     }
 
-    // Find the selected store balance
+    // Find the selected store balance - if not found, balance is 0
     const selectedStoreBalance = stockBalances.find(
       (balance: any) => balance.store_id === storeId
     );
+    
+    // If store not found in balances, available balance is 0
+    const availableBalance = selectedStoreBalance ? Number(selectedStoreBalance.balance || 0) : 0;
 
-    if (!selectedStoreBalance) {
+    // If quantity is 0 or negative, no need to validate
+    if (quantity <= 0) {
       setQuantityErrors((prev) => {
         const newErrors = { ...prev };
         delete newErrors[itemIndex];
@@ -216,8 +220,6 @@ function ApprovalRequisitionProductItem({
       });
       return;
     }
-
-    const availableBalance = Number(selectedStoreBalance.balance || 0);
 
     if (quantity > availableBalance) {
       setQuantityErrors((prev) => ({
@@ -285,10 +287,13 @@ function ApprovalRequisitionProductItem({
             // Check if there's a quantity error for this item
             const quantityError = quantityErrors[itemIndex];
             const storeId = (item as any).store_id || null;
+            
+            // Find the selected store balance - if not found, balance is 0
             const selectedStoreBalance = stockBalances.find(
               (balance: any) => balance.store_id === storeId
             );
-            const availableBalance = selectedStoreBalance?.balance || 0;
+            // If store not found in balances, available balance is 0
+            const availableBalance = selectedStoreBalance ? Number(selectedStoreBalance.balance || 0) : 0;
 
             return (
               <Grid
@@ -350,11 +355,6 @@ function ApprovalRequisitionProductItem({
                       ),
                     }}
                   />
-                  {fulfillmentType === 'STOCK' && storeId && availableBalance > 0 && (
-                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
-                      Available: {Number(availableBalance).toLocaleString()}
-                    </Typography>
-                  )}
                 </Grid>
                 <Grid size={{ xs: 12, md: 2 }}>
                   <TextField
@@ -451,6 +451,7 @@ function ApprovalRequisitionProductItem({
             );
           }
 
+          // Non-material mode (purchase type)
           const vat_factor = (item.vat_percentage || 0) * 0.01;
           const rate = item.rate || 0;
           const itemState = vatFieldStates[itemIndex] || ({} as ItemState);

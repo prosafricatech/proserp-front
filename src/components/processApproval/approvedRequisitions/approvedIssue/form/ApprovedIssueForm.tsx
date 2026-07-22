@@ -126,7 +126,7 @@ function ApprovedIssueForm({
 
   return (
     <>
-      <DialogTitle>Issue Stock Items</DialogTitle>
+      <DialogTitle textAlign={'center'}>Issue Stock Items</DialogTitle>
       <DialogContent>
         {items.length === 0 ? (
           <Alert variant='outlined' severity='info'>
