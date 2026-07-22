@@ -14,6 +14,11 @@ import {
   Tooltip,
   Chip,
   Box,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  FormHelperText,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -101,6 +106,7 @@ function RFQResponsesFormContent({
   const [serverError, setServerError] = useState<string | null>(null);
   const [responseItems, setResponseItems] = useState<ResponseItem[]>([]);
   const [removedItems, setRemovedItems] = useState<ResponseItem[]>([]);
+  const stakeholders: Stakeholder[] = rfqDetails?.stakeholders || [];
 
   const isEditMode = !!response?.id;
 
@@ -482,11 +488,48 @@ function RFQResponsesFormContent({
         </Grid>
 
         <Grid size={{ xs: 12, md: 4 }}>
-          <StakeholderSelector
-            label="Supplier"
-            frontError={errors?.stakeholder_id as any}
-            defaultValue={isEditMode ? response?.stakeholder?.id : preselectedStakeholder?.id || undefined}
-            onChange={handleStakeholderChange}
+          <Controller
+            name="stakeholder_id"
+            control={control}
+            render={({ field, fieldState }) => (
+              <FormControl fullWidth size="small" error={!!fieldState.error}>
+                <InputLabel>Supplier</InputLabel>
+                <Select
+                  {...field}
+                  label="Supplier"
+                  value={field.value || ''}
+                  onChange={(e) => {
+                    const value = e.target.value as number;
+                    field.onChange(value);
+                    clearErrors('stakeholder_id');
+                  }}
+                >
+                  {stakeholders.length === 0 ? (
+                    <MenuItem value="" disabled>
+                      No suppliers available
+                    </MenuItem>
+                  ) : (
+                    stakeholders.map((stakeholder) => (
+                      <MenuItem key={stakeholder.id} value={stakeholder.id}>
+                        {stakeholder.name}
+                        {stakeholder.status && (
+                          <Typography
+                            component="span"
+                            variant="caption"
+                            sx={{ ml: 1, color: 'text.secondary' }}
+                          >
+                            ({stakeholder.status})
+                          </Typography>
+                        )}
+                      </MenuItem>
+                    ))
+                  )}
+                </Select>
+                {fieldState.error && (
+                  <FormHelperText>{fieldState.error.message}</FormHelperText>
+                )}
+              </FormControl>
+            )}
           />
         </Grid>
 
