@@ -119,7 +119,7 @@ function ProformaInvoicePDF({
           <View style={{ flex: 2 }}>{/* Place holder */}</View>
         </View>
 
-        <View style={{ ...pdfStyles.table }}>
+        <View style={{ ...pdfStyles.table, minHeight: 230 }}>
           <View style={pdfStyles.tableRow}>
             <Text
               style={{

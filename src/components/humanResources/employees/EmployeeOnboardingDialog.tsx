@@ -1,6 +1,5 @@
 'use client';
 
-import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import {
   CheckCircleOutline,
   Delete,
@@ -39,6 +38,19 @@ import humanResourcesServices from '../humanResourcesServices';
 import ContributionsTab from './ContributionsTab';
 import DeductionsTab from './DeductionsTab';
 import LeaveAllocationsTab from './LeaveAllocationsTab';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+
+const getErrorMessage = (error: any) => {
+  const validationErrors = error?.response?.data?.validation_errors;
+  if (validationErrors && typeof validationErrors === 'object') {
+    const first = Object.values(validationErrors)[0] as any;
+    return Array.isArray(first) ? first[0] : String(first);
+  }
+  return (
+    error?.response?.data?.message || error?.message || 'Something went wrong'
+  );
+};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -60,6 +72,7 @@ const EmployeeOnboardingDialog = ({
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [settingTab, setSettingTab] = useState(0);
+  const { organizationHasSubscribed }= useJumboAuth();
 
   const [deductionSettings, setDeductionSettings] = useState<Array<any>>([]);
   const [contributionSettings, setContributionSettings] = useState<Array<any>>(
@@ -432,17 +445,19 @@ const EmployeeOnboardingDialog = ({
             </Paper>
 
             {/* ledger auto-create switch */}
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={autoCreateLedger}
-                  onChange={() => {
-                    setAutoCreateLedger((prev) => !prev);
-                  }}
-                />
-              }
-              label='Auto create payable ledger'
-            />
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={autoCreateLedger}
+                    onChange={() => {
+                      setAutoCreateLedger((prev) => !prev);
+                    }}
+                  />
+                }
+                label='Auto create payable ledger'
+              />
+            }
 
             {/* optional data */}
             <Tabs
