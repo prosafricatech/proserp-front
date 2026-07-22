@@ -230,7 +230,19 @@ function ImprestRetirementForm({
 
   const isEditMode = Boolean(existingRetirement?.id);
 
+  // Helper function to check if an item has a product (from requisition items)
+  const hasProductInItem = (item: any) => {
+    return item?.product_id || item?.product?.id || item?.product;
+  };
+
+  // Helper function to check if an item is an imprest fulfillment
+  const isImprestFulfillment = (item: any) => {
+    return item?.fulfillment_type?.toUpperCase() === 'IMPREST' || 
+           approvedDetails?.process_type?.toUpperCase() === 'IMPREST';
+  };
+
   const [items, setItems] = React.useState<RetirementItem[]>(() => {
+    // If existing retirement, load its items
     if (existingRetirement) {
       const sourceItems = Array.isArray(existingRetirement.items)
         ? existingRetirement.items
@@ -244,10 +256,7 @@ function ImprestRetirementForm({
         id: item.id,
         imprest_retirement_item_id:
           Number(item?.imprest_retirement_item_id || item?.id || 0) || undefined,
-        line_type:
-          Number(item.product_id || item.product?.id)
-            ? 'PRODUCT'
-            : 'EXPENSE',
+        line_type: hasProductInItem(item) ? 'PRODUCT' : 'EXPENSE',
         ledger_id: Number(item.ledger_id || item.ledger?.id) || null,
         product_id: Number(item.product_id || item.product?.id) || null,
         store_id: Number(item.store_id || item.store?.id) || null,
@@ -264,21 +273,34 @@ function ImprestRetirementForm({
       }));
     }
     
+    // NEW: Check if approvedDetails has items with products (imprest fulfillment)
     if (approvedDetails?.items?.length) {
-      return approvedDetails.items.filter((item: any) => (item.fulfillment_type === 'IMPREST' || approvedDetails.process_type === 'IMPREST')).map((item: any) => ({
-        line_type: 'EXPENSE',
-        ledger_id: Number(item?.ledger?.id) || null,
-        product_id: null,
-        store_id: null,
-        measurement_unit_id: Number(item?.measurement_unit?.id) || null,
-        quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
-        rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
-        description: item?.remarks || '',
-        ledger: item?.ledger ? { id: item.ledger.id, name: item.ledger.name } : null,
-        measurement_unit: item?.measurement_unit,
-      }));
+      const imprestItems = approvedDetails.items.filter((item: any) => 
+        isImprestFulfillment(item)
+      );
+      
+      if (imprestItems.length > 0) {
+        return imprestItems.map((item: any) => {
+          const hasProduct = hasProductInItem(item);
+          return {
+            line_type: hasProduct ? 'PRODUCT' : 'EXPENSE',
+            ledger_id: Number(item?.ledger?.id) || null,
+            product_id: hasProduct ? Number(item.product_id || item.product?.id) : null,
+            store_id: hasProduct ? Number(item.store_id || item.store?.id) : null,
+            measurement_unit_id: Number(item?.measurement_unit?.id) || null,
+            quantity: Number.isFinite(Number(item?.quantity)) ? Number(item.quantity) : 1,
+            rate: Number.isFinite(Number(item?.rate)) ? Number(item.rate) : 0,
+            description: item?.remarks || '',
+            ledger: item?.ledger ? { id: item.ledger.id, name: item.ledger.name } : null,
+            product: hasProduct ? (item.product || { id: item.product_id }) : null,
+            store: hasProduct ? (item.store || { id: item.store_id }) : null,
+            measurement_unit: item?.measurement_unit,
+          };
+        });
+      }
     }
     
+    // Fallback to single empty expense item
     return [{ ...EMPTY_ITEM }];
   });
 
@@ -802,7 +824,7 @@ function ImprestRetirementForm({
                       <StoreSelector
                         label='Store'
                         multiple={false}
-                        defaultValue={item.store || null}
+                        defaultValue={item.store?.id ? item.store : null}
                         onChange={(newValue: any) => {
                           updateItem(index, {
                             store_id: Number(newValue?.id || 0) || null,
@@ -813,7 +835,7 @@ function ImprestRetirementForm({
                     </Grid>
                   )}
 
-                  <Grid size={{ xs: 12, md: 2.5 }}>
+                  <Grid size={{ xs: 12, md: isProductLine ? 2.5 : 2.5 }}>
                     <MeasurementSelector
                       label="Unit"
                       defaultValue={item.measurement_unit_id || null}
