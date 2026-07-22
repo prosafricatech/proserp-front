@@ -42,17 +42,11 @@ function MaterialRequisitionTabs({
   const isFullyIssued = approvedRequisition?.is_fully_issued === true;
   const isFullyFulfilled = approvedRequisition?.is_fully_fulfilled === true;
 
-  // Determine which tabs to show based on fulfillment status
-  // Hide Purchase Orders tab when fully ordered
   const showPurchaseOrdersTab = !isFullyOrdered;
-  // Always show payments tab
   const showPaymentsTab = true;
-  // Show retirements if can retire and not fully fulfilled
   const showRetirementsTab = canRetire && !isFullyFulfilled;
-  // Hide Store Issues tab when fully issued
   const showStoreIssuesTab = !isFullyIssued;
 
-  // Auto-switch to appropriate tab if current tab is hidden
   React.useEffect(() => {
     const availableTabs = [];
     if (showPurchaseOrdersTab) availableTabs.push(MATERIAL_TAB.PURCHASE_ORDERS);
@@ -65,7 +59,6 @@ function MaterialRequisitionTabs({
     }
   }, [activeTab, showPurchaseOrdersTab, showPaymentsTab, showRetirementsTab, showStoreIssuesTab, setActiveTab]);
 
-  // Get the next available tab index
   const getNextAvailableTab = (currentTab: number): number => {
     const tabs = [];
     if (showPurchaseOrdersTab) tabs.push(MATERIAL_TAB.PURCHASE_ORDERS);
@@ -73,7 +66,6 @@ function MaterialRequisitionTabs({
     if (showRetirementsTab) tabs.push(MATERIAL_TAB.RETIREMENTS);
     if (showStoreIssuesTab) tabs.push(MATERIAL_TAB.STORE_ISSUES);
     
-    // If current tab is not in the list, return first available
     if (!tabs.includes(currentTab)) {
       return tabs[0] || MATERIAL_TAB.PURCHASE_ORDERS;
     }
