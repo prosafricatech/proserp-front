@@ -845,6 +845,17 @@ humanResourcesServices.completePayrollRun = async (id) => {
     return data;
 }
 
+// salary sheet (Bnk transfer list)
+humanResourcesServices.payPayrollRun = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
+    return data;
+}
+
+humanResourcesServices.payPayrollRun = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
+    return data;
+}
+
 // ============================================
 // PAYSLIPS
 // ============================================

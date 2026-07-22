@@ -141,6 +141,13 @@ const PayrollRuns = ({ defaultStatus }: PayrollRunsProps) => {
     }
   }, [payrollPeriods, searchParams, selectedPayrollPeriod]);
 
+  const showList =
+    selectedPayrollPeriod && !defaultStatus
+      ? true
+      : (!selectedPayrollPeriod || selectedPayrollPeriod) && defaultStatus
+        ? true
+        : false;
+
   if (!mounted) return null;
 
   return (
@@ -188,7 +195,7 @@ const PayrollRuns = ({ defaultStatus }: PayrollRunsProps) => {
             </Grid>
           </Grid>
 
-          {selectedPayrollPeriod ? (
+          {showList ? (
             <JumboRqList
               ref={listRef}
               wrapperComponent={Card}
