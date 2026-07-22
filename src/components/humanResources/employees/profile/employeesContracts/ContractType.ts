@@ -7,6 +7,10 @@ export interface ContractType {
   end_date?: string;
   probation_end_date: string;
   basic_salary: number;
+  pay_basis?: string | null;
+  overtime_multiplier?: number | null;
+  holiday_work_multiplier?: number | null;
+  standard_hours_per_day?: number | null;
   status: string;
   remarks?: string;
   created_by: number;

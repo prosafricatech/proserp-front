@@ -1,3 +1,5 @@
+'use client';
+
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { AddOutlined } from '@mui/icons-material';
 import {
@@ -8,9 +10,9 @@ import {
   useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
-import DesignationForm from './DesignationForm';
+import PublicH0lidayForm from './PublicH0lidayForm';
 
-const DesignationActionTail = () => {
+const PublicHolidaysActionTail = () => {
   const [openDialog, setOpenDialog] = useState(false);
 
   //Screen handling constants
@@ -19,7 +21,7 @@ const DesignationActionTail = () => {
   return (
     <>
       <Dialog maxWidth='md' fullScreen={belowLargeScreen} open={openDialog}>
-        <DesignationForm setOpenDialog={setOpenDialog} />
+        <PublicH0lidayForm setOpenDialog={setOpenDialog} />
       </Dialog>
       <ButtonGroup
         variant='outlined'
@@ -27,16 +29,14 @@ const DesignationActionTail = () => {
         disableElevation
         sx={{ '& .MuiButton-root': { px: 1 } }}
       >
-        {/* {( */}
-        <Tooltip title='Add Designation'>
+        <Tooltip title='Add Public Holiday'>
           <IconButton onClick={() => setOpenDialog(true)}>
             <AddOutlined />
           </IconButton>
         </Tooltip>
-        {/* )} */}
       </ButtonGroup>
     </>
   );
 };
 
-export default DesignationActionTail;
+export default PublicHolidaysActionTail;

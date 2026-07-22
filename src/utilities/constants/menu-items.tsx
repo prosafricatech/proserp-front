@@ -390,6 +390,11 @@ export async function getMenus(locale: string) {
               type: 'nav-item',
             },
             {
+              uri: `/${locale}/humanResources/publicHolidays`,
+              label: sidebar.menuItem.publicHolidays,
+              type: 'nav-item',
+            },
+            {
               uri: `/${locale}/humanResources/leave_types`,
               label: sidebar.menuItem.leave_types,
               type: 'nav-item',

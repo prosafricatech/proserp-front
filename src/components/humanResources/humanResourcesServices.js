@@ -185,6 +185,31 @@ humanResourcesServices.deleteDesignation = async (id) => {
 }
 
 // ============================================
+// PUBLIC HOLIDAYS
+// ============================================
+humanResourcesServices.publicHolidaysLIst = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/publicHolidays', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.addPublicHoliday = async (publicHoliday) => {
+    const { data } = await axios.post(`/api/humanResources/publicHolidays/add`, publicHoliday)
+    return data;
+};
+
+humanResourcesServices.updatePublicHoliday = async (publicHoliday) => {
+    const { data } = await axios.put(`/api/humanResources/publicHolidays/${publicHoliday.id}/update`, publicHoliday)
+    return data;
+}
+
+humanResourcesServices.deletePublicHoliday = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/publicHolidays/${id}/delete`);
+    return data;
+}
+
+// ============================================
 // LEAVE TYPES
 // ============================================
 humanResourcesServices.getLeaveTypesList = async (params = {}) => {

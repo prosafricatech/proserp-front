@@ -16,7 +16,7 @@ import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useDesignations } from '../../../designations/DesignationsProvider';
@@ -42,6 +42,12 @@ interface ApiResponse {
   };
 }
 
+const PAY_BASIS_OPTIONS = [
+  { label: 'Monthly', value: 'monthly' },
+  { label: 'Daily', value: 'daily' },
+  { label: 'Hourly', value: 'hourly' },
+];
+
 const EmployeesContractsForm = ({
   setOpenDialog,
   contract,
@@ -51,6 +57,14 @@ const EmployeesContractsForm = ({
   const { enqueueSnackbar } = useSnackbar();
   const { designations, isFetching: fetchingDesignations } = useDesignations();
   const designationsData = (designations || []) as Designation[];
+  const [selectedPayBasis, setSelectedPayBasis] = useState<any>(
+    contract
+      ? () => PAY_BASIS_OPTIONS.find((opt) => opt.value === contract.pay_basis)
+      : {
+          label: 'Monthly',
+          value: 'monthly',
+        }
+  );
 
   const contractOptions = [
     { label: 'Permanent', value: 'permanent' },
@@ -180,6 +194,19 @@ const EmployeesContractsForm = ({
       .number()
       .required('Basic salary is required')
       .min(0, 'Basic salary cannot be less than 0'),
+    pay_basis: yup.string().nullable(),
+    standard_hours_per_day: yup
+      .number()
+      .nullable()
+      .typeError('This value should be a number'),
+    overtime_multiplier: yup
+      .number()
+      .nullable()
+      .typeError('This value should be a number'),
+    holiday_work_multiplier: yup
+      .number()
+      .nullable()
+      .typeError('This value should be a number'),
     remarks: yup
       .string()
       .max(1000, 'Remarks should not exceed 1000 characters'),
@@ -190,6 +217,7 @@ const EmployeesContractsForm = ({
     handleSubmit,
     reset,
     setValue,
+    watch,
     control,
     formState: { errors },
   } = useForm<FormData>({
@@ -202,6 +230,10 @@ const EmployeesContractsForm = ({
       end_date: contract?.end_date || '',
       probation_end_date: contract?.probation_end_date || '',
       basic_salary: contract?.basic_salary || undefined,
+      pay_basis: contract?.pay_basis || 'monthly',
+      standard_hours_per_day: contract?.standard_hours_per_day || 8,
+      overtime_multiplier: contract?.overtime_multiplier || 1.5,
+      holiday_work_multiplier: contract?.holiday_work_multiplier || 2,
       remarks: contract?.remarks || '',
     },
   });
@@ -215,9 +247,27 @@ const EmployeesContractsForm = ({
       end_date: contract?.end_date || '',
       probation_end_date: contract?.probation_end_date || '',
       basic_salary: contract?.basic_salary || undefined,
+      pay_basis: contract?.pay_basis || 'monthly',
+      standard_hours_per_day: contract?.standard_hours_per_day || 8,
+      overtime_multiplier: contract?.overtime_multiplier || 1.5,
+      holiday_work_multiplier: contract?.holiday_work_multiplier || 2,
       remarks: contract?.remarks || '',
     });
   }, [contract, reset]);
+
+  const watchSelectedPayBasis = watch('pay_basis');
+  const showMoreFields = watchSelectedPayBasis !== 'monthly' ? true : false;
+
+  useEffect(() => {
+    if (!showMoreFields) {
+      setValue('standard_hours_per_day', contract?.standard_hours_per_day || 8);
+      setValue('overtime_multiplier', contract?.overtime_multiplier || 1.5);
+      setValue(
+        'holiday_work_multiplier',
+        contract?.holiday_work_multiplier || 2
+      );
+    }
+  }, [showMoreFields, watchSelectedPayBasis]);
 
   // Pre-fill employee_id when rendered inside the Employee Profile
   useEffect(() => {
@@ -324,7 +374,13 @@ const EmployeesContractsForm = ({
                   control={control}
                   render={({ field }) => (
                     <TextField
-                      label='Basic Salary'
+                      label={
+                        watchSelectedPayBasis === 'daily'
+                          ? 'Daily Rate'
+                          : watchSelectedPayBasis === 'hourly'
+                            ? 'Hourly Rate'
+                            : 'Basic Salary'
+                      }
                       size='small'
                       fullWidth
                       value={formatCommaSeparatedValue(field.value)}
@@ -351,6 +407,136 @@ const EmployeesContractsForm = ({
                 />
               </Div>
             </Grid>
+            <Grid size={{ xs: 12, md: 4 }}>
+              <Div sx={{ mt: 1, mb: 1 }}>
+                <Autocomplete
+                  size='small'
+                  options={PAY_BASIS_OPTIONS}
+                  value={selectedPayBasis}
+                  isOptionEqualToValue={(option, value) =>
+                    option?.value === value?.value
+                  }
+                  getOptionLabel={(option) => `${option.label}`}
+                  onChange={(_, newValue) => {
+                    setSelectedPayBasis(newValue);
+                    setValue('pay_basis', newValue.value);
+                  }}
+                  renderInput={(inputParams) => (
+                    <TextField {...inputParams} label='Pay Basis' fullWidth />
+                  )}
+                />
+              </Div>
+            </Grid>
+
+            {showMoreFields && (
+              <>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <Controller
+                      name='standard_hours_per_day'
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          label='Standard Hours/Day'
+                          size='small'
+                          fullWidth
+                          value={formatCommaSeparatedValue(field.value)}
+                          onChange={(event) => {
+                            const raw = event.target.value.replace(/,/g, '');
+                            field.onChange(raw === '' ? '' : Number(raw));
+                          }}
+                          error={
+                            !!errors?.standard_hours_per_day ||
+                            !!error?.response?.data?.validation_errors
+                              ?.standard_hours_per_day ||
+                            !!updateError?.response?.data?.validation_errors
+                              ?.standard_hours_per_day
+                          }
+                          helperText={
+                            errors.standard_hours_per_day?.message ||
+                            error?.response?.data?.validation_errors
+                              ?.standard_hours_per_day ||
+                            updateError?.response?.data?.validation_errors
+                              ?.standard_hours_per_day
+                          }
+                        />
+                      )}
+                    />
+                  </Div>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <Controller
+                      name='overtime_multiplier'
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          label='Overtime Multiplier'
+                          size='small'
+                          fullWidth
+                          value={formatCommaSeparatedValue(field.value)}
+                          onChange={(event) => {
+                            const raw = event.target.value.replace(/,/g, '');
+                            field.onChange(raw === '' ? '' : Number(raw));
+                          }}
+                          error={
+                            !!errors?.overtime_multiplier ||
+                            !!error?.response?.data?.validation_errors
+                              ?.overtime_multiplier ||
+                            !!updateError?.response?.data?.validation_errors
+                              ?.overtime_multiplier
+                          }
+                          helperText={
+                            errors.overtime_multiplier?.message ||
+                            error?.response?.data?.validation_errors
+                              ?.overtime_multiplier ||
+                            updateError?.response?.data?.validation_errors
+                              ?.overtime_multiplier
+                          }
+                        />
+                      )}
+                    />
+                  </Div>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <Div sx={{ mt: 1, mb: 1 }}>
+                    <Controller
+                      name='holiday_work_multiplier'
+                      control={control}
+                      render={({ field }) => (
+                        <TextField
+                          label='Holiday Work Multiplier'
+                          size='small'
+                          fullWidth
+                          value={formatCommaSeparatedValue(field.value)}
+                          onChange={(event) => {
+                            const raw = event.target.value.replace(/,/g, '');
+                            field.onChange(raw === '' ? '' : Number(raw));
+                          }}
+                          error={
+                            !!errors?.holiday_work_multiplier ||
+                            !!error?.response?.data?.validation_errors
+                              ?.holiday_work_multiplier ||
+                            !!updateError?.response?.data?.validation_errors
+                              ?.holiday_work_multiplier
+                          }
+                          helperText={
+                            errors.holiday_work_multiplier?.message ||
+                            error?.response?.data?.validation_errors
+                              ?.holiday_work_multiplier ||
+                            updateError?.response?.data?.validation_errors
+                              ?.holiday_work_multiplier
+                          }
+                        />
+                      )}
+                    />
+                  </Div>
+                </Grid>
+              </>
+            )}
+
             <Grid size={{ xs: 12, md: 4 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <Controller
@@ -428,7 +614,7 @@ const EmployeesContractsForm = ({
                 />
               </Div>
             </Grid>
-            <Grid size={{ xs: 12 }}>
+            <Grid size={{ xs: 12, md: 8 }}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
                   label='Remarks'
