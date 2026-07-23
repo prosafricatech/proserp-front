@@ -303,31 +303,6 @@ function RequisitionsForm({
   const selectedProcessType = watch('process_type');
   const currencyDetails = watch('currencyDetails');
   const selectedCostCenterId = watch('cost_center_id');
-  const { data: myLedgersResponse } = useQuery({
-    queryKey: ['my-ledgers'],
-    queryFn: userLedgerServices.getMyLedgers,
-    enabled: true,
-  });
-  const imprestLedgerOptions = React.useMemo(
-    () => extractList(myLedgersResponse) as ImprestLedgerOption[],
-    [myLedgersResponse]
-  );
-  const notAllowedImprestLedgers = React.useMemo(
-    () =>
-      Array.from(
-        new Set(
-          imprestLedgerOptions
-            .filter(
-              (item) =>
-                String(item.type || '').toLowerCase() === 'imprest' ||
-                !item.type
-            )
-            .map((item) => Number(item.ledger_id || item.ledger?.id || 0))
-            .filter((id) => Number.isFinite(id) && id > 0)
-        )
-      ),
-    [imprestLedgerOptions]
-  );
   const isPurchaseType = selectedProcessType === 'PURCHASE';
   const isMaterialType = selectedProcessType === 'MATERIAL';
   const isProductType = isPurchaseType || isMaterialType;
@@ -341,6 +316,41 @@ function RequisitionsForm({
           type !== 'PAYROLL'
       ),
     []
+  );
+
+  const { data: myLedgersResponse } = useQuery({
+    queryKey: ['my-ledgers'],
+    queryFn: userLedgerServices.getMyLedgers,
+    enabled: true,
+  });
+
+  const imprestLedgerOptions = React.useMemo(
+    () => extractList(myLedgersResponse) as ImprestLedgerOption[],
+    [myLedgersResponse]
+  );
+  
+  const notAllowedImprestLedgers = React.useMemo(
+    () => {
+      const allImprestLedgerIds = Array.from(
+        new Set(
+          imprestLedgerOptions
+            .filter(
+              (item) =>
+                String(item.type || '').toLowerCase() === 'imprest' ||
+                !item.type
+            )
+            .map((item) => Number(item.ledger_id || item.ledger?.id || 0))
+            .filter((id) => Number.isFinite(id) && id > 0)
+        )
+      );
+
+      const selectedImprestLedgerId = watch('imprest_ledger_id');
+
+      return allImprestLedgerIds.filter(
+        (id) => id !== selectedImprestLedgerId
+      );
+    },
+    [imprestLedgerOptions, watch('imprest_ledger_id')]
   );
 
   const saveMutation = React.useMemo(() => {
