@@ -4,7 +4,6 @@ import { getExcelColumnName } from '../uitls';
 import { createWorkbook } from '../workBook';
 
 // ---- Helper functions (mirrors SalarySheetPDF logic) ----
-
 function toNumber(value: unknown): number {
   if (typeof value === 'number') return Number.isFinite(value) ? value : 0;
   if (typeof value === 'string') {
@@ -58,8 +57,27 @@ function sumContributionByType(run: any, type: any): number {
   }, 0);
 }
 
+// ADDED: Helper function to get unique types (mirrors PDF logic)
+function getUniqueTypes(value: Array<any>): Array<any> {
+  const filtered = Array.from(
+    new Map(
+      value.map((itm) => [
+        itm?.deduction_type_id ??
+          itm?.allowance_type_id ??
+          itm?.employer_contribution_type_id ??
+          itm?.id ??
+          itm?.label,
+        itm,
+      ])
+    ).values()
+  );
+  return filtered;
+}
+
+// UPDATED: fmtTypeLabel with proper fallback chain
 function fmtTypeLabel(type: any, fallback: string): string {
-  const name = type.name || fallback;
+  // Use the same fallback chain as PDF: label || name || fallback
+  const name = type.label || type.name || fallback;
   const raw = Number(type.default_value ?? 0);
   if (!Number.isFinite(raw) || raw <= 0) return name;
   const isPercentage = String(type.computation_method || '').startsWith(
@@ -87,17 +105,33 @@ export async function ExportPayrollToExcel(exportedData: any) {
       contributionTypes = [],
     } = exportedData;
 
-    const preTaxDeductionTypes = deductionTypes.filter((t: any) =>
+    // FIX: Deduplicate the type lists before using them for columns
+    const uniqueAllowanceTypes = getUniqueTypes(allowanceTypes).filter(
+      (type) => type.allowance_type_id !== null
+    );
+    const uniqueDeductionTypes = getUniqueTypes(deductionTypes).filter(
+      (type) => type.deduction_type_id !== null
+    );
+    const uniqueContributionTypes = getUniqueTypes(contributionTypes).filter(
+      (type) => type.employer_contribution_type_id !== null
+    );
+
+    // Use unique lists for the rest of the function
+    const processedAllowanceTypes = uniqueAllowanceTypes;
+    const processedDeductionTypes = uniqueDeductionTypes;
+    const processedContributionTypes = uniqueContributionTypes;
+
+    // Separate pre-tax and post-tax deduction types
+    const preTaxDeductionTypes = processedDeductionTypes.filter((t: any) =>
       Boolean(t.is_pre_tax)
     );
-    const postTaxDeductionTypes = deductionTypes.filter(
+    const postTaxDeductionTypes = processedDeductionTypes.filter(
       (t: any) => !t.is_pre_tax
     );
 
     const getEmployeeName = (run: PayrollRunType) => {
       if (!run.employee) return 'Unknown Employee';
 
-      // Use type assertion to safely access name if it exists
       const employee = run.employee as any;
       if (employee.name) return employee.name;
 
@@ -108,32 +142,28 @@ export async function ExportPayrollToExcel(exportedData: any) {
     };
 
     // Column index layout (1-based)
-    const n = allowanceTypes.length; // allowance columns
-    const m = preTaxDeductionTypes.length; // pre-tax deduction columns
-    const p = postTaxDeductionTypes.length; // post-tax deduction columns
-    const q = contributionTypes.length; // employer contribution columns
+    const n = processedAllowanceTypes.length;
+    const m = preTaxDeductionTypes.length;
+    const p = postTaxDeductionTypes.length;
+    const q = processedContributionTypes.length;
 
     const COL_SN = 1;
     const COL_NAME = 2;
     const COL_DESIGNATION = 3;
     const COL_BASIC = 4;
-    // allowances → cols 5..4+n
     const COL_GROSS = 5 + n;
-    // pre-tax deductions → cols 6+n..5+n+m
     const COL_TAXABLE = 6 + n + m;
     const COL_PAYE = 7 + n + m;
-    // post-tax deductions → cols 8+n+m..7+n+m+p
     const COL_TOTAL_DED = 8 + n + m + p;
     const COL_NET = 9 + n + m + p;
-    // contributions → cols 10+n+m+p..9+n+m+p+q
     const COL_TOTAL_CONTRIB = 10 + n + m + p + q;
     const COL_EMPLOYER_COST = 11 + n + m + p + q;
     const TOTAL_COLS = COL_EMPLOYER_COST;
 
-    // ---- Totals (mirrors SalarySheetPDF reduce logic) ----
+    // ---- Totals ----
     const totals = rows.reduce(
       (sum: any, entry: any) => {
-        const abt = allowanceTypes.map((t: any) =>
+        const abt = processedAllowanceTypes.map((t: any) =>
           sumAllowanceByType(entry.run, t)
         );
         const pdbt = preTaxDeductionTypes.map((t: any) =>
@@ -142,7 +172,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
         const odbt = postTaxDeductionTypes.map((t: any) =>
           sumDeductionByType(entry.run, t)
         );
-        const cbt = contributionTypes.map((t: any) =>
+        const cbt = processedContributionTypes.map((t: any) =>
           sumContributionByType(entry.run, t)
         );
         return {
@@ -180,10 +210,10 @@ export async function ExportPayrollToExcel(exportedData: any) {
         netSalary: 0,
         totalEmployerContributions: 0,
         totalEmployerCost: 0,
-        allowanceByType: allowanceTypes.map(() => 0),
+        allowanceByType: processedAllowanceTypes.map(() => 0),
         preTaxDeductionByType: preTaxDeductionTypes.map(() => 0),
         postTaxDeductionByType: postTaxDeductionTypes.map(() => 0),
-        contributionByType: contributionTypes.map(() => 0),
+        contributionByType: processedContributionTypes.map(() => 0),
       }
     );
 
@@ -193,8 +223,6 @@ export async function ExportPayrollToExcel(exportedData: any) {
       totals.paye + totals.totalEmployerContributions;
     const summaryTotal =
       grossByEmployer + netEmployeePayment + payrollTaxesBenefits;
-    // const pctOf = (part: number, total: number) =>
-    //   total ? `${Math.round((part / total) * 100)}%` : '0%';
     const pctOf = (part: number, total: number) =>
       total ? Math.round((part / total) * 100) : 0;
 
@@ -217,6 +245,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
     titleCell.font = { bold: true, size: 14 };
     titleCell.alignment = { horizontal: 'center', vertical: 'middle' };
     ws.getRow(1).height = 25;
+
     // ---- Row 2: Period label ----
     ws.mergeCells(`A2:${getExcelColumnName(TOTAL_COLS)}2`);
     const subtitleCell = ws.getCell('A2');
@@ -248,27 +277,39 @@ export async function ExportPayrollToExcel(exportedData: any) {
       applyCellStyle(cell, CELL_STYLES.tableHeader);
       cell.alignment = { horizontal: 'center', vertical: 'middle' };
     };
+
     setHdr(COL_SN, 'S/N');
     setHdr(COL_NAME, 'Name');
     setHdr(COL_DESIGNATION, 'Designation');
     setHdr(COL_BASIC, 'Basic Salary');
-    allowanceTypes.forEach((t: any, i: number) =>
-      setHdr(5 + i, t.name || 'Allowance')
+
+    // UPDATED: Use proper fallback chain for allowance headers
+    processedAllowanceTypes.forEach((t: any, i: number) =>
+      setHdr(5 + i, t.label || t.name || 'Allowance')
     );
+
     setHdr(COL_GROSS, 'Gross');
+
+    // UPDATED: fmtTypeLabel already has the proper fallback chain
     preTaxDeductionTypes.forEach((t: any, i: number) =>
       setHdr(6 + n + i, fmtTypeLabel(t, 'Pre-Tax Ded.'))
     );
+
     setHdr(COL_TAXABLE, 'Taxable Salary');
     setHdr(COL_PAYE, 'PAYE');
+
     postTaxDeductionTypes.forEach((t: any, i: number) =>
       setHdr(8 + n + m + i, fmtTypeLabel(t, 'Post-Tax Ded.'))
     );
+
     setHdr(COL_TOTAL_DED, 'Total Ded.');
     setHdr(COL_NET, 'Net Payable');
-    contributionTypes.forEach((t: any, i: number) =>
-      setHdr(10 + n + m + p + i, fmtTypeLabel(t, 'Contribution'))
+
+    // UPDATED: Use proper fallback chain for contribution headers
+    processedContributionTypes.forEach((t: any, i: number) =>
+      setHdr(10 + n + m + p + i, t.label || t.name || 'Contribution')
     );
+
     setHdr(COL_TOTAL_CONTRIB, 'Total Empr. Contrib.');
     setHdr(COL_EMPLOYER_COST, 'Employer Cost');
     ws.getRow(4).height = 18;
@@ -276,13 +317,6 @@ export async function ExportPayrollToExcel(exportedData: any) {
     // ---- Data rows ----
     rows.forEach((entry: any, index: number) => {
       const ROW = 5 + index;
-      // const name = [
-      //   entry.run.employee?.first_name,
-      //   entry.run.employee?.last_name,
-      // ]
-      //   .filter(Boolean)
-      //   .join(' ');
-
       const name = getEmployeeName(entry.run);
       const fill = getAlternatingRowFill(index);
 
@@ -302,23 +336,31 @@ export async function ExportPayrollToExcel(exportedData: any) {
       setTxt(COL_NAME, name || '-');
       setTxt(COL_DESIGNATION, entry.run.contract?.designation?.title || '-');
       setNum(COL_BASIC, entry.computed.basicSalary);
-      allowanceTypes.forEach((t: any, i: number) =>
+
+      processedAllowanceTypes.forEach((t: any, i: number) =>
         setNum(5 + i, sumAllowanceByType(entry.run, t))
       );
+
       setNum(COL_GROSS, entry.computed.grossSalary);
+
       preTaxDeductionTypes.forEach((t: any, i: number) =>
         setNum(6 + n + i, sumDeductionByType(entry.run, t))
       );
+
       setNum(COL_TAXABLE, entry.computed.taxableIncome);
       setNum(COL_PAYE, entry.computed.paye);
+
       postTaxDeductionTypes.forEach((t: any, i: number) =>
         setNum(8 + n + m + i, sumDeductionByType(entry.run, t))
       );
+
       setNum(COL_TOTAL_DED, entry.computed.totalDeductions);
       setNum(COL_NET, entry.computed.netSalary);
-      contributionTypes.forEach((t: any, i: number) =>
+
+      processedContributionTypes.forEach((t: any, i: number) =>
         setNum(10 + n + m + p + i, sumContributionByType(entry.run, t))
       );
+
       setNum(COL_TOTAL_CONTRIB, entry.computed.totalEmployerContributions);
       setNum(COL_EMPLOYER_COST, entry.computed.totalEmployerCost);
       ws.getRow(ROW).height = 16;
@@ -329,6 +371,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
     ws.mergeCells(
       `${getExcelColumnName(COL_SN)}${TOTALS_ROW}:${getExcelColumnName(COL_DESIGNATION)}${TOTALS_ROW}`
     );
+
     const setTotalTxt = (col: number, value: string) => {
       const cell = ws.getCell(`${getExcelColumnName(col)}${TOTALS_ROW}`);
       cell.value = value;
@@ -340,32 +383,41 @@ export async function ExportPayrollToExcel(exportedData: any) {
       cell.numFmt = NUM_FMT;
       applyCellStyle(cell, CELL_STYLES.totalRowNumeric);
     };
+
     setTotalTxt(COL_SN, ' ');
     setTotalNum(COL_BASIC, totals.basicSalary);
+
     totals.allowanceByType.forEach((amount: number, i: number) =>
       setTotalNum(5 + i, amount)
     );
+
     setTotalNum(COL_GROSS, totals.grossSalary);
+
     totals.preTaxDeductionByType.forEach((amount: number, i: number) =>
       setTotalNum(6 + n + i, amount)
     );
+
     setTotalNum(COL_TAXABLE, totals.taxableSalary);
     setTotalNum(COL_PAYE, totals.paye);
+
     totals.postTaxDeductionByType.forEach((amount: number, i: number) =>
       setTotalNum(8 + n + m + i, amount)
     );
+
     setTotalNum(COL_TOTAL_DED, totals.totalDeductions);
     setTotalNum(COL_NET, totals.netSalary);
+
     totals.contributionByType.forEach((amount: number, i: number) =>
       setTotalNum(10 + n + m + p + i, amount)
     );
+
     setTotalNum(COL_TOTAL_CONTRIB, totals.totalEmployerContributions);
     setTotalNum(COL_EMPLOYER_COST, totals.totalEmployerCost);
     ws.getRow(TOTALS_ROW).height = 20;
+
     // ---- Summary section ----
     let summaryRow = TOTALS_ROW + 2;
 
-    // thin grey border reused across all summary cells
     const smBorder = { style: 'thin' as const, color: { argb: 'FFB8B8B8' } };
     const allSides = {
       top: smBorder,
@@ -394,7 +446,6 @@ export async function ExportPayrollToExcel(exportedData: any) {
       labelCell.border = allSides;
 
       if (bold) {
-        // main rows: blank D, amount in E
         cellD.border = allSides;
         cellE.value = amount;
         cellE.numFmt = NUM_FMT;
@@ -402,7 +453,6 @@ export async function ExportPayrollToExcel(exportedData: any) {
         cellE.alignment = { horizontal: 'right', vertical: 'middle' };
         cellE.border = allSides;
       } else {
-        // sub-rows: amount in D, blank E
         cellD.value = amount;
         cellD.numFmt = NUM_FMT;
         cellD.font = { italic: true, size: 10 };
@@ -445,16 +495,17 @@ export async function ExportPayrollToExcel(exportedData: any) {
       pctOf(totals.paye, grossByEmployer) / 100,
       false
     );
-    contributionTypes.forEach((t: any, i: number) => {
+
+    processedContributionTypes.forEach((t: any, i: number) => {
       addSummaryRow(
-        `  ${t.name || 'Contribution'}`,
+        `  ${t.label || t.name || 'Contribution'}`,
         totals.contributionByType[i] || 0,
         pctOf(totals.contributionByType[i] || 0, grossByEmployer) / 100,
         false
       );
     });
 
-    // Grand total line — label spans A:D, amount in E (aligns with bold rows)
+    // Grand total line
     const topBlack = { style: 'thin' as const, color: { argb: 'FF000000' } };
     ws.mergeCells(`A${summaryRow}:D${summaryRow}`);
     ws.getCell(`A${summaryRow}`).border = {

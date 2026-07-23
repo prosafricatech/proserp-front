@@ -337,7 +337,7 @@ export async function getMenus(locale: string) {
           uri: `/${locale}/humanResources/leave-requests`,
           label: sidebar.menuItem.leave_requests,
           type: 'nav-item',
-          icon: icon('reports'),
+          icon: icon('leave_requests'),
         },
         {
           uri: `/${locale}/humanResources/loan-requests`,
