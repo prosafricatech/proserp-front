@@ -73,6 +73,7 @@
       "departments": "Idara",
       "leave_types": "Likizo",
       "designations": "Vyeo",
+      "publicHolidays": "Sikukuu",
       "banks": "Benki",
       "employee_contracts": "Mikataba ya waajiriwa",
       "employee_bank_accounts": "Akaunti za benki",
@@ -85,6 +86,7 @@
       "leave_allocations": "Mgawo wa likizo",
       "leave_requests": "Maombi ya likizo",
       "loan_requests": "Maombi ya mkopo",
+      "employeesAttendance": "Mahudhurio ya wafanyakazi",
       "paye_tax_bands": "Viwango vya kodi ya PAYE",
       "payroll_periods": "Vipindi vya Mishahara",
       "payroll_runs": "Uendeshaji wa Mishahara"

@@ -1,18 +1,19 @@
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 
 type EmployeesType = {
-  employee_id: 4;
-  employee_number: null;
+  employee_id: number;
+  employee_number: string | null;
   name: string;
-  bank_name: null;
-  branch: null;
-  account_number: null;
-  account_name: null;
-  net_salary: 644000;
+  bank_name: string | null;
+  branch: string | null;
+  account_number: string | null;
+  account_name: string | null;
+  net_salary: number;
 };
-export type salarySheetType = {
+
+export type SalarySheetType = {
   run: {
-    id: 1;
+    id: number;
     status: string;
     period: {
       year: number;
@@ -20,9 +21,13 @@ export type salarySheetType = {
     };
     cost_center?: CostCenter;
   };
-  rows: [{}];
-  total_net_salary: 5010000;
-  total_employees: 4;
-  employees_without_bank_account: 4;
-  zero_pay_employees: [];
+  rows: EmployeesType[];
+  total_net_salary: number;
+  total_employees: number;
+  employees_without_bank_account: number;
+  zero_pay_employees?: {
+    employee_id: number;
+    employee_number: number;
+    name: string;
+  }[];
 };

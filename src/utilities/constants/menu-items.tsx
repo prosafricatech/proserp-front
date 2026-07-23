@@ -346,6 +346,12 @@ export async function getMenus(locale: string) {
           icon: icon('loan_requests'),
         },
         {
+          uri: `/${locale}/humanResources/employeesAttendance`,
+          label: sidebar.menuItem.employeesAttendance,
+          type: 'nav-item',
+          icon: icon('employeesAttendance'),
+        },
+        {
           label: sidebar.menuItem.payroll,
           type: 'collapsible',
           icon: icon('payrollRuns'),
@@ -387,6 +393,11 @@ export async function getMenus(locale: string) {
             {
               uri: `/${locale}/humanResources/designations`,
               label: sidebar.menuItem.designations,
+              type: 'nav-item',
+            },
+            {
+              uri: `/${locale}/humanResources/publicHolidays`,
+              label: sidebar.menuItem.publicHolidays,
               type: 'nav-item',
             },
             {

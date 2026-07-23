@@ -1,8 +1,7 @@
 'use client';
-
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import {
   CheckCircleOutline,
-  Delete,
   DescriptionOutlined,
   DownloadOutlined,
   ErrorOutline,
@@ -17,40 +16,18 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Divider,
-  FormControlLabel,
-  Grid,
-  IconButton,
   LinearProgress,
   Paper,
   Stack,
-  Switch,
   Tab,
   Tabs,
-  Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import React, { ChangeEvent, useState } from 'react';
+import { ChangeEvent, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
-import ContributionsTab from './ContributionsTab';
-import DeductionsTab from './DeductionsTab';
-import LeaveAllocationsTab from './LeaveAllocationsTab';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MODULES } from '@/utilities/constants/modules';
-
-const getErrorMessage = (error: any) => {
-  const validationErrors = error?.response?.data?.validation_errors;
-  if (validationErrors && typeof validationErrors === 'object') {
-    const first = Object.values(validationErrors)[0] as any;
-    return Array.isArray(first) ? first[0] : String(first);
-  }
-  return (
-    error?.response?.data?.message || error?.message || 'Something went wrong'
-  );
-};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -64,7 +41,7 @@ const TabPanel = ({ children, value, index }: TabPanelProps) => (
   </div>
 );
 
-const EmployeeOnboardingDialog = ({
+const EmployeeAttendanceDialog = ({
   setOpenDialog,
 }: {
   setOpenDialog: (open: boolean) => void;
@@ -72,16 +49,6 @@ const EmployeeOnboardingDialog = ({
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [settingTab, setSettingTab] = useState(0);
-  const { organizationHasSubscribed }= useJumboAuth();
-
-  const [deductionSettings, setDeductionSettings] = useState<Array<any>>([]);
-  const [contributionSettings, setContributionSettings] = useState<Array<any>>(
-    []
-  );
-  const [allocationsSettings, setAllocationsSettings] = useState<Array<any>>(
-    []
-  );
-  const [autoCreateLedger, setAutoCreateLedger] = useState(false);
 
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<any | null>(null);
@@ -89,12 +56,12 @@ const EmployeeOnboardingDialog = ({
   const queryClient = useQueryClient();
 
   const { mutate: downloadTemplate, isPending: isDownloading } = useMutation({
-    mutationFn: humanResourcesServices.downloadEmployeesRegistrationTemplate,
+    mutationFn: humanResourcesServices.downloadEmployeesAttendanceTemplate,
     onSuccess: (blob: Blob) => {
       const url = window.URL.createObjectURL(blob);
       const anchor = document.createElement('a');
       anchor.href = url;
-      anchor.download = 'employees-registration-template.xlsx';
+      anchor.download = 'employees-attendance-template.xlsx';
       anchor.click();
       window.URL.revokeObjectURL(url);
       enqueueSnackbar('Template downloaded successfully', {
@@ -106,10 +73,10 @@ const EmployeeOnboardingDialog = ({
   });
 
   const { mutate: importExcelMutation, isPending: isImporting } = useMutation({
-    mutationFn: humanResourcesServices.importEmployeesRegistrationExcel,
+    mutationFn: humanResourcesServices.importEmployeesAttendanceExcel,
     onSuccess: (response: any) => {
       setImportResult(response);
-      queryClient.invalidateQueries({ queryKey: ['employees'] });
+      queryClient.invalidateQueries({ queryKey: ['employeesAtteance'] });
 
       if (response.errors && response.errors.length > 0) {
         enqueueSnackbar(
@@ -117,9 +84,12 @@ const EmployeeOnboardingDialog = ({
           { variant: 'warning' }
         );
       } else if (response.imported > 0 && response.skipped === 0) {
-        enqueueSnackbar(response.message || 'Employees imported successfully', {
-          variant: 'success',
-        });
+        enqueueSnackbar(
+          response.message || 'Employees Attendance imported successfully',
+          {
+            variant: 'success',
+          }
+        );
         setOpenDialog(false);
       } else if (response.imported > 0 && response.skipped > 0) {
         enqueueSnackbar(
@@ -129,7 +99,7 @@ const EmployeeOnboardingDialog = ({
       } else {
         enqueueSnackbar(
           response.message ||
-            'No employees were imported. Please check the errors below.',
+            'No employees attendance were imported. Please check the errors below.',
           { variant: 'error' }
         );
       }
@@ -141,11 +111,7 @@ const EmployeeOnboardingDialog = ({
 
   const importExcel = (data: any) => {
     const payload = {
-      employees_excel: data,
-      create_payable_ledgers: !autoCreateLedger ? 0 : 1,
-      deductions: deductionSettings,
-      contributions: contributionSettings,
-      leave_allocations: allocationsSettings,
+      attendance_excel: data,
     };
 
     importExcelMutation(payload);
@@ -162,12 +128,6 @@ const EmployeeOnboardingDialog = ({
       setImportResult(null);
     }
   };
-  const handleSettingTabChange = (
-    event: React.SyntheticEvent,
-    newValue: number
-  ) => {
-    setSettingTab(newValue);
-  };
 
   const handleClose = () => {
     if (!isImporting && !isDownloading) {
@@ -181,7 +141,7 @@ const EmployeeOnboardingDialog = ({
     <>
       <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
         <Typography variant='h5' fontWeight={600}>
-          Employee Onboarding
+          Employee Attendance
         </Typography>
       </DialogTitle>
 
@@ -244,10 +204,8 @@ const EmployeeOnboardingDialog = ({
                 Getting Started
               </Typography>
               <Typography variant='body2' color='text.secondary'>
-                Download the Excel template below. Fill in employee details
-                following the format provided. The template includes dropdown
-                validation for fields like Gender, Department, and Employment
-                Type.
+                Download the Excel template below. Fill in employee attendance
+                details following the format provided.
               </Typography>
             </Alert>
 
@@ -294,7 +252,7 @@ const EmployeeOnboardingDialog = ({
                 />
               </Box>
               <Typography variant='h6' fontWeight={600}>
-                Employee Registration Template
+                Employee Attendance Template
               </Typography>
               <Typography variant='body2' color='text.secondary' align='center'>
                 Excel file with pre-defined columns and dropdown validation
@@ -444,176 +402,6 @@ const EmployeeOnboardingDialog = ({
                 </>
               )}
             </Paper>
-
-            {/* ledger auto-create switch */}
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={autoCreateLedger}
-                    onChange={() => {
-                      setAutoCreateLedger((prev) => !prev);
-                    }}
-                  />
-                }
-                label='Auto create payable ledger'
-              />
-            }
-
-            {/* optional data */}
-            <Tabs
-              value={settingTab}
-              onChange={handleSettingTabChange}
-              variant='fullWidth'
-              sx={{
-                '& .MuiTab-root': {
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  py: 2,
-                  minHeight: 48,
-                  '&.Mui-selected': {
-                    color: theme.palette.primary.main,
-                  },
-                },
-                '& .MuiTabs-indicator': {
-                  height: 3,
-                  borderRadius: '3px 3px 0 0',
-                },
-              }}
-            >
-              <Tab label='Deductions' />
-              <Tab label='Contributions' />
-              <Tab label='Leave Allocations' />
-            </Tabs>
-
-            {settingTab === 0 && (
-              <DeductionsTab setDeductionSettings={setDeductionSettings} />
-            )}
-
-            {settingTab === 1 && (
-              <ContributionsTab
-                setContributionSettings={setContributionSettings}
-              />
-            )}
-
-            {settingTab === 2 && (
-              <LeaveAllocationsTab
-                setAllocationsSettings={setAllocationsSettings}
-              />
-            )}
-
-            {settingTab === 0 &&
-              deductionSettings.length > 0 &&
-              deductionSettings.map((itm: any, idx: number) => (
-                <React.Fragment key={idx}>
-                  <Divider sx={{ py: 0, my: 0 }} />
-                  <Grid container>
-                    <Grid size={5}>
-                      <Tooltip title='Deduction'>
-                        <Typography>{itm.deduction_name}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={5}>
-                      <Tooltip title='Scope'>
-                        <Typography>{itm.scope_lable}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={2}>
-                      <Tooltip title='Delete'>
-                        <IconButton
-                          color='error'
-                          size='small'
-                          onClick={() => {
-                            setDeductionSettings((prev) => {
-                              return prev.filter((item, i) => i !== idx);
-                            });
-                          }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                </React.Fragment>
-              ))}
-
-            {settingTab === 1 &&
-              contributionSettings.length > 0 &&
-              contributionSettings.map((itm: any, idx: number) => (
-                <React.Fragment key={idx}>
-                  <Divider sx={{ py: 0, my: 0 }} />
-                  <Grid container>
-                    <Grid size={5}>
-                      <Tooltip title='Deduction'>
-                        <Typography>{itm.contribution_name}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={5}>
-                      <Tooltip title='Scope'>
-                        <Typography>{itm.scope_lable}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={2}>
-                      <Tooltip title='Delete'>
-                        <IconButton
-                          color='error'
-                          size='small'
-                          onClick={() => {
-                            setContributionSettings((prev) => {
-                              return prev.filter((item, i) => i !== idx);
-                            });
-                          }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                </React.Fragment>
-              ))}
-
-            {settingTab === 2 &&
-              allocationsSettings.length > 0 &&
-              allocationsSettings.map((itm: any, idx: number) => (
-                <React.Fragment key={idx}>
-                  <Divider sx={{ py: 0, my: 0 }} />
-                  <Grid container>
-                    <Grid size={5}>
-                      <Tooltip title='Leave Name'>
-                        <Typography>{itm.leave_name}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={5}>
-                      <Tooltip title='Allocation Amount'>
-                        <Typography>
-                          {parseFloat(itm.allocation_amount).toLocaleString(
-                            'en-US',
-                            {
-                              minimumFractionDigits: 2,
-                              maximumFractionDigits: 2,
-                            }
-                          )}
-                        </Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={2}>
-                      <Tooltip title='Delete'>
-                        <IconButton
-                          color='error'
-                          size='small'
-                          onClick={() => {
-                            setAllocationsSettings((prev) => {
-                              return prev.filter((item, i) => i !== idx);
-                            });
-                          }}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                </React.Fragment>
-              ))}
 
             {file && (
               <Button
@@ -1001,4 +789,4 @@ const EmployeeOnboardingDialog = ({
   );
 };
 
-export default EmployeeOnboardingDialog;
+export default EmployeeAttendanceDialog;

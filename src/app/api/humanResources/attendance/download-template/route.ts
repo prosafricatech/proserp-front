@@ -1,34 +1,13 @@
-import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
+import { getAuthHeaders } from '@/lib/utils/apiUtils';
 import { NextRequest, NextResponse } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL;
 
-export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-
+export async function POST(req: NextRequest) {
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const res = await fetch(`${API_BASE}/payroll-runs/${id}/salary-sheet`, {
-    headers,
-    credentials: 'include',
-  });
-
-  return handleJsonResponse(res);
-}
-
-export async function POST(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
-  const { headers, response } = await getAuthHeaders(req);
-  if (response) return response;
-
-  const res = await fetch(`${API_BASE}/payroll-runs/${id}/salary-sheet`, {
+  const res = await fetch(`${API_BASE}/employee-attendances-import-template`, {
     method: 'POST',
     headers,
     credentials: 'include',

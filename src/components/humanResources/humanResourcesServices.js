@@ -185,6 +185,55 @@ humanResourcesServices.deleteDesignation = async (id) => {
 }
 
 // ============================================
+// PUBLIC HOLIDAYS
+// ============================================
+humanResourcesServices.publicHolidaysLIst = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/publicHolidays', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.addPublicHoliday = async (publicHoliday) => {
+    const { data } = await axios.post(`/api/humanResources/publicHolidays/add`, publicHoliday)
+    return data;
+};
+
+humanResourcesServices.updatePublicHoliday = async (publicHoliday) => {
+    const { data } = await axios.put(`/api/humanResources/publicHolidays/${publicHoliday.id}/update`, publicHoliday)
+    return data;
+}
+
+humanResourcesServices.deletePublicHoliday = async (id) => {
+    const { data } = await axios.delete(`/api/humanResources/publicHolidays/${id}/delete`);
+    return data;
+}
+
+// ============================================
+// ATTENDANCE
+// ============================================
+humanResourcesServices.attendanceLIst = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/attendance', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.downloadEmployeesAttendanceTemplate = async () => {
+    const { data } = await axios.post('/api/humanResources/attendance/download-template', {}, {
+        responseType: 'blob',
+    });
+    return data;
+}
+
+humanResourcesServices.importEmployeesAttendanceExcel = async (file) => {
+    const { data } = await axios.post('/api/humanResources/attendance/import', file, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+}
+
+// ============================================
 // LEAVE TYPES
 // ============================================
 humanResourcesServices.getLeaveTypesList = async (params = {}) => {
@@ -846,13 +895,15 @@ humanResourcesServices.completePayrollRun = async (id) => {
 }
 
 // salary sheet (Bnk transfer list)
-humanResourcesServices.payPayrollRun = async (id) => {
+humanResourcesServices.bankTransferList = async (id) => {
     const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
     return data;
 }
 
-humanResourcesServices.payPayrollRun = async (id) => {
-    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/salary-sheet`);
+humanResourcesServices.bankTransferListExcel = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/salary-sheet`, {}, {
+        responseType: 'blob',
+    });
     return data;
 }
 
