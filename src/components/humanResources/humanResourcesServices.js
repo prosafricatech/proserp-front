@@ -210,6 +210,30 @@ humanResourcesServices.deletePublicHoliday = async (id) => {
 }
 
 // ============================================
+// ATTENDANCE
+// ============================================
+humanResourcesServices.attendanceLIst = async (params = {}) => {
+    const { data } = await axios.get('/api/humanResources/attendance', {
+        params,
+    });
+    return data;
+};
+
+humanResourcesServices.downloadEmployeesAttendanceTemplate = async () => {
+    const { data } = await axios.post('/api/humanResources/attendance/download-template', {}, {
+        responseType: 'blob',
+    });
+    return data;
+}
+
+humanResourcesServices.importEmployeesAttendanceExcel = async (file) => {
+    const { data } = await axios.post('/api/humanResources/attendance/import', file, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+}
+
+// ============================================
 // LEAVE TYPES
 // ============================================
 humanResourcesServices.getLeaveTypesList = async (params = {}) => {

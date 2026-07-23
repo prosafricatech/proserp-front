@@ -346,6 +346,12 @@ export async function getMenus(locale: string) {
           icon: icon('loan_requests'),
         },
         {
+          uri: `/${locale}/humanResources/employeesAttendance`,
+          label: sidebar.menuItem.employeesAttendance,
+          type: 'nav-item',
+          icon: icon('employeesAttendance'),
+        },
+        {
           label: sidebar.menuItem.payroll,
           type: 'collapsible',
           icon: icon('payrollRuns'),

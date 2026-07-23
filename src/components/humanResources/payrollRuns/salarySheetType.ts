@@ -25,5 +25,9 @@ export type SalarySheetType = {
   total_net_salary: number;
   total_employees: number;
   employees_without_bank_account: number;
-  zero_pay_employees?: [];
+  zero_pay_employees?: {
+    employee_id: number;
+    employee_number: number;
+    name: string;
+  }[];
 };

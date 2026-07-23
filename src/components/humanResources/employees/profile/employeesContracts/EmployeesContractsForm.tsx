@@ -79,7 +79,7 @@ const EmployeesContractsForm = ({
     const numericValue = Number(String(value).replace(/,/g, ''));
     return Number.isNaN(numericValue)
       ? ''
-      : numericValue.toLocaleString('en-US');
+      : numericValue.toLocaleString('en-US', { maximumFractionDigits: 2 });
   };
 
   const {
@@ -475,10 +475,14 @@ const EmployeesContractsForm = ({
                           label='Overtime Multiplier'
                           size='small'
                           fullWidth
-                          value={formatCommaSeparatedValue(field.value)}
+                          // value={formatCommaSeparatedValue(field.value)}
+                          value={field.value}
                           onChange={(event) => {
                             const raw = event.target.value.replace(/,/g, '');
-                            field.onChange(raw === '' ? '' : Number(raw));
+                            if (/^\d*\.?\d*$/.test(raw)) {
+                              field.onChange(raw);
+                            }
+                            // field.onChange(raw === '' ? '' : Number(raw));
                           }}
                           error={
                             !!errors?.overtime_multiplier ||
@@ -510,10 +514,14 @@ const EmployeesContractsForm = ({
                           label='Holiday Work Multiplier'
                           size='small'
                           fullWidth
-                          value={formatCommaSeparatedValue(field.value)}
+                          // value={formatCommaSeparatedValue(field.value)}
+                          value={field.value}
                           onChange={(event) => {
                             const raw = event.target.value.replace(/,/g, '');
-                            field.onChange(raw === '' ? '' : Number(raw));
+                            if (/^\d*\.?\d*$/.test(raw)) {
+                              field.onChange(raw);
+                            }
+                            // field.onChange(raw === '' ? '' : Number(raw));
                           }}
                           error={
                             !!errors?.holiday_work_multiplier ||
