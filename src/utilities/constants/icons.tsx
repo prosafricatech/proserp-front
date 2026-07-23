@@ -44,7 +44,6 @@ import {
   StraightenOutlined,
   TroubleshootOutlined,
   TuneOutlined,
-  VerifiedOutlined,
   ViewAgendaOutlined,
 } from '@mui/icons-material';
 
@@ -53,7 +52,7 @@ export const ICONS = {
   dashboard: DashboardCustomizeOutlined,
   requisitions: FormatListNumberedOutlined,
   approvals: ChecklistRtlOutlined,
-  approvedPayments: VerifiedOutlined,
+  approvedPayments: PaymentsOutlined,
   approvedPayrollRuns: FactCheckOutlined,
   approvedPurchases: ShoppingCartCheckout,
   retirements: AssignmentTurnedInOutlined,
