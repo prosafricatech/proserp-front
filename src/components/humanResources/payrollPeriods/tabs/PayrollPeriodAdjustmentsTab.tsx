@@ -955,7 +955,6 @@ const PayrollPeriodAdjustmentsTab = ({
           )}
         </Stack>
       </TabPanel>
-
       {/* Edit Dialog */}
       <Dialog
         open={!!editingAllowance || !!editingDeduction}
@@ -1014,7 +1013,6 @@ const PayrollPeriodAdjustmentsTab = ({
           </Button>
         </MuiDialogActions>
       </Dialog>
-
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteDialogOpen}
