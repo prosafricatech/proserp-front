@@ -34,7 +34,7 @@ import {
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { Fragment, useEffect, useState } from 'react';
 import projectsServices from '../../project-services';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import BudgetsOnscreen from './preview/BudgetsOnscreen';
@@ -585,142 +585,143 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
             {filteredExpenses?.length > 0 ? (
-              filteredExpenses.map((item, index) => {
-                const committed = item?.committed || 0;
-                const percentageSpent =
-                  item?.budgeted === 0
-                    ? Infinity
-                    : (item?.spent / item?.budgeted) * 100;
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell align='right'>Budgeted</TableCell>
+                      <TableCell align='right'>Committed</TableCell>
+                      <TableCell align='right'>Spent</TableCell>
+                      <TableCell align='right'>% Spent</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredExpenses.map((item, index) => {
+                      const committed = item?.committed || 0;
+                      const percentageSpent =
+                        item?.budgeted === 0
+                          ? Infinity
+                          : (item?.spent / item?.budgeted) * 100;
+                      const isLastRow = index === filteredExpenses.length - 1;
 
-                return (
-                  <Grid
-                    key={index}
-                    container
-                    size={12}
-                    width={'100%'}
-                    columnSpacing={2}
-                    alignItems='center'
-                    sx={{
-                      cursor: 'pointer',
-                      borderTop: 1,
-                      borderColor: 'divider',
-                      '&:hover': { bgcolor: 'action.hover' },
-                      padding: 1,
-                    }}
-                  >
-                    <Grid size={{ xs: 12, md: 4 }}>
-                      <Tooltip title='Name'>
-                        <Typography variant='h6'>{item?.name}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 4, md: 2 }}>
-                      <Tooltip title='Budgeted, click to view'>
-                        <Typography
-                          variant='h6'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewBudgeted(item);
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            '&:hover': { color: 'primary.main' },
-                          }}
-                        >
-                          {item?.budgeted.toLocaleString('en-US', {
-                            style: 'currency',
-                            currency: baseCurrency?.code,
-                          })}
-                        </Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 4, md: 2 }}>
-                      <Tooltip title='Committed, click to view'>
-                        <Typography
-                          variant='h6'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewCommitted(item);
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            '&:hover': { color: 'primary.main' },
-                          }}
-                        >
-                          {committed.toLocaleString('en-US', {
-                            style: 'currency',
-                            currency: baseCurrency?.code,
-                          })}
-                        </Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 4, md: 2 }}>
-                      <Tooltip title='Spent, click to view'>
-                        <Box display='flex' alignItems='center' gap={0.5}>
-                          <Typography
-                            variant='h6'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewLedger(item);
-                            }}
+                      return (
+                        <Fragment key={index}>
+                          <TableRow
+                            hover
+                            sx={{ '& > .MuiTableCell-root': { border: 0 } }}
+                          >
+                            <TableCell>
+                              <Typography variant='body1' fontWeight={500}>
+                                {item?.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Budgeted, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewBudgeted(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {item?.budgeted.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Committed, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewCommitted(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {committed.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Spent, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewLedger(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {item?.spent.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Chip
+                                label={
+                                  percentageSpent === Infinity
+                                    ? 'unbudgeted'
+                                    : `${percentageSpent.toFixed(2)}%`
+                                }
+                                color={getPercentageColor(percentageSpent)}
+                                size='small'
+                              />
+                            </TableCell>
+                          </TableRow>
+                          <TableRow
                             sx={{
-                              cursor: 'pointer',
-                              '&:hover': { color: 'primary.main' },
+                              '& > .MuiTableCell-root': {
+                                borderBottom: isLastRow ? 0 : 1,
+                                borderColor: 'divider',
+                              },
                             }}
                           >
-                            {item?.spent.toLocaleString('en-US', {
-                              style: 'currency',
-                              currency: baseCurrency?.code,
-                            })}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 12, md: 2 }}>
-                      <Tooltip title='Percentage Spent'>
-                        <Chip
-                          label={
-                            percentageSpent === Infinity
-                              ? 'unbudgeted'
-                              : `${percentageSpent.toFixed(2)}%`
-                          }
-                          color={getPercentageColor(percentageSpent)}
-                          size='small'
-                        />
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={12} paddingTop={1}>
-                      <Tooltip title='Percentage Spent'>
-                        <Box sx={{ width: '100%', textAlign: 'center' }}>
-                          <LinearProgress
-                            variant='determinate'
-                            value={
-                              percentageSpent === Infinity
-                                ? 100
-                                : percentageSpent
-                            }
-                            color={getPercentageColor(percentageSpent)}
-                            sx={{
-                              height: 15,
-                              borderRadius: 5,
-                              ...(percentageSpent === Infinity ||
-                              percentageSpent >= 100
-                                ? {
-                                    backgroundColor: (theme) =>
-                                      theme.palette.error.main,
-                                    '& .MuiLinearProgress-bar': {
-                                      backgroundColor: (theme) =>
-                                        theme.palette.error.main,
-                                    },
+                            <TableCell colSpan={5} sx={{ pt: 0, pb: 1.5 }}>
+                              <Tooltip title='Percentage Spent'>
+                                <LinearProgress
+                                  variant='determinate'
+                                  value={
+                                    percentageSpent === Infinity
+                                      ? 100
+                                      : percentageSpent
                                   }
-                                : {}),
-                            }}
-                          />
-                        </Box>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                );
-              })
+                                  color={getPercentageColor(percentageSpent)}
+                                  sx={{
+                                    height: 10,
+                                    borderRadius: 5,
+                                    ...(percentageSpent === Infinity ||
+                                    percentageSpent >= 100
+                                      ? {
+                                          backgroundColor: (theme) =>
+                                            theme.palette.error.main,
+                                          '& .MuiLinearProgress-bar': {
+                                            backgroundColor: (theme) =>
+                                              theme.palette.error.main,
+                                          },
+                                        }
+                                      : {}),
+                                  }}
+                                />
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        </Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
               <Alert variant='outlined' severity='info'>
                 No expenses budgeted found
