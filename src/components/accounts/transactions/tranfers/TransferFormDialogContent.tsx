@@ -44,6 +44,21 @@ interface TransferItem {
   description: string;
 }
 
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
+}
+
 interface TransferResponse {
   message?: string;
 }
@@ -87,7 +102,6 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const { ungroupedLedgerOptions } = useLedgerSelect();
     const { enqueueSnackbar } = useSnackbar();
     const [serverError, setServerError] = useState<Record<string, string> | null>(null);
-    const [items, setItems] = useState<TransferItem[]>(transfer?.items || []);
 
     const haveAllCostCenters = checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL);
 
@@ -95,6 +109,26 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const [isDirty, setIsDirty] = useState(false);
     const [clearFormKey, setClearFormKey] = useState(0);
     const [submitItemForm, setSubmitItemForm] = useState(false);
+
+    // Helper function to find currency ID for a ledger
+    const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
+        if (!ledgerId) return undefined;
+        const ledger = ungroupedLedgerOptions.find(l => l.id === ledgerId);
+        return ledger?.currency?.id;
+    };
+
+    // Initialize items with currency IDs from ledger options
+    const getInitialItems = (): TransferItem[] => {
+        if (!transfer?.items) return [];
+        return transfer.items.map((item: TransferItem) => ({
+            ...item,
+            // Find the currency ID from the ledger options
+            item_form_ledger_currency_id: item.item_form_ledger_currency_id || 
+                findLedgerCurrencyId(item.debit_ledger_id),
+        }));
+    };
+
+    const [items, setItems] = useState<TransferItem[]>(getInitialItems());
 
     const addTransfer = useMutation<TransferResponse, Error, TransferFormValues>({
         mutationFn: fundTransferServices.add,
@@ -192,6 +226,14 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     useEffect(() => {
         setValue('items', items);
     }, [items, setValue]);
+
+    // Update items when transfer changes (for edit mode)
+    useEffect(() => {
+        if (transfer?.items) {
+            const updatedItems = getInitialItems();
+            setItems(updatedItems);
+        }
+    }, [transfer]);
 
     const totalAmount = items.reduce((totalAmount, item) => totalAmount + item.amount, 0);
 

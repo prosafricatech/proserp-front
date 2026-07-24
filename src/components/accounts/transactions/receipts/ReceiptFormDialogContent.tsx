@@ -52,6 +52,12 @@ interface Ledger {
   ledger_group_id: number;
   alias: string | null;
   nature_id?: number;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
 }
 
 interface ReceiptResponse {
@@ -105,7 +111,6 @@ function ReceiptFormDialogContent({
   const [serverError, setServerError] = useState<Record<string, string> | null>(
     null
   );
-  const [items, setItems] = useState<ReceiptItem[]>(receipt?.items || []);
 
   const haveAllCostCenters = checkOrganizationPermission(
     PERMISSIONS.COST_CENTERS_ALL
@@ -119,6 +124,26 @@ function ReceiptFormDialogContent({
   const [ledgerType, setLedgerType] = useState<'debit' | 'credit'>('debit');
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
+
+  // Helper function to find currency ID for a ledger
+  const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
+    if (!ledgerId) return undefined;
+    const ledger = ungroupedLedgerOptions.find(l => l.id === ledgerId);
+    return ledger?.currency?.id;
+  };
+
+  // Initialize items with currency IDs from ledger options
+  const getInitialItems = (): ReceiptItem[] => {
+    if (!receipt?.items) return [];
+    return receipt.items.map((item: ReceiptItem) => ({
+      ...item,
+      // Find the currency ID from the ledger options
+      item_form_ledger_currency_id: item.item_form_ledger_currency_id || 
+        findLedgerCurrencyId(item.credit_ledger_id),
+    }));
+  };
+
+  const [items, setItems] = useState<ReceiptItem[]>(getInitialItems());
 
   const addReceipt = useMutation<ReceiptResponse, Error, ReceiptFormValues>({
     mutationFn: receiptServices.add,
@@ -229,6 +254,14 @@ function ReceiptFormDialogContent({
     setValue('items', items);
   }, [items, setValue]);
 
+  // Update items when receipt changes (for edit mode)
+  useEffect(() => {
+    if (receipt?.items) {
+      const updatedItems = getInitialItems();
+      setItems(updatedItems);
+    }
+  }, [receipt]);
+
   const totalAmount = items.reduce(
     (totalAmount, item) => totalAmount + item.amount,
     0
@@ -331,7 +364,7 @@ function ReceiptFormDialogContent({
               <Grid size={{ xs: 12, md: 4 }}>
                 <Div sx={{ mt: 1, mb: 1 }}>
                   <LedgerSelect
-                    addedLedger={addedLedger}
+                    addedLedger={addedLedger as any}
                     frontError={errors.debit_ledger_id}
                     defaultValue={
                       ungroupedLedgerOptions.find(

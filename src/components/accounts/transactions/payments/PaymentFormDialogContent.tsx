@@ -104,7 +104,6 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
     null
   );
   const { enqueueSnackbar } = useSnackbar();
-  const [items, setItems] = useState<PaymentItem[]>(payment?.items || []);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
   const [ledgerType, setLedgerType] = useState('credit');
@@ -114,6 +113,25 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
   const [prevKey, setPrevKey]= useState(0)
   const [submitItemForm, setSubmitItemForm] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
+
+  const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
+    if (!ledgerId) return undefined;
+    const ledger = ungroupedLedgerOptions.find(l => l.id === ledgerId);
+    return ledger?.currency?.id;
+  };
+
+  // Initialize items with currency IDs from ledger options
+  const getInitialItems = (): PaymentItem[] => {
+    if (!payment?.items) return [];
+    return payment.items.map((item: PaymentItem) => ({
+      ...item,
+      item_form_ledger_currency_id: item.item_form_ledger_currency_id || 
+        findLedgerCurrencyId(item.debit_ledger_id) ||
+        findLedgerCurrencyId(item.credit_ledger_id),
+    }));
+  };
+
+  const [items, setItems] = useState<PaymentItem[]>(getInitialItems());
 
   const haveAllCostCenters = checkOrganizationPermission(
     PERMISSIONS.COST_CENTERS_ALL
