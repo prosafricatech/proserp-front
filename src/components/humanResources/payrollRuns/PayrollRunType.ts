@@ -10,6 +10,10 @@ export interface PayrollRunType {
   total_allowances?: number;
   total_deductions?: number;
   payslip_count?: number;
+  created_by_user?: {
+    first_name: string;
+    last_name: string;
+  }
   employee_count?: number;
   net_salary?: number;
   requires_approval?: boolean;
@@ -142,3 +146,4 @@ export interface PayrollRunType {
     };
   };
 }
+

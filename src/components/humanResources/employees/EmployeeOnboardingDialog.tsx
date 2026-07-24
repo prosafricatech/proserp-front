@@ -1,11 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
-=======
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { MODULES } from '@/utilities/constants/modules';
-import { getErrorMessage } from '@/utilities/helpers/errorHandler';
->>>>>>> origin/hr-development
 import {
   CheckCircleOutline,
   Delete,
@@ -75,7 +69,6 @@ const EmployeeOnboardingDialog = ({
 }: {
   setOpenDialog: (open: boolean) => void;
 }) => {
-  const { organizationHasSubscribed } = useJumboAuth();
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [settingTab, setSettingTab] = useState(0);
@@ -439,11 +432,7 @@ const EmployeeOnboardingDialog = ({
             </Paper>
 
             {/* ledger auto-create switch */}
-<<<<<<< HEAD
             {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
-=======
-            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
->>>>>>> origin/hr-development
               <FormControlLabel
                 control={
                   <Switch
@@ -455,12 +444,7 @@ const EmployeeOnboardingDialog = ({
                 }
                 label='Auto create payable ledger'
               />
-<<<<<<< HEAD
             }
-=======
-            )}
->>>>>>> origin/hr-development
-
             {/* optional data */}
             <Tabs
               value={settingTab}
