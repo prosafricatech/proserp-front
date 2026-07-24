@@ -7,6 +7,7 @@ import LedgerGroupProvider from '../ledgerGroups/LedgerGroupProvider';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { MODULES } from '@/utilities/constants/modules';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
+import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 
 export default function Ledgers() {
     const { organizationHasSubscribed } = useJumboAuth();
@@ -24,8 +25,10 @@ export default function Ledgers() {
 
     return (
         <LedgerGroupProvider>
-            <Typography variant="h4" mb={2}>Ledgers</Typography>
-            <LedgersList />
+            <CurrencySelectProvider>
+                <Typography variant="h4" mb={2}>Ledgers</Typography>
+                <LedgersList />    
+            </CurrencySelectProvider>
         </LedgerGroupProvider>
     );
 }

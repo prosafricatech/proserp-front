@@ -16,6 +16,16 @@ export interface Stakeholder {
   vrn: string | null;
   ledger_code?: string | null;
   address: string;
+  currency_id?: number | null;
+  has_transactions?: boolean;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+    name_plural: string;
+    symbol_native: string;
+  } | null;
   email: string | null;
   phone: string | null;
   remarks: string | null;
@@ -28,5 +38,4 @@ export interface Stakeholder {
   create_payable: boolean;
 }
 
-// For an array of stakeholders
 export type Stakeholders = Stakeholder[];

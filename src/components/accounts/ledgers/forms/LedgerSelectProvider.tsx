@@ -4,20 +4,38 @@ import React, { createContext, useContext, useEffect, useState, ReactNode, useMe
 import ledgerServices from '../ledger-services';
 import { useQuery } from '@tanstack/react-query';
 
+// ✅ Updated Ledger interface with currency fields
 interface Ledger {
   id: number;
   name: string;
   code: string | null;
   ledger_group_id: number;
   alias: string | null;
-  nature_id?: number; 
+  nature_id?: number;
+  currency_id?: number | null;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+    name_plural: string;
+    symbol_native: string;
+  } | null;
 }
 
+// ✅ Updated LedgerGroup interface (optional - if groups can have currency)
 interface LedgerGroup {
   nature_id: number;
   original_name: string;
   ledgers?: Ledger[];
   children_with_ledgers?: LedgerGroup[];
+  currency_id?: number | null;  // Optional
+  currency?: {                 // Optional
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
 }
 
 interface LedgerSelectContextType {
@@ -74,7 +92,7 @@ function buildLedgerIndex(groups: LedgerGroup[] | undefined): IndexedLedgerRecor
           result.push({
             ledgerId: ledger.id,
             projectedLedger: {
-              ...ledger,
+              ...ledger,  // ✅ Preserves all fields including currency
               nature_id: currentNatureId,
             },
             groupPath: currentPath.slice(),

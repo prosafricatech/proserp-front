@@ -10,6 +10,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { Stakeholder } from './StakeholderType';
 import { Div } from '@jumbo/shared';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 
 interface StakeholderDialogFormProps {
   stakeholder?: Stakeholder | null;
@@ -30,6 +31,7 @@ type FormData = {
   create_receivable: boolean;
   create_payable: boolean;
   ledger_type?: string;
+  currency_id?: number | null;
 };
 
 interface ApiResponse {
@@ -59,6 +61,7 @@ const stakeholderTypes = [
 
 const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakeholder, toggleOpen }) => {
   const dictionary = useDictionary();
+  
   const validationSchema = yup.object({
     name: yup.string().required(dictionary.stakeholders.form.errors.validation.name.required),
     type: yup.string().required(dictionary.stakeholders.form.errors.validation.type.required).typeError(dictionary.stakeholders.form.errors.validation.typeError),
@@ -70,7 +73,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       )
       .nullable(),
     create_receivable: yup.boolean(),
-    create_payable: yup.boolean()
+    create_payable: yup.boolean(),
+    currency_id: yup.number().nullable()
   }).test('at-least-one-button', 'Select one ledger type', function (value) {
     const { create_receivable, create_payable } = value;
     if (!create_receivable && !create_payable && !stakeholder) {
@@ -85,6 +89,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
     trigger, 
     setError, 
     setValue, 
+    watch,
     formState: { errors } 
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -100,12 +105,12 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       vrn: stakeholder?.vrn || null,
       create_receivable: stakeholder?.create_receivable || false,
       create_payable: stakeholder?.create_payable || false,
+      currency_id: stakeholder?.currency_id ?? stakeholder?.currency?.id ?? null,
     }
   });
 
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
- 
 
   const handleRadioChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const value = event.target.value;
@@ -134,7 +139,11 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
     },
     onError: (error) => {
       const errorMessage = error?.response?.data?.message;
-      errorMessage && enqueueSnackbar(dictionary.stakeholders.form.errors.messages.createResponse, { variant: 'error' });
+      if (errorMessage) {
+        enqueueSnackbar(errorMessage, { variant: 'error' });
+      } else {
+        enqueueSnackbar(dictionary.stakeholders.form.errors.messages.createResponse, { variant: 'error' });
+      }
 
       const validationErrors = error?.response?.data?.validation_errors;
       if (validationErrors) {
@@ -157,9 +166,32 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       queryClient.invalidateQueries({ queryKey: ['stakeholders'] });
     },
     onError: (error) => {
-      enqueueSnackbar(dictionary.stakeholders.form.errors.messages.updateResponse, {
-        variant: 'error',
-      });
+      // Handle validation errors including currency_id
+      const validationErrors = error?.response?.data?.validation_errors;
+      if (validationErrors) {
+        Object.keys(validationErrors).forEach((fieldName) => {
+          const errorMessages = validationErrors[fieldName];
+          setError(fieldName as keyof FormData, {
+            type: 'manual',
+            message: errorMessages.join('<br/>')
+          });
+        });
+        
+        // Show general error message
+        const errorMessage = error?.response?.data?.message;
+        if (errorMessage) {
+          enqueueSnackbar(errorMessage, { variant: 'error' });
+        }
+      } else {
+        const errorMessage = error?.response?.data?.message;
+        if (errorMessage) {
+          enqueueSnackbar(errorMessage, { variant: 'error' });
+        } else {
+          enqueueSnackbar(dictionary.stakeholders.form.errors.messages.updateResponse, {
+            variant: 'error',
+          });
+        }
+      }
     },
   });
 
@@ -174,10 +206,11 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
   return (
     <form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
       <DialogTitle textAlign={'center'}>
-        {!stakeholder?.id ? dictionary.stakeholders.form.title : dictionary.stakeholders.form.pageTitle.replace('{name}' ,stakeholder.name)}
+        {!stakeholder?.id ? dictionary.stakeholders.form.title : dictionary.stakeholders.form.pageTitle.replace('{name}', stakeholder.name)}
       </DialogTitle>
       <DialogContent>
         <Grid container columnSpacing={1}>
+          {/* Name */}
           <Grid size={{xs: 12, md: 6}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -191,6 +224,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
+          
+          {/* Type */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <Autocomplete
@@ -215,7 +250,9 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
-          {!stakeholder &&
+          
+          {/* Ledger Code (only for new stakeholders) */}
+          {!stakeholder && (
             <Grid size={{xs: 12, md: 3}}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <TextField
@@ -228,7 +265,31 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
                 />
               </Div>
             </Grid>
-          }
+          )}
+          
+          {/* Currency */}
+          <Grid size={{xs: 12, md: 3}}>
+            <Div sx={{ mt: 1, mb: 1 }}>
+              <CurrencySelector
+                frontError={
+                  errors?.currency_id?.message
+                    ? { message: errors.currency_id.message }
+                    : null
+                }
+                defaultValue={stakeholder?.currency_id ?? stakeholder?.currency?.id ?? null as any}
+                onChange={(newValue) => {
+                  setValue('currency_id', newValue ? newValue.id : null, {
+                    shouldDirty: true,
+                    shouldValidate: true,
+                  });
+                }}
+                // Optional: You can add disabled prop when stakeholder has transactions
+                // disabled={stakeholder?.has_transactions}
+              />
+            </Div>
+          </Grid>
+          
+          {/* Email */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -242,6 +303,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
+          
+          {/* Phone */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -255,6 +318,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
+          
+          {/* TIN */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -268,6 +333,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
+          
+          {/* VRN */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -281,6 +348,8 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
+          
+          {/* Website */}
           <Grid size={{xs: 12, md: 3}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
@@ -294,7 +363,9 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
-          <Grid size={{xs: 12, md: stakeholder ? 12 : 9}}>
+          
+          {/* Address */}
+          <Grid size={{xs: 12, md: stakeholder ? 9 : 6}}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <TextField
                 size='small'
@@ -309,8 +380,9 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
               />
             </Div>
           </Grid>
-          {
-            !stakeholder ? 
+          
+          {/* Ledger Type (only for new stakeholders) */}
+          {!stakeholder && (
             <Grid size={12}>
               <Div sx={{ mt: 1, mb: 1 }}>
                 <FormLabel component="legend">{dictionary.stakeholders.form.labels.ledgerType}</FormLabel>
@@ -328,8 +400,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
                 )}
               </Div>
             </Grid>
-            : null
-          }
+          )}
         </Grid>
       </DialogContent>
       <DialogActions>

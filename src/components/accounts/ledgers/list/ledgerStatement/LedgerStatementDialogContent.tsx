@@ -23,6 +23,8 @@ import {
   Stack,
   Tab,
   Tabs,
+  Typography,
+  Chip,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
@@ -33,21 +35,39 @@ import { useForm } from 'react-hook-form';
 import ledgerServices from '../../ledger-services';
 import LedgerStatementOnScreen from './LedgerStatementOnScreen';
 
+// ✅ Updated interfaces with currency support
+interface Transaction {
+  transactionDate: string;
+  voucherNo?: string;
+  reference?: string;
+  description: string;
+  debit: number;
+  credit: number;
+  debit_foreign?: number;  // ✅ New: foreign currency debit
+  credit_foreign?: number; // ✅ New: foreign currency credit
+}
+
 interface ReportDocumentProps {
   transactionsData: {
-    transactions: Array<{
-      transactionDate: string;
-      voucherNo?: string;
-      reference?: string;
-      description: string;
-      debit: number;
-      credit: number;
-    }>;
+    transactions: Transaction[];
     filters: {
       from: string;
       to: string;
       cost_centers: Array<{ id: number; name: string }>;
       ledgerName?: string;
+      ledger?: {
+        id: number;
+        name: string;
+        code: string;
+        currency?: {
+          id: number;
+          name: string;
+          code: string;
+          symbol: string;
+          name_plural: string;
+          symbol_native: string;
+        } | null;
+      };
     };
   };
   authOrganization: {
@@ -61,6 +81,11 @@ interface ReportDocumentProps {
     id: number;
     name: string;
     increasesWith?: 'DR' | 'CR';
+    currency?: {
+      id: number;
+      code: string;
+      symbol: string;
+    } | null;
   };
   ledgerName?: string;
   increasesWith?: 'DR' | 'CR';
@@ -72,6 +97,11 @@ interface LedgerStatementDialogContentProps {
     id: number;
     name: string;
     increasesWith?: 'DR' | 'CR';
+    currency?: {
+      id: number;
+      code: string;
+      symbol: string;
+    } | null;
   };
   commingFilters?: {
     from: string;
@@ -81,6 +111,11 @@ interface LedgerStatementDialogContentProps {
     with_item_description: boolean;
     ledgerName?: string;
     increasesWith?: 'DR' | 'CR';
+    currency?: {
+      id: number;
+      code: string;
+      symbol: string;
+    } | null;
   };
 }
 
@@ -94,7 +129,10 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
 }) => {
   const [openingBalanceTx, ...restTransactions] = transactionsData.transactions;
 
-  // Opening balance seeds cumulative balance but is excluded from DR/CR totals
+  const hasForeignCurrency = !!transactionsData.filters.ledger?.currency;
+  const currencySymbol = transactionsData.filters.ledger?.currency?.symbol || '';
+  const currencyCode = transactionsData.filters.ledger?.currency?.code || '';
+
   const openingBalance = openingBalanceTx
     ? increasesWith === 'DR'
       ? openingBalanceTx.debit - openingBalanceTx.credit
@@ -109,34 +147,54 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
     (total: number, transaction) => total + transaction.debit,
     0
   );
-  const mainColor =
-    authOrganization.organization.settings?.main_color || '#2113AD';
-  const lightColor =
-    authOrganization.organization.settings?.light_color || '#bec5da';
-  const contrastText =
-    authOrganization.organization.settings?.contrast_text || '#FFFFFF';
+
+  const totalForeignCredits = hasForeignCurrency ? restTransactions.reduce(
+    (total: number, transaction) => total + (transaction.credit_foreign || 0),
+    0
+  ) : 0;
+
+  const totalForeignDebits = hasForeignCurrency ? restTransactions.reduce(
+    (total: number, transaction) => total + (transaction.debit_foreign || 0),
+    0
+  ) : 0;
+
+  const mainColor = authOrganization.organization.settings?.main_color || '#2113AD';
+  const lightColor = authOrganization.organization.settings?.light_color || '#bec5da';
+  const contrastText = authOrganization.organization.settings?.contrast_text || '#FFFFFF';
   const costCenters = transactionsData.filters.cost_centers;
 
   let runningBalance = openingBalance;
+  let foreignRunningBalance = hasForeignCurrency ? 
+    (openingBalanceTx ? (increasesWith === 'DR'
+      ? (openingBalanceTx.debit_foreign || 0) - (openingBalanceTx.credit_foreign || 0)
+      : (openingBalanceTx.credit_foreign || 0) - (openingBalanceTx.debit_foreign || 0)) : 0) : 0;
 
   const tableRows = [
     ...(openingBalanceTx
-      ? [
-          {
-            transactionDate: openingBalanceTx.transactionDate,
-            reference: '',
-            description: openingBalanceTx.description,
-            debit: null as number | null,
-            credit: null as number | null,
-            balance: openingBalance,
-          },
-        ]
+      ? [{
+          transactionDate: openingBalanceTx.transactionDate,
+          reference: '',
+          description: openingBalanceTx.description,
+          debit: null as number | null,
+          credit: null as number | null,
+          balance: openingBalance,
+          debit_foreign: hasForeignCurrency ? (openingBalanceTx.debit_foreign || null) : null,
+          credit_foreign: hasForeignCurrency ? (openingBalanceTx.credit_foreign || null) : null,
+          balance_foreign: hasForeignCurrency ? (openingBalanceTx.debit_foreign || 0) - (openingBalanceTx.credit_foreign || 0) : null,
+        }]
       : []),
     ...restTransactions.map((transaction) => {
       runningBalance +=
         increasesWith === 'DR'
           ? transaction.debit - transaction.credit
           : transaction.credit - transaction.debit;
+
+      if (hasForeignCurrency) {
+        foreignRunningBalance +=
+          increasesWith === 'DR'
+            ? (transaction.debit_foreign || 0) - (transaction.credit_foreign || 0)
+            : (transaction.credit_foreign || 0) - (transaction.debit_foreign || 0);
+      }
 
       return {
         transactionDate: transaction.transactionDate,
@@ -146,6 +204,9 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
         debit: transaction.debit,
         credit: transaction.credit,
         balance: runningBalance,
+        debit_foreign: hasForeignCurrency ? (transaction.debit_foreign || null) : null,
+        credit_foreign: hasForeignCurrency ? (transaction.credit_foreign || null) : null,
+        balance_foreign: hasForeignCurrency ? foreignRunningBalance : null,
       };
     }),
   ];
@@ -158,23 +219,28 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
     >
       <Page size='A4' style={pdfStyles.page}>
         <View style={pdfStyles.table}>
+          {/* Header Section */}
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
             <View style={{ flex: 1, maxWidth: 120 }}>
               <PdfLogo organization={authOrganization.organization} />
             </View>
             <View style={{ flex: 1, textAlign: 'right' }}>
-              <Text
-                style={{ ...pdfStyles.majorInfo, color: mainColor }}
-              >{`Ledger Statement`}</Text>
-              <Text
-                style={{ ...pdfStyles.midInfo }}
-              >{`${ledger?.name || ledgerName}`}</Text>
-              <Text
-                style={{ ...pdfStyles.minInfo }}
-              >{`${readableDate(transactionsData.filters.from, true)} - ${readableDate(transactionsData.filters.to, true)}`}</Text>
+              <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>Ledger Statement</Text>
+              <Text style={{ ...pdfStyles.midInfo }}>{`${ledger?.name || ledgerName}`}</Text>
+              {hasForeignCurrency && (
+                <Text style={{ ...pdfStyles.midInfo}}>
+                 {currencyCode}
+                </Text>
+              )}
+              <Text style={{ ...pdfStyles.minInfo }}>
+                {`${readableDate(transactionsData.filters.from, true)} - ${readableDate(transactionsData.filters.to, true)}`}
+              </Text>
             </View>
           </View>
-          <View style={{ ...pdfStyles.tableRow, marginTop: 10 }}>
+
+          {/* ── INFO ROW: TOTALS + PRINTED INFO (SAME LINE) ── */}
+          <View style={{ ...pdfStyles.tableRow, marginTop: 10, marginBottom: 6 }}>
+            {/* Total Credits */}
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
                 Total Credits
@@ -186,6 +252,8 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
                 })}
               </Text>
             </View>
+
+            {/* Total Debits */}
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
                 Total Debits
@@ -197,12 +265,46 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
                 })}
               </Text>
             </View>
+
+            {/* Foreign Totals (if exists) */}
+            {hasForeignCurrency && (
+              <>
+                <View style={{ flex: 1, padding: 2 }}>
+                  <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+                    Total Credits ({currencyCode})
+                  </Text>
+                  <Text style={{ ...pdfStyles.minInfo }}>
+                    {currencySymbol} {totalForeignCredits.toLocaleString('en-US', {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, padding: 2 }}>
+                  <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+                    Total Debits ({currencyCode})
+                  </Text>
+                  <Text style={{ ...pdfStyles.minInfo }}>
+                    {currencySymbol} {totalForeignDebits.toLocaleString('en-US', {
+                      maximumFractionDigits: 2,
+                      minimumFractionDigits: 2,
+                    })}
+                  </Text>
+                </View>
+              </>
+            )}
+
+            {/* Printed By */}
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
                 Printed By
               </Text>
-              <Text style={{ ...pdfStyles.minInfo }}>{user.name}</Text>
+              <Text style={{ ...pdfStyles.minInfo }}>
+                {user.name}
+              </Text>
             </View>
+
+            {/* Printed On */}
             <View style={{ flex: 1, padding: 2 }}>
               <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
                 Printed On
@@ -212,216 +314,103 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
               </Text>
             </View>
           </View>
-          <View style={{ ...pdfStyles.tableRow, marginBottom: 2 }}>
-            {Array.isArray(costCenters) && costCenters.length > 0 && (
+
+          {/* ── COST CENTERS ── */}
+          {Array.isArray(costCenters) && costCenters.length > 0 && (
+            <View style={{ ...pdfStyles.tableRow, marginBottom: 6 }}>
               <View style={{ flex: 2, padding: 2 }}>
                 <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
                   Cost Centers
                 </Text>
                 <Text style={{ ...pdfStyles.minInfo }}>
-                  {costCenters
-                    .map((cost_centers) => cost_centers.name)
-                    .join(', ')}
+                  {costCenters.map((cc) => cc.name).join(', ')}
                 </Text>
               </View>
+            </View>
+          )}
+
+          {/* ── TABLE ── */}
+          <View style={pdfStyles.tableRow}>
+            {/* Table headers */}
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Date</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Reference</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 2 }}>Description</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Debit</Text>
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Credit</Text>
+            {hasForeignCurrency && (
+              <>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Debit     ({currencyCode})</Text>
+                <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1 }}>Credit    ({currencyCode})</Text>
+              </>
+            )}
+            <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Balance</Text>
+            {hasForeignCurrency && (
+              <Text style={{ ...pdfStyles.tableHeader, backgroundColor: mainColor, color: contrastText, flex: 1.5 }}>Balance       ({currencyCode})</Text>
             )}
           </View>
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1.5,
-              }}
-            >
-              Date
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Reference
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Description
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Debit
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Credit
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1.5,
-              }}
-            >
-              Balance
-            </Text>
-          </View>
+
+          {/* Data rows */}
           {tableRows.map((row, index) => (
-            <View
-              key={`${row.transactionDate}-${index}`}
-              style={pdfStyles.tableRow}
-            >
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.5,
-                }}
-              >
+            <View key={`${row.transactionDate}-${index}`} style={pdfStyles.tableRow}>
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5 }}>
                 {readableDate(row.transactionDate)}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1,
-                }}
-              >
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1 }}>
                 {row.reference}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 2,
-                }}
-              >
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 2 }}>
                 {row.description}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1,
-                  textAlign: 'right',
-                }}
-              >
-                {row.debit && row.debit !== 0
-                  ? row.debit.toLocaleString('en-US', {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
-                    })
-                  : '-'}
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>
+                {row.debit && row.debit !== 0 ? row.debit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1,
-                  textAlign: 'right',
-                }}
-              >
-                {row.credit && row.credit !== 0
-                  ? row.credit.toLocaleString('en-US', {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
-                    })
-                  : '-'}
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>
+                {row.credit && row.credit !== 0 ? row.credit.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}
               </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-                  flex: 1.5,
-                  textAlign: 'right',
-                }}
-              >
-                {row.balance.toLocaleString('en-US', {
-                  maximumFractionDigits: 2,
-                  minimumFractionDigits: 2,
-                }) === '-0.00'
-                  ? '0.00'
-                  : row.balance.toLocaleString('en-US', {
-                      maximumFractionDigits: 2,
-                      minimumFractionDigits: 2,
-                    })}
+              {hasForeignCurrency && (
+                <>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>
+                    {row.debit_foreign && row.debit_foreign !== 0 ? row.debit_foreign.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}
+                  </Text>
+                  <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1, textAlign: 'right' }}>
+                    {row.credit_foreign && row.credit_foreign !== 0 ? row.credit_foreign.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) : '-'}
+                  </Text>
+                </>
+              )}
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>
+                {row.balance.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) === '-0.00' ? '0.00' : row.balance.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
               </Text>
+              {hasForeignCurrency && (
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor, flex: 1.5, textAlign: 'right' }}>
+                  {row.balance_foreign?.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) === '-0.00' ? '0.00' : row.balance_foreign?.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 }) || '-'}
+                </Text>
+              )}
             </View>
           ))}
+
           {/* TOTAL row */}
           <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: mainColor,
-                color: contrastText,
-                fontWeight: 'bold',
-                textAlign: 'center',
-                flex: 4.7,
-              }}
-            >
-              TOTAL
+            <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', textAlign: 'center', flex: 4.7 }}>TOTAL</Text>
+            <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>
+              {totalDebits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
             </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: mainColor,
-                color: contrastText,
-                fontWeight: 'bold',
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              {totalDebits.toLocaleString('en-US', {
-                maximumFractionDigits: 2,
-                minimumFractionDigits: 2,
-              })}
+            <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>
+              {totalCredits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
             </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: mainColor,
-                color: contrastText,
-                fontWeight: 'bold',
-                flex: 1,
-                textAlign: 'right',
-              }}
-            >
-              {totalCredits.toLocaleString('en-US', {
-                maximumFractionDigits: 2,
-                minimumFractionDigits: 2,
-              })}
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1.5,
-              }}
-            ></Text>
+            {hasForeignCurrency && (
+              <>
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>
+                  {totalForeignDebits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                </Text>
+                <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, fontWeight: 'bold', flex: 1, textAlign: 'right' }}>
+                  {totalForeignCredits.toLocaleString('en-US', { maximumFractionDigits: 2, minimumFractionDigits: 2 })}
+                </Text>
+              </>
+            )}
+            <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5 }} />
+            {hasForeignCurrency && (
+              <Text style={{ ...pdfStyles.tableCell, backgroundColor: mainColor, color: contrastText, flex: 1.5 }} />
+            )}
           </View>
         </View>
         <PageFooter />
@@ -517,11 +506,25 @@ const LedgerStatementDialogContent: React.FC<
   const effectiveTo = watch('to') || commingFilters?.to;
   const downloadFileName = `${ledger?.name || ledgerName} Statement ${readableDate(effectiveFrom)}-${readableDate(effectiveTo)}`;
 
+  const hasForeignCurrency = !!(
+    transactions?.filters.ledger?.currency ||
+    ledger?.currency ||
+    commingFilters?.currency
+  );
+
+  const currencyCode = transactions?.filters.ledger?.currency?.code ||
+    ledger?.currency?.code ||
+    commingFilters?.currency?.code ||
+    '';
+
   const exportedData = {
     transactionsData: transactions,
     authOrganization: authOrganization,
     user: user,
-    ledger: ledger,
+    ledger: {
+      ...ledger,
+      currency: transactions?.filters.ledger?.currency || ledger?.currency,
+    },
     ledgerName: ledgerName,
     increasesWith: ledger?.increasesWith || commingFilters?.increasesWith,
   };
@@ -536,8 +539,6 @@ const LedgerStatementDialogContent: React.FC<
       a.download = `${'Ledger_Statement_Report_'} ${readableDate(exportedData.transactionsData?.filters?.from, true)} - ${readableDate(exportedData.transactionsData?.filters?.to, true)}.xlsx`;
       a.click();
       window.URL.revokeObjectURL(url);
-
-      // console.log('blob: ', blob);
     } catch (e) {
       console.log('error exporting: ', e);
     } finally {
@@ -567,7 +568,19 @@ const LedgerStatementDialogContent: React.FC<
             {!commingFilters && (
               <>
                 <Grid size={{ xs: 12 }}>
-                  {ledger && ledger.name + ' statement'}
+                  <Stack direction="row" spacing={1} alignItems="center" justifyContent="center">
+                    <Typography variant="h6">
+                      {ledger && ledger.name + ' statement'}
+                    </Typography>
+                    {hasForeignCurrency && (
+                      <Chip
+                        label={currencyCode}
+                        size="small"
+                        color="primary"
+                        variant="outlined"
+                      />
+                    )}
+                  </Stack>
                 </Grid>
                 {!ledger && (
                   <Grid size={{ xs: 12, md: 4 }}>
@@ -749,7 +762,14 @@ const LedgerStatementDialogContent: React.FC<
                       transactionsData={transactions}
                       authOrganization={authOrganization}
                       user={user}
-                      ledger={ledger}
+                      ledger={
+                        ledger ? {
+                          id: ledger.id,
+                          name: ledger.name,
+                          increasesWith: ledger.increasesWith,
+                          currency: transactions.filters.ledger?.currency || ledger.currency,
+                        } : undefined
+                      }
                       ledgerName={ledgerName}
                     />
                   }

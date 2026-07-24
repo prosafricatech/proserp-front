@@ -1,3 +1,5 @@
+'use client'
+
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
 import {
   Autocomplete,
@@ -7,6 +9,8 @@ import {
   TextField,
   CircularProgress,
   createFilterOptions,
+  Typography,
+  Stack,
 } from '@mui/material';
 import React, { useEffect, useMemo, useCallback, useState } from 'react';
 import { useLedgerSelect } from './LedgerSelectProvider';
@@ -21,6 +25,15 @@ interface Ledger {
   ledger_group_id: number;
   alias: string | null;
   nature_id?: number;
+  currency_id?: number | null;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+    name_plural: string;
+    symbol_native: string;
+  } | null;
 }
 
 type LedgerRef = number | Ledger | { id: number };
@@ -38,11 +51,7 @@ interface LedgerSelectProps {
   addedLedger?: Ledger | null;
   multiple?: boolean;
   startAdornment?: React.ReactNode;
-  renderOption?: (
-    props: React.HTMLAttributes<HTMLLIElement>,
-    option: Ledger,
-    state: { selected: boolean }
-  ) => React.ReactNode;
+  showCurrency?: boolean;
 }
 
 function LedgerSelect(props: LedgerSelectProps) {
@@ -59,6 +68,7 @@ function LedgerSelect(props: LedgerSelectProps) {
     addedLedger = null,
     multiple = false,
     startAdornment,
+    showCurrency = true,
   } = props;
 
   const { extractLedgers, isLoaded } = useLedgerSelect();
@@ -78,7 +88,7 @@ function LedgerSelect(props: LedgerSelectProps) {
     return { allowedLedgerIds, notAllowedLedgerIds };
   }, [allowedLedgers, notAllowedLedgers, toLedgerId]);
 
-  // Compute options directly from provider cache; avoids per-instance async churn.
+  // Compute options directly from provider cache
   const options = useMemo(() => {
     if (!isLoaded) return [];
 
@@ -119,16 +129,27 @@ function LedgerSelect(props: LedgerSelectProps) {
     return option.id === val.id;
   }, []);
 
-  // Memoize getOptionLabel
+  // ✅ Only show currency code if it exists and showCurrency is true
   const getOptionLabel = useCallback((option: Ledger) => {
-    return option.name;
-  }, []);
+    if (showCurrency && option.currency) {
+      return `${option.name} (${option.currency.code})`;
+    }
+    return option.name; // ✅ Return just name if no currency
+  }, [showCurrency]);
 
+  // ✅ Filter includes currency code in search only if currency exists
   const baseFilter = useMemo(
     () =>
       createFilterOptions<Ledger>({
         trim: true,
-        stringify: (option) => `${option.name} ${option.code ?? ''}`,
+        stringify: (option) => {
+          let searchText = `${option.name} ${option.code ?? ''}`;
+          // ✅ Only add currency to search if it exists
+          if (option.currency) {
+            searchText += ` ${option.currency.code} ${option.currency.name}`;
+          }
+          return searchText;
+        },
       }),
     []
   );
@@ -143,40 +164,121 @@ function LedgerSelect(props: LedgerSelectProps) {
     [baseFilter]
   );
 
-  // Memoize renderInput
-  const renderInput = useCallback((params: any) => (
-    <TextField
-      {...params}
-      size='small'
-      fullWidth
-      label={label}
-      error={!!frontError}
-      helperText={frontError?.message}
-      InputProps={{
-        ...params.InputProps,
-        startAdornment: (
-          <>
-            {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
-            {params.InputProps.startAdornment}
-          </>
-        ),
-      }}
-    />
-  ), [label, frontError, startAdornment]);
+  // ✅ Render input - no currency suffix in label
+  const renderInput = useCallback((params: any) => {
+    return (
+      <TextField
+        {...params}
+        size='small'
+        fullWidth
+        label={label}
+        error={!!frontError}
+        helperText={frontError?.message}
+        InputProps={{
+          ...params.InputProps,
+          startAdornment: (
+            <>
+              {startAdornment && <Box sx={{ mr: 0.5 }}>{startAdornment}</Box>}
+              {params.InputProps.startAdornment}
+            </>
+          ),
+        }}
+      />
+    );
+  }, [label, frontError, startAdornment]);
 
-  // Memoize renderTags
+  // ✅ Render tags - only show currency code if it exists
   const renderTags = useCallback((tagValue: Ledger[], getTagProps: any) => {
     return tagValue.map((option: Ledger, index: number) => {
       const { key, ...restProps } = getTagProps({ index });
+      // ✅ Only add currency code to label if it exists
+      let label = option.name;
+      if (showCurrency && option.currency) {
+        label = `${option.name} (${option.currency.code})`;
+      }
+      
       return (
         <Chip
           {...restProps}
           key={`${option.id}-${key}`}
-          label={option.name}
+          label={label}
+          size="small"
         />
       );
     });
-  }, []);
+  }, [showCurrency]);
+
+  // ✅ Render option - only show currency chip if it exists
+  const renderOption = useCallback((
+    props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
+    option: Ledger,
+    { selected }: { selected: boolean }
+  ) => {
+    const { key, ...otherProps } = props;
+
+    // ✅ Currency chip - only render if currency exists
+    const currencyChip = option.currency && showCurrency ? (
+      <Typography
+        variant="caption"
+        sx={{
+          backgroundColor: 'primary.light',
+          padding: '0 8px',
+          borderRadius: '4px',
+          fontSize: '0.65rem',
+          fontWeight: 500,
+          color: 'primary.contrastText',
+          ml: 1,
+          height: '18px',
+          display: 'inline-flex',
+          alignItems: 'center',
+        }}
+      >
+        {option.currency.code}
+      </Typography>
+    ) : null;
+
+    // Ledger code display (if exists)
+    const ledgerCode = option.code ? (
+      <Typography
+        variant="caption"
+        sx={{
+          color: 'text.disabled',
+          fontSize: '0.7rem',
+          ml: 0.5,
+        }}
+      >
+        #{option.code}
+      </Typography>
+    ) : null;
+
+    if (multiple) {
+      return (
+        <li key={option.id} {...otherProps}>
+          <Checkbox
+            icon={<CheckBoxOutlineBlank fontSize='small' />}
+            checkedIcon={<CheckBox fontSize='small' />}
+            style={{ marginRight: 8 }}
+            checked={selected}
+          />
+          <Stack direction="row" spacing={0.5} alignItems="center" flex={1}>
+            <Typography variant="body2">{option.name}</Typography>
+            {currencyChip}
+            {ledgerCode}
+          </Stack>
+        </li>
+      );
+    }
+
+    return (
+      <li key={option.id} {...otherProps}>
+        <Stack direction="row" spacing={0.5} alignItems="center" flex={1}>
+          <Typography variant="body2">{option.name}</Typography>
+          {currencyChip}
+          {ledgerCode}
+        </Stack>
+      </li>
+    );
+  }, [multiple, showCurrency]);
 
   // Show loading state
   if (!isLoaded) {
@@ -207,27 +309,7 @@ function LedgerSelect(props: LedgerSelectProps) {
       loading={!isLoaded}
       loadingText="Loading ledgers..."
       renderInput={renderInput}
-      {...(multiple && {
-        renderOption: (
-          props: React.HTMLAttributes<HTMLLIElement> & { key?: React.Key },
-          option: Ledger,
-          { selected }
-        ) => {
-          const { key, ...otherProps } = props;
-
-          return (
-            <li key={option.id} {...otherProps}>
-              <Checkbox
-                icon={<CheckBoxOutlineBlank fontSize='small' />}
-                checkedIcon={<CheckBox fontSize='small' />}
-                style={{ marginRight: 8 }}
-                checked={selected}
-              />
-              {option.name}
-            </li>
-          );
-        },
-      })}
+      renderOption={renderOption}
       onChange={(
         event: React.SyntheticEvent,
         newValue: Ledger | Ledger[] | null

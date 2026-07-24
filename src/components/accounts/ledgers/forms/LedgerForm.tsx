@@ -1,5 +1,6 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
+import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import axios from '@/lib/services/config';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -45,6 +46,16 @@ interface Ledger {
     name: string;
   };
   ledger_group_id?: number;
+  currency_id?: number | null;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+    name_plural: string;
+    symbol_native: string;
+  } | null;
+  has_transactions?: boolean; // For disabling currency field
 }
 
 interface LedgerGroupOption {
@@ -65,6 +76,7 @@ interface FormValues {
   opening_balance_side?: 'credit' | 'debit';
   as_at?: string | null;
   cost_center_id?: number | null;
+  currency_id?: number | null;
 }
 
 interface LedgerFormProps {
@@ -87,11 +99,10 @@ export default function LedgerForm({
   const { enqueueSnackbar } = useSnackbar();
   const { ledgerGroupOptions } = useLedgerGroup();
   const queryClient = useQueryClient();
-  const [isFetching, setIsFetching] = useState(false);
-  const [openQuickAddLedgerGroup, setOpenQuickAddLedgerGroup] = useState(false);
+  const [isFetching, setIsFetching]= useState(false);
+  const [openQuickAddLedgerGroup, setOpenQuickAddLedgerGroup]= useState(false);
   const { authOrganization } = useJumboAuth();
-  const [openingBalanceCostCenter, setOpeningBalanceCostCenter] =
-    useState<any>(null);
+  const [openingBalanceCostCenter, setOpeningBalanceCostCenter]= useState<any>(null);
   const [serverError, setServerError] = useState<Record<
     string,
     string[]
@@ -162,6 +173,7 @@ export default function LedgerForm({
         }
         return schema;
       }),
+    currency_id: yup.number().nullable(),
   });
 
   const {
@@ -169,6 +181,7 @@ export default function LedgerForm({
     setValue,
     handleSubmit,
     control,
+    watch,
     formState: { errors, isSubmitting },
   } = useForm<FormValues>({
     defaultValues: {
@@ -178,6 +191,7 @@ export default function LedgerForm({
       description: ledger?.description || '',
       ledger_group_id: ledger?.ledger_group?.id || null,
       as_at: authOrganization?.organization?.recording_start_date,
+      currency_id: ledger?.currency_id ?? ledger?.currency?.id ?? null,
     },
     resolver: yupResolver(validationSchema) as any,
   });
@@ -191,6 +205,7 @@ export default function LedgerForm({
       setValue('ledger_group_id', ledger.ledger_group?.id || null);
       setValue('code', ledger.code);
       setValue('description', ledger.description);
+      setValue('currency_id', ledger.currency_id ?? ledger?.currency?.id ?? null);
 
       axios
         .get(
@@ -223,6 +238,13 @@ export default function LedgerForm({
         });
     }
   }, [ledger, setValue]);
+
+  // Clear server errors when form values change
+  useEffect(() => {
+    if (serverError) {
+      setServerError(null);
+    }
+  }, [watch('name'), watch('ledger_group_id'), watch('currency_id')]);
 
   if (isFetching) {
     return (
@@ -258,7 +280,7 @@ export default function LedgerForm({
         <form autoComplete='off'>
           <Grid container spacing={1}>
             <Grid size={12}>
-              <Div sx={{ mb: 1 }}>
+              <Div sx={{ mt: 1 }}>
                 <TextField
                   fullWidth
                   label='Ledger Name'
@@ -271,7 +293,7 @@ export default function LedgerForm({
             </Grid>
             {!openQuickAddLedgerGroup && (
               <Grid size={{ xs: 12, md: 6 }}>
-                <Div sx={{ mt: 1, mb: 1 }}>
+                <Div sx={{ mt: 1 }}>
                   <Controller
                     control={control}
                     name='ledger_group_id'
@@ -356,7 +378,7 @@ export default function LedgerForm({
             {!openQuickAddLedgerGroup && (
               <>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
+                  <Div sx={{ mt: 1 }}>
                     <TextField
                       fullWidth
                       label='Alias (Optional)'
@@ -371,7 +393,7 @@ export default function LedgerForm({
                   </Div>
                 </Grid>
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
+                  <Div sx={{ mt: 1 }}>
                     <TextField
                       fullWidth
                       label='Code (Optional)'
@@ -385,10 +407,38 @@ export default function LedgerForm({
                     )}
                   </Div>
                 </Grid>
+
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Div sx={{ mt: 1, mb: 1 }}>
+                  <Div sx={{ mt: 1 }}>
+                    <CurrencySelector
+                      frontError={
+                        errors?.currency_id?.message || serverError?.currency_id?.[0]
+                          ? { message: errors?.currency_id?.message || serverError?.currency_id?.[0] }
+                          : null
+                      }
+                      defaultValue={ledger?.currency_id ?? ledger?.currency?.id ?? null as any}
+                      disabled={ledger?.has_transactions ?? false}
+                      onChange={(newValue) => {
+                        setValue('currency_id', newValue ? newValue.id : null, {
+                          shouldDirty: true,
+                          shouldValidate: true,
+                        });
+                      }}
+                    />
+                    {ledger?.has_transactions && (
+                      <Typography variant='caption' color='text.secondary'>
+                        Currency locked — this ledger already has transactions
+                      </Typography>
+                    )}
+                  </Div>
+                </Grid>
+
+                <Grid size={{ xs: 12, md: 12 }}>
+                  <Div sx={{ mt: 1 }}>
                     <TextField
                       fullWidth
+                      multiline
+                      rows={2}
                       label='Description (Optional)'
                       size='small'
                       {...register('description')}
@@ -460,7 +510,7 @@ export default function LedgerForm({
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+              <Div sx={{ mt: 1 }}>
                 <DateTimePicker
                   label='As at (MM/DD/YYYY)'
                   value={dayjs(
@@ -476,7 +526,7 @@ export default function LedgerForm({
               </Div>
             </Grid>
             <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
+              <Div sx={{ mt: 1 }}>
                 <CostCenterSelector
                   label='Cost Centers'
                   multiple={false}

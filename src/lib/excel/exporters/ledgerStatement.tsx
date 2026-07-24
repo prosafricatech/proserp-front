@@ -20,7 +20,10 @@ export async function exportLedgerStatement(exportedData: any) {
     const reportPeriod = `${reportFrom} - ${reportTo}`;
     const effectiveLedgerName = ledger?.name || ledgerName || '';
 
-    // ── Replicate the same tableRows logic from the PDF component ──────────────
+    const hasForeignCurrency = !!transactionsData.filters.ledger?.currency;
+    const currencyCode = transactionsData.filters.ledger?.currency?.code || '';
+
+    // ── Process transactions ──────────────────────────────────────────────────
     const [openingBalanceTx, ...restTransactions] =
       transactionsData.transactions;
 
@@ -30,284 +33,372 @@ export async function exportLedgerStatement(exportedData: any) {
         : openingBalanceTx.credit - openingBalanceTx.debit
       : 0;
 
+    const foreignOpeningBalance = openingBalanceTx && hasForeignCurrency
+      ? increasesWith === 'DR'
+        ? (openingBalanceTx.debit_foreign || 0) - (openingBalanceTx.credit_foreign || 0)
+        : (openingBalanceTx.credit_foreign || 0) - (openingBalanceTx.debit_foreign || 0)
+      : 0;
+
     const totalCredits = restTransactions.reduce(
-      (total: number, t: any) => total + t.credit,
+      (total: number, t: any) => total + (t.credit || 0),
       0
     );
     const totalDebits = restTransactions.reduce(
-      (total: number, t: any) => total + t.debit,
+      (total: number, t: any) => total + (t.debit || 0),
       0
     );
 
+    const totalForeignCredits = hasForeignCurrency ? restTransactions.reduce(
+      (total: number, t: any) => total + (t.credit_foreign || 0),
+      0
+    ) : 0;
+
+    const totalForeignDebits = hasForeignCurrency ? restTransactions.reduce(
+      (total: number, t: any) => total + (t.debit_foreign || 0),
+      0
+    ) : 0;
+
+    // Build table rows
     let runningBalance = openingBalance;
+    let foreignRunningBalance = foreignOpeningBalance;
 
-    const tableRows = [
-      ...(openingBalanceTx
-        ? [
-            {
-              transactionDate: openingBalanceTx.transactionDate,
-              reference: '',
-              description: openingBalanceTx.description,
-              debit: null as number | null,
-              credit: null as number | null,
-              balance: openingBalance,
-            },
-          ]
-        : []),
-      ...restTransactions.map((transaction: any) => {
-        runningBalance +=
+    const tableRows = [];
+
+    if (openingBalanceTx) {
+      tableRows.push({
+        transactionDate: openingBalanceTx.transactionDate,
+        reference: '',
+        description: 'Opening Balance',
+        debit: null as number | null,
+        credit: null as number | null,
+        balance: openingBalance,
+        debit_foreign: hasForeignCurrency ? (openingBalanceTx.debit_foreign || null) : null,
+        credit_foreign: hasForeignCurrency ? (openingBalanceTx.credit_foreign || null) : null,
+        balance_foreign: hasForeignCurrency ? foreignOpeningBalance : null,
+        isOpeningBalance: true,
+      });
+    }
+
+    for (const transaction of restTransactions) {
+      runningBalance +=
+        increasesWith === 'DR'
+          ? (transaction.debit || 0) - (transaction.credit || 0)
+          : (transaction.credit || 0) - (transaction.debit || 0);
+
+      if (hasForeignCurrency) {
+        foreignRunningBalance +=
           increasesWith === 'DR'
-            ? transaction.debit - transaction.credit
-            : transaction.credit - transaction.debit;
+            ? (transaction.debit_foreign || 0) - (transaction.credit_foreign || 0)
+            : (transaction.credit_foreign || 0) - (transaction.debit_foreign || 0);
+      }
 
-        return {
-          transactionDate: transaction.transactionDate,
-          reference:
-            `${transaction.voucherNo ? transaction.voucherNo : ''} ${transaction.reference ? transaction.reference : ''}`.trim(),
-          description: transaction.description,
-          debit: transaction.debit,
-          credit: transaction.credit,
-          balance: runningBalance,
-        };
-      }),
-    ];
+      tableRows.push({
+        transactionDate: transaction.transactionDate,
+        reference:
+          `${transaction.voucherNo ? transaction.voucherNo : ''} ${transaction.reference ? transaction.reference : ''}`.trim(),
+        description: transaction.description,
+        debit: transaction.debit || 0,
+        credit: transaction.credit || 0,
+        balance: runningBalance,
+        debit_foreign: hasForeignCurrency ? (transaction.debit_foreign || null) : null,
+        credit_foreign: hasForeignCurrency ? (transaction.credit_foreign || null) : null,
+        balance_foreign: hasForeignCurrency ? foreignRunningBalance : null,
+        isOpeningBalance: false,
+      });
+    }
 
     // ── Workbook & worksheet ───────────────────────────────────────────────────
     const wb = createWorkbook();
     const ws = wb.addWorksheet('Ledger Statement');
 
-    // Column widths — mirrors PDF flex values:
-    // A=Date(flex 1.5), B=Reference(flex 1), C=Description(flex 2), D=Debit(flex 1), E=Credit(flex 1), F=Balance(flex 1.5)
-    ws.columns = [
-      { width: 22 }, // A — Date
-      { width: 22 }, // B — Reference
-      { width: 40 }, // C — Description
-      { width: 20 }, // D — Debit
-      { width: 20 }, // E — Credit
-      { width: 22 }, // F — Balance
-    ];
+    const columnCount = hasForeignCurrency ? 9 : 6;
+    if (hasForeignCurrency) {
+      ws.columns = [
+        { width: 22 }, { width: 22 }, { width: 40 },
+        { width: 18 }, { width: 18 }, { width: 18 },
+        { width: 18 }, { width: 22 }, { width: 22 }
+      ];
+    } else {
+      ws.columns = [
+        { width: 22 }, { width: 22 }, { width: 40 },
+        { width: 20 }, { width: 20 }, { width: 22 }
+      ];
+    }
 
-    // ── ROW 1: Org name (A) + Report title (F) ────────────────────────────────
-    ws.addRow([organization.name, ' ', ' ', ' ', ' ', 'Ledger Statement']);
-    ws.getCell('A1').font = { bold: true, size: 12 };
-    ws.getCell('F1').font = { bold: true, size: 12 };
+    let currentRow = 1;
 
-    // ── ROW 2: Ledger name (F) ─────────────────────────────────────────────────
-    ws.addRow([' ', ' ', ' ', ' ', ' ', effectiveLedgerName]);
-    ws.getCell('F2').font = { bold: true, size: 11 };
+    // ── ROW 1: Organization name ──────────────────────────────────────────────
+    ws.getCell(`A${currentRow}`).value = organization.name;
+    ws.getCell(`A${currentRow}`).font = { bold: true, size: 12 };
+    if (hasForeignCurrency) {
+      ws.getCell(`I${currentRow}`).value = 'Ledger Statement';
+      ws.getCell(`I${currentRow}`).font = { bold: true, size: 12 };
+      ws.getCell(`I${currentRow}`).alignment = { horizontal: 'right' };
+    } else {
+      ws.getCell(`F${currentRow}`).value = 'Ledger Statement';
+      ws.getCell(`F${currentRow}`).font = { bold: true, size: 12 };
+      ws.getCell(`F${currentRow}`).alignment = { horizontal: 'right' };
+    }
+    currentRow++;
 
-    // ── ROW 3: Report period (F) ───────────────────────────────────────────────
-    ws.addRow([' ', ' ', ' ', ' ', ' ', reportPeriod]);
-    ws.getCell('F3').font = { bold: true, size: 10 };
+    // ── ROW 2: Ledger name ────────────────────────────────────────────────────
+    const ledgerDisplayName = hasForeignCurrency 
+      ? `${effectiveLedgerName} (${currencyCode})`
+      : effectiveLedgerName;
+    if (hasForeignCurrency) {
+      ws.getCell(`I${currentRow}`).value = ledgerDisplayName;
+      ws.getCell(`I${currentRow}`).font = { bold: true, size: 11 };
+      ws.getCell(`I${currentRow}`).alignment = { horizontal: 'right' };
+    } else {
+      ws.getCell(`F${currentRow}`).value = ledgerDisplayName;
+      ws.getCell(`F${currentRow}`).font = { bold: true, size: 11 };
+      ws.getCell(`F${currentRow}`).alignment = { horizontal: 'right' };
+    }
+    currentRow++;
+
+    // ── ROW 3: Report period ──────────────────────────────────────────────────
+    if (hasForeignCurrency) {
+      ws.getCell(`I${currentRow}`).value = reportPeriod;
+      ws.getCell(`I${currentRow}`).font = { bold: true, size: 10 };
+      ws.getCell(`I${currentRow}`).alignment = { horizontal: 'right' };
+    } else {
+      ws.getCell(`F${currentRow}`).value = reportPeriod;
+      ws.getCell(`F${currentRow}`).font = { bold: true, size: 10 };
+      ws.getCell(`F${currentRow}`).alignment = { horizontal: 'right' };
+    }
+    currentRow++;
 
     // ── ROW 4: Spacer ──────────────────────────────────────────────────────────
-    ws.addRow([]);
+    currentRow++;
 
-    // ── ROW 5: Info labels — Total Credits | Total Debits | Printed By | Printed On
-    // Mirrors the PDF's 4-column info row (each flex: 1)
-    // Mapped to: A=Total Credits, B=Total Debits, C= (gap), D=Printed By, E= (gap), F=Printed On (condensed to 6 cols)
-    ws.addRow([
-      'Total Credits',
-      'Total Debits',
-      ' ',
-      'Printed By',
-      ' ',
-      'Printed On',
-    ]);
-    for (let col = 65; col <= 70; col++) {
-      applyCellStyle(
-        ws.getCell(`${String.fromCharCode(col)}5`),
-        CELL_STYLES.tableHeader
-      );
-    }
-    ws.getRow(5).height = 20;
+    // ── ROW 5: INFO LABELS (ALL IN ONE ROW) ──────────────────────────────────
+    const infoLabels = hasForeignCurrency
+      ? [
+          'Total Credits',
+          'Total Debits',
+          `Total Credits (${currencyCode})`,
+          `Total Debits (${currencyCode})`,
+          'Printed By',
+          'Printed On',
+          '', '', ''
+        ]
+      : [
+          'Total Credits',
+          'Total Debits',
+          'Printed By',
+          'Printed On',
+          '', ''
+        ];
 
-    // ── ROW 6: Info values ─────────────────────────────────────────────────────
-    ws.addRow([
-      totalCredits,
-      totalDebits,
-      ' ',
-      user?.name,
-      ' ',
-      readableDate(undefined, true),
-    ]);
-    ws.getCell('A6').numFmt = '#,###.00';
-    ws.getCell('B6').numFmt = '#,###.00';
-    for (let col = 65; col <= 70; col++) {
-      ws.getCell(`${String.fromCharCode(col)}6`).border = {
-        top: { style: 'thin', color: { argb: COLORS.BLACK } },
-        bottom: { style: 'thin', color: { argb: COLORS.BLACK } },
-        left: { style: 'thin', color: { argb: COLORS.BLACK } },
-        right: { style: 'thin', color: { argb: COLORS.BLACK } },
-      };
-    }
-    ws.getRow(6).height = 18;
-
-    // ── ROWS 7–8: Cost Centers (conditional) ──────────────────────────────────
-    if (Array.isArray(costCenters) && costCenters.length > 0) {
-      ws.addRow(['Cost Centers', ' ', ' ', ' ', ' ', ' ']);
-      applyCellStyle(ws.getCell('A7'), CELL_STYLES.tableHeader);
-      ws.getRow(7).height = 20;
-
-      ws.addRow([costCenters.map((cc: any) => cc.name).join(', ')]);
-      ws.getCell('A8').border = {
-        top: { style: 'thin', color: { argb: COLORS.BLACK } },
-        bottom: { style: 'thin', color: { argb: COLORS.BLACK } },
-        left: { style: 'thin', color: { argb: COLORS.BLACK } },
-        right: { style: 'thin', color: { argb: COLORS.BLACK } },
-      };
-      ws.getRow(8).height = 18;
-    }
-
-    // ── Spacer before table ────────────────────────────────────────────────────
-    ws.addRow([]);
-
-    // ── TABLE HEADER ROW ───────────────────────────────────────────────────────
-    // Columns mirror PDF: Date | Reference | Description | Debit | Credit | Balance
-    const headerRowNum = (ws.lastRow?.number ?? 0) + 1;
-    ws.addRow([
-      'Date',
-      'Reference',
-      'Description',
-      'Debit',
-      'Credit',
-      'Balance',
-    ]);
-    ws.getRow(headerRowNum).height = 25;
-    for (let col = 65; col <= 70; col++) {
-      applyCellStyle(
-        ws.getCell(`${String.fromCharCode(col)}${headerRowNum}`),
-        CELL_STYLES.tableHeader
-      );
-    }
-    // Numeric headers right-aligned
-    ws.getCell(`D${headerRowNum}`).alignment = {
-      horizontal: 'right',
-      vertical: 'middle',
-    };
-    ws.getCell(`E${headerRowNum}`).alignment = {
-      horizontal: 'right',
-      vertical: 'middle',
-    };
-    ws.getCell(`F${headerRowNum}`).alignment = {
-      horizontal: 'right',
-      vertical: 'middle',
-    };
-
-    // ── DATA ROWS ──────────────────────────────────────────────────────────────
-    tableRows.forEach((row: any) => {
-      const rowNum = (ws.lastRow?.number ?? 0) + 1;
-
-      ws.getCell(`A${rowNum}`).value = readableDate(row.transactionDate);
-      ws.getCell(`B${rowNum}`).value = row.reference ?? '';
-      // Split \n into separate richText segments — ExcelJS requires the literal
-      // '\n' character inside a richText text value to produce an XML line break.
-      // A single richText block with \n embedded does NOT render as a line break;
-      // it must be a real newline character (\n) inside the text string.
-      const descriptionLines = `${row.description}`.split('\n');
-      ws.getCell(`C${rowNum}`).value = {
-        richText: descriptionLines.flatMap((line, i) =>
-          i < descriptionLines.length - 1
-            ? [{ text: line }, { text: '\n' }]
-            : [{ text: line }]
-        ),
-      };
-
-      // Debit — show null/0 as blank (matching PDF logic)
-      ws.getCell(`D${rowNum}`).value =
-        row.debit && row.debit !== 0 ? row.debit : null;
-      if (row.debit && row.debit !== 0)
-        ws.getCell(`D${rowNum}`).numFmt = '#,###.00';
-
-      // Credit — show null/0 as blank
-      ws.getCell(`E${rowNum}`).value =
-        row.credit && row.credit !== 0 ? row.credit : null;
-      if (row.credit && row.credit !== 0)
-        ws.getCell(`E${rowNum}`).numFmt = '#,###.00';
-
-      // Balance — handle '-0.00' edge case exactly like the PDF
-      const balanceDisplay =
-        row.balance.toLocaleString('en-US', {
-          maximumFractionDigits: 2,
-          minimumFractionDigits: 2,
-        }) === '-0.00'
-          ? 0
-          : row.balance;
-      ws.getCell(`F${rowNum}`).value = balanceDisplay;
-      ws.getCell(`F${rowNum}`).numFmt = '#,###.00';
-
-      // Apply borders/style to all cells FIRST
-      for (let col = 65; col <= 70; col++) {
-        applyCellStyle(
-          ws.getCell(`${String.fromCharCode(col)}${rowNum}`),
-          CELL_STYLES.dataRowText
-        );
+    for (let col = 0; col < columnCount; col++) {
+      const cell = ws.getCell(`${String.fromCharCode(65 + col)}${currentRow}`);
+      cell.value = infoLabels[col] || '';
+      applyCellStyle(cell, CELL_STYLES.tableHeader);
+      if (col < 4 || (hasForeignCurrency && col < 4)) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
       }
+    }
+    ws.getRow(currentRow).height = 20;
+    currentRow++;
 
-      // Set alignment AFTER applyCellStyle so it is not overwritten.
-      // wrapText: true is required for the \n line breaks to actually render in Excel.
-      ws.getCell(`C${rowNum}`).alignment = {
-        wrapText: true,
-        vertical: 'top',
-      };
-      ws.getCell(`D${rowNum}`).alignment = {
-        horizontal: 'right',
-        vertical: 'middle',
-      };
-      ws.getCell(`E${rowNum}`).alignment = {
-        horizontal: 'right',
-        vertical: 'middle',
-      };
-      ws.getCell(`F${rowNum}`).alignment = {
-        horizontal: 'right',
-        vertical: 'middle',
-      };
-    });
+    // ── ROW 6: INFO VALUES (ALL IN ONE ROW) ──────────────────────────────────
+    const infoValues = hasForeignCurrency
+      ? [
+          totalCredits || 0,
+          totalDebits || 0,
+          totalForeignCredits || 0,
+          totalForeignDebits || 0,
+          user?.name || '',
+          readableDate(undefined, true),
+          '', '', ''
+        ]
+      : [
+          totalCredits || 0,
+          totalDebits || 0,
+          user?.name || '',
+          readableDate(undefined, true),
+          '', ''
+        ];
 
-    // ── TOTAL ROW ──────────────────────────────────────────────────────────────
-    // PDF: merged label (flex 4.7) | totalDebits | totalCredits | blank balance cell
-    // Excel: A:C merged = TOTAL, D = totalDebits, E = totalCredits, F = blank
-    const totalRowNum = (ws.lastRow?.number ?? 0) + 1;
+    for (let col = 0; col < columnCount; col++) {
+      const cell = ws.getCell(`${String.fromCharCode(65 + col)}${currentRow}`);
+      const value = infoValues[col];
+      if (value !== undefined && value !== '') {
+        cell.value = value;
+        if (col < 4 || (hasForeignCurrency && col < 4)) {
+          cell.numFmt = '#,###.00';
+          cell.alignment = { horizontal: 'right', vertical: 'middle' };
+        }
+      }
+      cell.border = {
+        top: { style: 'thin', color: { argb: COLORS.BLACK } },
+        bottom: { style: 'thin', color: { argb: COLORS.BLACK } },
+        left: { style: 'thin', color: { argb: COLORS.BLACK } },
+        right: { style: 'thin', color: { argb: COLORS.BLACK } },
+      };
+    }
+    ws.getRow(currentRow).height = 18;
+    currentRow++;
+
+    // ── ROW 7: Spacer ──────────────────────────────────────────────────────────
+    currentRow++;
+
+    // ── ROW 8: Cost Centers ────────────────────────────────────────────────────
+    if (Array.isArray(costCenters) && costCenters.length > 0) {
+      const ccLabels = ['Cost Centers', '', '', '', '', '', '', '', ''];
+      for (let col = 0; col < columnCount; col++) {
+        const cell = ws.getCell(`${String.fromCharCode(65 + col)}${currentRow}`);
+        cell.value = ccLabels[col] || '';
+        applyCellStyle(cell, CELL_STYLES.tableHeader);
+      }
+      ws.getRow(currentRow).height = 20;
+      currentRow++;
+
+      const ccNames = costCenters.map((cc: any) => cc.name).join(', ');
+      const cell = ws.getCell(`A${currentRow}`);
+      cell.value = ccNames;
+      cell.border = {
+        top: { style: 'thin', color: { argb: COLORS.BLACK } },
+        bottom: { style: 'thin', color: { argb: COLORS.BLACK } },
+        left: { style: 'thin', color: { argb: COLORS.BLACK } },
+        right: { style: 'thin', color: { argb: COLORS.BLACK } },
+      };
+      ws.getRow(currentRow).height = 18;
+      currentRow++;
+    }
+
+    // ── ROW 9: Spacer ──────────────────────────────────────────────────────────
+    currentRow++;
+
+    // ── TABLE HEADER ROW ──────────────────────────────────────────────────────
+    const headers = hasForeignCurrency
+      ? ['Date', 'Reference', 'Description', 'Debit', 'Credit', `Debit (${currencyCode})`, `Credit (${currencyCode})`, 'Balance', `Balance (${currencyCode})`]
+      : ['Date', 'Reference', 'Description', 'Debit', 'Credit', 'Balance'];
+
+    for (let col = 0; col < columnCount; col++) {
+      const cell = ws.getCell(`${String.fromCharCode(65 + col)}${currentRow}`);
+      cell.value = headers[col] || '';
+      applyCellStyle(cell, CELL_STYLES.tableHeader);
+      if (col >= 3) {
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+      }
+    }
+    ws.getRow(currentRow).height = 25;
+    currentRow++;
+
+    // ── DATA ROWS ─────────────────────────────────────────────────────────────
+    if (tableRows.length === 0) {
+      ws.getCell(`A${currentRow}`).value = 'No transactions found';
+      currentRow++;
+    } else {
+      for (const row of tableRows) {
+        const rowNum = currentRow;
+        
+        ws.getCell(`A${rowNum}`).value = readableDate(row.transactionDate);
+        ws.getCell(`B${rowNum}`).value = row.reference || '';
+        ws.getCell(`C${rowNum}`).value = row.description || '';
+        
+        if (row.debit && row.debit !== 0) {
+          ws.getCell(`D${rowNum}`).value = row.debit;
+          ws.getCell(`D${rowNum}`).numFmt = '#,###.00';
+        } else {
+          ws.getCell(`D${rowNum}`).value = null;
+        }
+        
+        if (row.credit && row.credit !== 0) {
+          ws.getCell(`E${rowNum}`).value = row.credit;
+          ws.getCell(`E${rowNum}`).numFmt = '#,###.00';
+        } else {
+          ws.getCell(`E${rowNum}`).value = null;
+        }
+
+        if (hasForeignCurrency) {
+          if (row.debit_foreign && row.debit_foreign !== 0) {
+            ws.getCell(`F${rowNum}`).value = row.debit_foreign;
+            ws.getCell(`F${rowNum}`).numFmt = '#,###.00';
+          } else {
+            ws.getCell(`F${rowNum}`).value = null;
+          }
+
+          if (row.credit_foreign && row.credit_foreign !== 0) {
+            ws.getCell(`G${rowNum}`).value = row.credit_foreign;
+            ws.getCell(`G${rowNum}`).numFmt = '#,###.00';
+          } else {
+            ws.getCell(`G${rowNum}`).value = null;
+          }
+
+          if (row.balance_foreign !== null && row.balance_foreign !== undefined) {
+            const balanceDisplay = Math.abs(row.balance_foreign) < 0.005 ? 0 : row.balance_foreign;
+            ws.getCell(`I${rowNum}`).value = balanceDisplay;
+            ws.getCell(`I${rowNum}`).numFmt = '#,###.00';
+          } else {
+            ws.getCell(`I${rowNum}`).value = null;
+          }
+        }
+
+        const balanceDisplay = Math.abs(row.balance) < 0.005 ? 0 : row.balance;
+        const balanceCol = hasForeignCurrency ? 'H' : 'F';
+        ws.getCell(`${balanceCol}${rowNum}`).value = balanceDisplay;
+        ws.getCell(`${balanceCol}${rowNum}`).numFmt = '#,###.00';
+
+        for (let col = 0; col < columnCount; col++) {
+          const cell = ws.getCell(`${String.fromCharCode(65 + col)}${rowNum}`);
+          applyCellStyle(cell, CELL_STYLES.dataRowText);
+          if (col >= 3) {
+            cell.alignment = { horizontal: 'right', vertical: 'middle' };
+          }
+        }
+        
+        ws.getCell(`C${rowNum}`).alignment = { wrapText: true, vertical: 'top' };
+
+        if (row.isOpeningBalance) {
+          for (let col = 0; col < columnCount; col++) {
+            const cell = ws.getCell(`${String.fromCharCode(65 + col)}${rowNum}`);
+            cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFF5F5F5' } };
+          }
+        }
+
+        currentRow++;
+      }
+    }
+
+    // ── TOTAL ROW ─────────────────────────────────────────────────────────────
+    const totalRowNum = currentRow;
     ws.getRow(totalRowNum).height = 20;
 
     ws.mergeCells(`A${totalRowNum}:C${totalRowNum}`);
-    ws.getCell(`A${totalRowNum}`).value = 'TOTAL';
-    ws.getCell(`A${totalRowNum}`).alignment = {
-      horizontal: 'center',
-      vertical: 'middle',
-    };
+    const totalLabelCell = ws.getCell(`A${totalRowNum}`);
+    totalLabelCell.value = 'TOTAL';
+    totalLabelCell.alignment = { horizontal: 'center', vertical: 'middle' };
+    applyCellStyle(totalLabelCell, CELL_STYLES.tableHeader);
 
-    // Apply tableHeader style to all cells in total row
-    for (let col = 65; col <= 70; col++) {
-      applyCellStyle(
-        ws.getCell(`${String.fromCharCode(col)}${totalRowNum}`),
-        CELL_STYLES.tableHeader
-      );
+    for (let col = 0; col < columnCount; col++) {
+      const cell = ws.getCell(`${String.fromCharCode(65 + col)}${totalRowNum}`);
+      if (col >= 3) {
+        applyCellStyle(cell, CELL_STYLES.tableHeader);
+        cell.alignment = { horizontal: 'right', vertical: 'middle' };
+      }
     }
 
-    ws.getCell(`D${totalRowNum}`).value = totalDebits;
+    ws.getCell(`D${totalRowNum}`).value = totalDebits || 0;
     ws.getCell(`D${totalRowNum}`).numFmt = '#,###.00';
-    ws.getCell(`D${totalRowNum}`).alignment = {
-      horizontal: 'right',
-      vertical: 'middle',
-    };
-
-    ws.getCell(`E${totalRowNum}`).value = totalCredits;
+    ws.getCell(`E${totalRowNum}`).value = totalCredits || 0;
     ws.getCell(`E${totalRowNum}`).numFmt = '#,###.00';
-    ws.getCell(`E${totalRowNum}`).alignment = {
-      horizontal: 'right',
-      vertical: 'middle',
-    };
 
-    ws.getCell(`F${totalRowNum}`).value = '';
+    if (hasForeignCurrency) {
+      ws.getCell(`F${totalRowNum}`).value = totalForeignDebits || 0;
+      ws.getCell(`F${totalRowNum}`).numFmt = '#,###.00';
+      ws.getCell(`G${totalRowNum}`).value = totalForeignCredits || 0;
+      ws.getCell(`G${totalRowNum}`).numFmt = '#,###.00';
+      ws.getCell(`H${totalRowNum}`).value = null;
+      ws.getCell(`I${totalRowNum}`).value = null;
+    } else {
+      ws.getCell(`F${totalRowNum}`).value = null;
+    }
 
-    // Return Excel buffer
     return await wb.xlsx.writeBuffer();
-    // return tableRows;
   } catch (e: any) {
     console.error('Error exporting Ledger Statement Excel:', e);
-    throw new Error(
-      e?.message || 'Excel export failed during workbook generation'
-    );
+    throw new Error(e?.message || 'Excel export failed during workbook generation');
   }
-}
+};

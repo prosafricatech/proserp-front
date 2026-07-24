@@ -15,6 +15,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { useParams, useSearchParams } from 'next/navigation';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import CurrencySelectProvider from '../Currencies/CurrencySelectProvider';
 
 function Stakeholders() {
     const params = useParams<{ category?: string; id?: string; keyword?: string }>();
@@ -81,7 +82,7 @@ function Stakeholders() {
     }
 
 return (
-    <React.Fragment>
+    <CurrencySelectProvider>
         <Typography variant={'h4'} mb={2}>{dictionary.stakeholders.form.labels.listHeader}</Typography>
         <JumboRqList
             ref={listRef}
@@ -124,7 +125,7 @@ return (
                 </JumboListToolbar>
             }
         />
-    </React.Fragment>
+    </CurrencySelectProvider>
 );
 }
 
