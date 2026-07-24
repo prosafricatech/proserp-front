@@ -7,15 +7,19 @@ export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  const { headers, response } = await getAuthHeaders(req);
-  if (response) return response;
+    const { headers, response } = await getAuthHeaders(req);
+    if (response) return response;
 
-  const res = await fetch(`${API_BASE}/payroll-period-allowancess/${id}`, {
-    method: 'DELETE',
-    headers,
-  });
+    const res = await fetch(`${API_BASE}/payroll-period-allowances/${id}`, {
+      method: 'DELETE',
+      headers,
+    });
 
-  return handleJsonResponse(res);
+    return handleJsonResponse(res);
+  } catch (error) {
+    console.log('error: ', error);
+  }
 }

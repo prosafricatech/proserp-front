@@ -8,7 +8,6 @@ import {
   EditOutlined,
   ErrorOutline,
   InsertDriveFileOutlined,
-  Refresh,
   UploadOutlined,
 } from '@mui/icons-material';
 import {
@@ -19,27 +18,27 @@ import {
   Chip,
   CircularProgress,
   Dialog,
+  IconButton,
+  LinearProgress,
   DialogActions as MuiDialogActions,
   DialogContent as MuiDialogContent,
   DialogTitle as MuiDialogTitle,
-  IconButton,
-  LinearProgress,
   Paper,
   Stack,
   Tab,
-  Tabs,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  Tabs,
   TextField,
   Tooltip,
   Typography,
   useTheme,
 } from '@mui/material';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import React, { ChangeEvent, useState } from 'react';
 import humanResourcesServices from '../../humanResourcesServices';
@@ -65,6 +64,10 @@ interface PeriodAllowance {
   amount: number;
   remarks: string | null;
   employee: AdjustmentEmployee;
+  allowance_type: {
+    id: number;
+    name: string;
+  };
   allowanceType: {
     id: number;
     name: string;
@@ -79,7 +82,11 @@ interface PeriodDeduction {
   amount: number;
   remarks: string | null;
   employee: AdjustmentEmployee;
-  deductionType: {
+  deduction_type: {
+    id: number;
+    name: string;
+  };
+  deductionType?: {
     id: number;
     name: string;
   };
@@ -146,22 +153,26 @@ const PayrollPeriodAdjustmentsTab = ({
 }: PayrollPeriodAdjustmentsTabProps) => {
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
-  const isDark = theme.type=== 'dark';
+  const isDark = theme.type === 'dark';
 
   const [tabValue, setTabValue] = useState(0);
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
   // Edit states
-  const [editingAllowance, setEditingAllowance] = useState<PeriodAllowance | null>(null);
-  const [editingDeduction, setEditingDeduction] = useState<PeriodDeduction | null>(null);
+  const [editingAllowance, setEditingAllowance] =
+    useState<PeriodAllowance | null>(null);
+  const [editingDeduction, setEditingDeduction] =
+    useState<PeriodDeduction | null>(null);
   const [editAmount, setEditAmount] = useState<number>(0);
   const [editRemarks, setEditRemarks] = useState<string>('');
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
-  const [deletingType, setDeletingType] = useState<'allowance' | 'deduction' | null>(null);
+  const [deletingType, setDeletingType] = useState<
+    'allowance' | 'deduction' | null
+  >(null);
 
   const monthName = MONTH_NAMES[month] || month;
 
@@ -172,11 +183,13 @@ const PayrollPeriodAdjustmentsTab = ({
     refetch: refetchAdjustments,
   } = useQuery({
     queryKey: ['periodAdjustments', String(payrollPeriodId)],
-    queryFn: () => humanResourcesServices.periodAdjustmentReview(payrollPeriodId),
+    queryFn: () =>
+      humanResourcesServices.periodAdjustmentReview(payrollPeriodId),
     enabled: tabValue === 0,
   });
 
-  const adjustments: PeriodAdjustments = adjustmentsData?.data || adjustmentsData || { allowances: [], deductions: [] };
+  const adjustments: PeriodAdjustments = adjustmentsData?.data ||
+    adjustmentsData || { allowances: [], deductions: [] };
 
   // Download template mutation
   const { mutate: downloadTemplate, isPending: isDownloading } = useMutation({
@@ -199,12 +212,14 @@ const PayrollPeriodAdjustmentsTab = ({
   // Upload adjustments mutation
   const { mutate: importAdjustments, isPending: isImporting } = useMutation({
     mutationFn: (file: File) =>
-      humanResourcesServices.importPeriodAdjustmentExcel(payrollPeriodId, file),
+      humanResourcesServices.importPeriodAdjustmentExcel(payrollPeriodId, {
+        adjustments_excel: file,
+      }),
     onSuccess: (response: any) => {
       const result = response.data || response;
       setImportResult(result);
       setFile(null);
-      
+
       if (result.errors && result.errors.length > 0) {
         enqueueSnackbar(
           `${result.message}. ${result.errors.length} error(s) found. Check the details below.`,
@@ -319,7 +334,10 @@ const PayrollPeriodAdjustmentsTab = ({
     }
   };
 
-  const handleEditClick = (item: PeriodAllowance | PeriodDeduction, type: 'allowance' | 'deduction') => {
+  const handleEditClick = (
+    item: PeriodAllowance | PeriodDeduction,
+    type: 'allowance' | 'deduction'
+  ) => {
     if (type === 'allowance') {
       const allowance = item as PeriodAllowance;
       setEditingAllowance(allowance);
@@ -371,65 +389,74 @@ const PayrollPeriodAdjustmentsTab = ({
 
     if (allowances.length === 0 && deductions.length === 0) {
       return (
-        <Alert severity="info" sx={{ borderRadius: 2 }}>
-          No adjustments uploaded for this period. Go to the "Upload" tab to add ad-hoc allowances or deductions.
+        <Alert severity='info' sx={{ borderRadius: 2 }}>
+          No adjustments uploaded for this period. Go to the "Upload" tab to add
+          ad-hoc allowances or deductions.
         </Alert>
       );
     }
 
-    const renderTableRows = (items: PeriodAllowance[] | PeriodDeduction[], type: 'allowance' | 'deduction') => {
+    const renderTableRows = (
+      items: PeriodAllowance[] | PeriodDeduction[],
+      type: 'allowance' | 'deduction'
+    ) => {
       if (items.length === 0) return null;
 
       return items.map((item) => {
         const isAllowance = type === 'allowance';
         const employee = item.employee;
         const typeName = isAllowance
-          ? (item as PeriodAllowance).allowanceType?.name || 'N/A'
-          : (item as PeriodDeduction).deductionType?.name || 'N/A';
+          ? (item as PeriodAllowance).allowance_type?.name ||
+            (item as PeriodAllowance).allowanceType?.name ||
+            'N/A'
+          : (item as PeriodDeduction).deduction_type?.name ||
+            (item as PeriodDeduction).deductionType?.name ||
+            'N/A';
 
         return (
           <TableRow key={item.id} hover>
             <TableCell>
-              <Typography variant="body2">
-                {employee?.employee_number || 'N/A'} — {employee?.first_name || ''} {employee?.last_name || ''}
+              <Typography variant='body2'>
+                {employee?.employee_number || 'N/A'} —{' '}
+                {employee?.first_name || ''} {employee?.last_name || ''}
               </Typography>
             </TableCell>
             <TableCell>
               <Chip
                 label={typeName}
-                size="small"
+                size='small'
                 color={isAllowance ? 'success' : 'error'}
-                variant="outlined"
+                variant='outlined'
               />
             </TableCell>
-            <TableCell align="right">
-              <Typography variant="body2" fontWeight="medium">
+            <TableCell align='right'>
+              <Typography variant='body2' fontWeight='medium'>
                 {item.amount.toLocaleString()}
               </Typography>
             </TableCell>
             <TableCell>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 {item.remarks || '-'}
               </Typography>
             </TableCell>
-            <TableCell align="center">
-              <Stack direction="row" spacing={0.5} justifyContent="center">
-                <Tooltip title="Edit">
+            <TableCell align='center'>
+              <Stack direction='row' spacing={0.5} justifyContent='center'>
+                <Tooltip title='Edit'>
                   <IconButton
-                    size="small"
+                    size='small'
                     onClick={() => handleEditClick(item, type)}
-                    color="primary"
+                    color='primary'
                   >
-                    <EditOutlined fontSize="small" />
+                    <EditOutlined fontSize='small' />
                   </IconButton>
                 </Tooltip>
-                <Tooltip title="Delete">
+                <Tooltip title='Delete'>
                   <IconButton
-                    size="small"
+                    size='small'
                     onClick={() => handleDeleteClick(item.id, type)}
-                    color="error"
+                    color='error'
                   >
-                    <DeleteOutline fontSize="small" />
+                    <DeleteOutline fontSize='small' />
                   </IconButton>
                 </Tooltip>
               </Stack>
@@ -440,15 +467,19 @@ const PayrollPeriodAdjustmentsTab = ({
     };
 
     return (
-      <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
-        <Table size="small">
+      <TableContainer
+        component={Paper}
+        variant='outlined'
+        sx={{ borderRadius: 2 }}
+      >
+        <Table size='small'>
           <TableHead>
             <TableRow sx={{ bgcolor: isDark ? 'action.hover' : 'grey.50' }}>
               <TableCell>Employee</TableCell>
               <TableCell>Type</TableCell>
-              <TableCell align="right">Amount</TableCell>
+              <TableCell align='right'>Amount</TableCell>
               <TableCell>Remarks</TableCell>
-              <TableCell align="center">Actions</TableCell>
+              <TableCell align='center'>Actions</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -510,22 +541,21 @@ const PayrollPeriodAdjustmentsTab = ({
               '& .MuiAlert-icon': {
                 alignItems: 'center',
               },
-              bgcolor: isDark
-                ? alpha(theme.palette.info.main, 0.1)
-                : undefined,
+              bgcolor: isDark ? alpha(theme.palette.info.main, 0.1) : undefined,
             }}
           >
             <Typography variant='body2' fontWeight={600} gutterBottom>
               Current Adjustments — {monthName} {year}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              These ad-hoc allowances and deductions will appear in payslips when the payroll run is submitted.
-              You can edit the amount and remarks, or delete entries as needed.
+              These ad-hoc allowances and deductions will appear in payslips
+              when the payroll run is submitted. You can edit the amount and
+              remarks, or delete entries as needed.
             </Typography>
           </Alert>
 
           {isLoadingAdjustments ? (
-            <Box display="flex" justifyContent="center" py={4}>
+            <Box display='flex' justifyContent='center' py={4}>
               <CircularProgress size={30} />
             </Box>
           ) : (
@@ -543,18 +573,17 @@ const PayrollPeriodAdjustmentsTab = ({
               '& .MuiAlert-icon': {
                 alignItems: 'center',
               },
-              bgcolor: isDark
-                ? alpha(theme.palette.info.main, 0.1)
-                : undefined,
+              bgcolor: isDark ? alpha(theme.palette.info.main, 0.1) : undefined,
             }}
           >
             <Typography variant='body2' fontWeight={600} gutterBottom>
               Upload Instructions
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              Download the template, fill in the adjustments, and upload the file.
-              Each row represents one adjustment for an employee. Re-uploading will
-              overwrite matching entries based on (period, employee, type).
+              Download the template, fill in the adjustments, and upload the
+              file. Each row represents one adjustment for an employee.
+              Re-uploading will overwrite matching entries based on (period,
+              employee, type).
             </Typography>
           </Alert>
 
@@ -655,7 +684,7 @@ const PayrollPeriodAdjustmentsTab = ({
             )}
           </Paper>
 
-          <Stack direction="row" spacing={2} justifyContent="flex-end">
+          <Stack direction='row' spacing={2} justifyContent='flex-end'>
             <Button
               variant='contained'
               startIcon={<DownloadOutlined />}
@@ -674,6 +703,7 @@ const PayrollPeriodAdjustmentsTab = ({
             {file && (
               <Button
                 variant='contained'
+                color='success'
                 startIcon={<UploadOutlined />}
                 onClick={() => importAdjustments(file)}
                 disabled={isImporting}
@@ -718,42 +748,74 @@ const PayrollPeriodAdjustmentsTab = ({
                     '& .MuiAlert-icon': {
                       alignItems: 'center',
                     },
-                    bgcolor: isDark
-                      ? 'background.paper'
-                      : 'background.default',
+                    bgcolor: isDark ? 'background.paper' : 'background.default',
                   }}
                 >
-                  <Typography variant='body2' color={isDark ? theme.palette.text.primary : 'primary'} gutterBottom>
+                  <Typography
+                    variant='body2'
+                    color={isDark ? theme.palette.text.primary : 'primary'}
+                    gutterBottom
+                  >
                     Import Summary
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 4, mt: 1, flexWrap: 'wrap' }}>
+                  <Box
+                    sx={{ display: 'flex', gap: 4, mt: 1, flexWrap: 'wrap' }}
+                  >
                     <Box>
-                      <Typography variant='caption' color='text.secondary' display='block'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        display='block'
+                      >
                         Imported
                       </Typography>
-                      <Typography variant='h6' color='success.main' fontWeight={700}>
+                      <Typography
+                        variant='h6'
+                        color='success.main'
+                        fontWeight={700}
+                      >
                         {importResult.imported ?? 0}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography variant='caption' color='text.secondary' display='block'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        display='block'
+                      >
                         Skipped
                       </Typography>
-                      <Typography variant='h6' color='warning.main' fontWeight={700}>
+                      <Typography
+                        variant='h6'
+                        color='warning.main'
+                        fontWeight={700}
+                      >
                         {importResult.skipped ?? 0}
                       </Typography>
                     </Box>
                     <Box>
-                      <Typography variant='caption' color='text.secondary' display='block'>
+                      <Typography
+                        variant='caption'
+                        color='text.secondary'
+                        display='block'
+                      >
                         Errors
                       </Typography>
-                      <Typography variant='h6' color='error.main' fontWeight={700}>
+                      <Typography
+                        variant='h6'
+                        color='error.main'
+                        fontWeight={700}
+                      >
                         {importResult.errors?.length ?? 0}
                       </Typography>
                     </Box>
                   </Box>
                   {importResult.message && (
-                    <Typography variant='body2' color='text.secondary' sx={{ mt: 1 }}>
+                    <Typography
+                      variant='body2'
+                      color='text.secondary'
+                      sx={{ mt: 1 }}
+                    >
                       {importResult.message}
                     </Typography>
                   )}
@@ -769,7 +831,8 @@ const PayrollPeriodAdjustmentsTab = ({
                       sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
                     >
                       <ErrorOutline fontSize='small' color='warning' />
-                      Skipped Rows ({importResult.errors.length} row{importResult.errors.length > 1 ? 's' : ''})
+                      Skipped Rows ({importResult.errors.length} row
+                      {importResult.errors.length > 1 ? 's' : ''})
                     </Typography>
 
                     <Box
@@ -848,7 +911,9 @@ const PayrollPeriodAdjustmentsTab = ({
                             p: 1.5,
                           }}
                         >
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
+                          <Box
+                            sx={{ display: 'flex', alignItems: 'flex-start' }}
+                          >
                             <Typography variant='body2' color='warning.main'>
                               {item.row}.
                             </Typography>
@@ -898,7 +963,7 @@ const PayrollPeriodAdjustmentsTab = ({
           setEditingAllowance(null);
           setEditingDeduction(null);
         }}
-        maxWidth="sm"
+        maxWidth='sm'
         fullWidth
       >
         <MuiDialogTitle>
@@ -907,8 +972,8 @@ const PayrollPeriodAdjustmentsTab = ({
         <MuiDialogContent>
           <Box sx={{ pt: 2 }}>
             <TextField
-              label="Amount"
-              type="number"
+              label='Amount'
+              type='number'
               fullWidth
               value={editAmount}
               onChange={(e) => setEditAmount(Number(e.target.value))}
@@ -917,13 +982,13 @@ const PayrollPeriodAdjustmentsTab = ({
               inputProps={{ min: 0, step: 0.01 }}
             />
             <TextField
-              label="Remarks"
+              label='Remarks'
               fullWidth
               multiline
               rows={3}
               value={editRemarks}
               onChange={(e) => setEditRemarks(e.target.value)}
-              placeholder="Optional remarks for this adjustment"
+              placeholder='Optional remarks for this adjustment'
             />
           </Box>
         </MuiDialogContent>
@@ -938,8 +1003,12 @@ const PayrollPeriodAdjustmentsTab = ({
           </Button>
           <Button
             onClick={handleEditSave}
-            variant="contained"
-            disabled={editAmount <= 0 || editAllowanceMutation.isPending || editDeductionMutation.isPending}
+            variant='contained'
+            disabled={
+              editAmount <= 0 ||
+              editAllowanceMutation.isPending ||
+              editDeductionMutation.isPending
+            }
           >
             Save
           </Button>
@@ -954,17 +1023,20 @@ const PayrollPeriodAdjustmentsTab = ({
         <MuiDialogTitle>Confirm Delete</MuiDialogTitle>
         <MuiDialogContent>
           <Typography>
-            Are you sure you want to delete this {deletingType} adjustment?
-            This action cannot be undone.
+            Are you sure you want to delete this {deletingType} adjustment? This
+            action cannot be undone.
           </Typography>
         </MuiDialogContent>
         <MuiDialogActions>
           <Button onClick={() => setDeleteDialogOpen(false)}>Cancel</Button>
           <Button
             onClick={handleDeleteConfirm}
-            color="error"
-            variant="contained"
-            disabled={deleteAllowanceMutation.isPending || deleteDeductionMutation.isPending}
+            color='error'
+            variant='contained'
+            disabled={
+              deleteAllowanceMutation.isPending ||
+              deleteDeductionMutation.isPending
+            }
           >
             Delete
           </Button>
