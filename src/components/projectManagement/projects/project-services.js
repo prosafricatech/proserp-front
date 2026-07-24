@@ -106,6 +106,13 @@ projectsServices.getBudgetedCostItems = async (budgetId, ledgerId) => {
     return data;
 }
 
+projectsServices.getCommittedCostItems = async (budgetId, ledgerId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${budgetId}/committed-cost-items`, {
+        params: { ledgerId }
+    });
+    return data;
+}
+
 projectsServices.exportBudgetItemsDetailsExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/budgetDetails/`, exportedData, {
         responseType: 'blob',
@@ -313,6 +320,11 @@ projectsServices.showProject = async ({ queryKey }) => {
 
 projectsServices.getProjectDashboardFigures = async (projectId) => {
     const { data } = await axios.get(`/api/projectManagement/project/${projectId}/dashboard-figures`);
+    return data;
+}
+
+projectsServices.getProjectCommitments = async (projectId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${projectId}/commitments`);
     return data;
 }
 
