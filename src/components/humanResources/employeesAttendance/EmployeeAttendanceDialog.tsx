@@ -139,10 +139,12 @@ const EmployeeAttendanceDialog = ({
 
   return (
     <>
-      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-        <Typography variant='h5' fontWeight={600}>
-          Employee Attendance
-        </Typography>
+      <DialogTitle
+        variant='h5'
+        fontWeight={600}
+        sx={{ textAlign: 'center', pb: 1 }}
+      >
+        Employee Attendance
       </DialogTitle>
 
       <DialogContent>
@@ -257,22 +259,6 @@ const EmployeeAttendanceDialog = ({
               <Typography variant='body2' color='text.secondary' align='center'>
                 Excel file with pre-defined columns and dropdown validation
               </Typography>
-              <Button
-                variant='contained'
-                startIcon={<DownloadOutlined />}
-                onClick={() => downloadTemplate()}
-                disabled={isDownloading}
-                size='large'
-                sx={{
-                  mt: 1,
-                  minWidth: 200,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                {isDownloading ? 'Downloading...' : 'Download Template'}
-              </Button>
             </Paper>
           </Stack>
         </TabPanel>
@@ -402,25 +388,6 @@ const EmployeeAttendanceDialog = ({
                 </>
               )}
             </Paper>
-
-            {file && (
-              <Button
-                variant='contained'
-                startIcon={<UploadOutlined />}
-                onClick={() => importExcel(file)}
-                disabled={isImporting}
-                size='large'
-                sx={{
-                  minWidth: 200,
-                  alignSelf: 'center',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                {isImporting ? 'Uploading...' : 'Upload & Import'}
-              </Button>
-            )}
 
             {/* Improved Import Results with Dark Mode Support */}
             {importResult && (
@@ -784,6 +751,42 @@ const EmployeeAttendanceDialog = ({
         >
           Close
         </Button>
+
+        {tabValue === 0 && (
+          <Button
+            variant='contained'
+            startIcon={<DownloadOutlined />}
+            onClick={() => downloadTemplate()}
+            disabled={isDownloading}
+            size='large'
+            sx={{
+              minWidth: 200,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {isDownloading ? 'Downloading...' : 'Download Template'}
+          </Button>
+        )}
+        {file && tabValue === 1 && (
+          <Button
+            variant='contained'
+            startIcon={<UploadOutlined />}
+            onClick={() => importExcel(file)}
+            disabled={isImporting}
+            size='large'
+            sx={{
+              minWidth: 200,
+              alignSelf: 'center',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {isImporting ? 'Uploading...' : 'Upload & Import'}
+          </Button>
+        )}
       </DialogActions>
     </>
   );

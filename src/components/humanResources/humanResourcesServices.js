@@ -799,6 +799,49 @@ humanResourcesServices.getSalaryComponentsSummary = async (params = {}) => {
 };
 
 // ============================================
+// PAYROLL PERIODS ADJUSTMENTS
+// ============================================
+humanResourcesServices.downloadPeriodAdjustmentTemplate = async () => {
+    const { data } = await axios.post('/api/humanResources/payrollPeriods/period-adjustments-template/download', {}, {
+        responseType: 'blob',
+    });
+    return data;
+}
+
+humanResourcesServices.importPeriodAdjustmentExcel = async (periodId, file) => {
+    const { data } = await axios.post(`/api/humanResources/payrollPeriods/period-adjustments-template/${periodId}/upload`, file, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
+    return data;
+}
+// --- adjustments review --- //
+humanResourcesServices.periodAdjustmentReview = async (periodId, params = {}) => {
+    const { data } = await axios.get(`/api/humanResources/payrollPeriods/period-adjustments-template/${periodId}`, {
+        params,
+    });
+    return data;
+};
+// ===== edit an adjustment ===== //
+humanResourcesServices.updateperiodAdjustmentAllowance = async (adjustmentAllowance) => {
+    const { data } = await axios.put(`/api/humanResources/payrollPeriods/period-adjustments-template/allowances/${adjustmentAllowance.id}/update`, adjustmentAllowance)
+    return data;
+}
+humanResourcesServices.updateperiodAdjustmentDeducction = async (adjustmentDeduction) => {
+    const { data } = await axios.put(`/api/humanResources/payrollPeriods/period-adjustments-template/deductions/${adjustmentDeduction.id}/update`, adjustmentDeduction)
+    return data;
+}
+// ===== remove an adjustmen ===== //
+humanResourcesServices.deleteperiodAdjustmentAllowance = async (allowanceId) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollPeriods/period-adjustments-template/allowances/${allowanceId}/delete`);
+    return data;
+}
+humanResourcesServices.deleteperiodAdjustmentDeduction = async (deductionId) => {
+    const { data } = await axios.delete(`/api/humanResources/payrollPeriods/period-adjustments-template/deductions/${deductionId}/delete`);
+    return data;
+}
+
+
+// ============================================
 // PAYROLL RUNS
 // ============================================
 humanResourcesServices.getPayrollRunsList = async (params = {}) => {

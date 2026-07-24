@@ -1,5 +1,11 @@
 'use client';
 
+<<<<<<< HEAD
+=======
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+>>>>>>> origin/hr-development
 import {
   CheckCircleOutline,
   Delete,
@@ -69,6 +75,7 @@ const EmployeeOnboardingDialog = ({
 }: {
   setOpenDialog: (open: boolean) => void;
 }) => {
+  const { organizationHasSubscribed } = useJumboAuth();
   const theme = useTheme();
   const [tabValue, setTabValue] = useState(0);
   const [settingTab, setSettingTab] = useState(0);
@@ -179,10 +186,12 @@ const EmployeeOnboardingDialog = ({
 
   return (
     <>
-      <DialogTitle sx={{ textAlign: 'center', pb: 1 }}>
-        <Typography variant='h5' fontWeight={600}>
-          Employee Onboarding
-        </Typography>
+      <DialogTitle
+        variant='h5'
+        fontWeight={600}
+        sx={{ textAlign: 'center', pb: 1 }}
+      >
+        Employee Onboarding
       </DialogTitle>
 
       <DialogContent>
@@ -299,22 +308,6 @@ const EmployeeOnboardingDialog = ({
               <Typography variant='body2' color='text.secondary' align='center'>
                 Excel file with pre-defined columns and dropdown validation
               </Typography>
-              <Button
-                variant='contained'
-                startIcon={<DownloadOutlined />}
-                onClick={() => downloadTemplate()}
-                disabled={isDownloading}
-                size='large'
-                sx={{
-                  mt: 1,
-                  minWidth: 200,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                {isDownloading ? 'Downloading...' : 'Download Template'}
-              </Button>
             </Paper>
           </Stack>
         </TabPanel>
@@ -446,7 +439,11 @@ const EmployeeOnboardingDialog = ({
             </Paper>
 
             {/* ledger auto-create switch */}
+<<<<<<< HEAD
             {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) &&
+=======
+            {organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && (
+>>>>>>> origin/hr-development
               <FormControlLabel
                 control={
                   <Switch
@@ -458,7 +455,11 @@ const EmployeeOnboardingDialog = ({
                 }
                 label='Auto create payable ledger'
               />
+<<<<<<< HEAD
             }
+=======
+            )}
+>>>>>>> origin/hr-development
 
             {/* optional data */}
             <Tabs
@@ -614,25 +615,6 @@ const EmployeeOnboardingDialog = ({
                   </Grid>
                 </React.Fragment>
               ))}
-
-            {file && (
-              <Button
-                variant='contained'
-                startIcon={<UploadOutlined />}
-                onClick={() => importExcel(file)}
-                disabled={isImporting}
-                size='large'
-                sx={{
-                  minWidth: 200,
-                  alignSelf: 'center',
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 600,
-                }}
-              >
-                {isImporting ? 'Uploading...' : 'Upload & Import'}
-              </Button>
-            )}
 
             {/* Improved Import Results with Dark Mode Support */}
             {importResult && (
@@ -996,6 +978,41 @@ const EmployeeOnboardingDialog = ({
         >
           Close
         </Button>
+        {tabValue === 0 && (
+          <Button
+            variant='contained'
+            startIcon={<DownloadOutlined />}
+            onClick={() => downloadTemplate()}
+            disabled={isDownloading}
+            size='large'
+            sx={{
+              minWidth: 200,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {isDownloading ? 'Downloading...' : 'Download Template'}
+          </Button>
+        )}
+        {file && tabValue === 1 && (
+          <Button
+            variant='contained'
+            startIcon={<UploadOutlined />}
+            onClick={() => importExcel(file)}
+            disabled={isImporting}
+            size='large'
+            sx={{
+              minWidth: 200,
+              alignSelf: 'center',
+              borderRadius: 2,
+              textTransform: 'none',
+              fontWeight: 600,
+            }}
+          >
+            {isImporting ? 'Uploading...' : 'Upload & Import'}
+          </Button>
+        )}
       </DialogActions>
     </>
   );
