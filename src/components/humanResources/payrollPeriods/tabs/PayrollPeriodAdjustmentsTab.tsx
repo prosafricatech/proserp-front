@@ -35,6 +35,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TableRow,
   Tabs,
@@ -453,6 +454,8 @@ const PayrollPeriodAdjustmentsTab = ({
       );
     }
 
+    const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+
     const renderTableRows = (
       items: (PeriodAllowance | PeriodDeduction)[],
       type: 'allowance' | 'deduction'
@@ -534,6 +537,25 @@ const PayrollPeriodAdjustmentsTab = ({
             </TableRow>
           </TableHead>
           <TableBody>{renderTableRows(items, type)}</TableBody>
+          <TableFooter>
+            <TableRow sx={{ bgcolor: isDark ? 'action.hover' : 'grey.50' }}>
+              <TableCell colSpan={2}>
+                <Typography variant='body2' fontWeight={700}>
+                  Total ({items.length}
+                  {items.length !== allItems.length
+                    ? ` of ${allItems.length}`
+                    : ''}
+                  )
+                </Typography>
+              </TableCell>
+              <TableCell align='right'>
+                <Typography variant='body2' fontWeight={700}>
+                  {total.toLocaleString()}
+                </Typography>
+              </TableCell>
+              <TableCell colSpan={2} />
+            </TableRow>
+          </TableFooter>
         </Table>
       </TableContainer>
     );
