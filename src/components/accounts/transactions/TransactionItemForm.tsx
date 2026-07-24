@@ -25,6 +25,7 @@ import { Ledger } from '../ledgers/LedgerType';
 
 type TransactionItem = {
   debit_ledger_id?: number;
+  item_form_ledger_currency_id?: number;
   credit_ledger_id?: number;
   amount: number;
   description: string;
@@ -38,6 +39,7 @@ type TransactionItemFormProps = {
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
   isReceipt?: boolean;
   isPayment?: boolean;
+  selectedCurrencyId: number;
   isTransfer?: boolean;
   index?: number;
   setShowForm?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -49,6 +51,8 @@ type TransactionItemFormProps = {
 type FormValues = {
   debit_ledger?: Ledger;
   debit_ledger_id?: number;
+  item_form_ledger_currency_id?: number;
+  selectedCurrencyId?: number;
   credit_ledger?: Ledger;
   credit_ledger_id?: number;
   amount: number;
@@ -64,6 +68,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
   isReceipt = false,
   isPayment = false,
   isTransfer = false,
+  selectedCurrencyId,
   index = -1,
   setShowForm = null,
   item,
@@ -73,8 +78,9 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
-  const [ledgerType, setLedgerType] = useState('credit');
+  const [ledgerType, setLedgerType] = useState<'debit' | 'credit'>('credit');
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
+  const [selectedLedgerCurrencyId, setSelectedLedgerCurrencyId] = useState<number | undefined>(item?.item_form_ledger_currency_id);
 
   const validationSchema = yup.object().shape({
     debit_ledger_id: yup.number().when('$isPaymentOrTransfer', {
@@ -125,6 +131,8 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
     handleSubmit,
     watch,
     reset,
+    clearErrors,
+    setError,
     formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
@@ -141,10 +149,48 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
           (ledger) => ledger.id === item.debit_ledger_id
         ),
       debit_ledger_id: item?.debit_ledger_id,
+      item_form_ledger_currency_id: item?.item_form_ledger_currency_id,
       amount: item?.amount || 0,
       description: item?.description || '',
     },
   });
+
+  // Watch the currency ID from the ledger selection
+  const watchedCurrencyId = watch('item_form_ledger_currency_id');
+
+  // Update local state when watched currency changes
+  useEffect(() => {
+    if (watchedCurrencyId !== undefined) {
+      setSelectedLedgerCurrencyId(watchedCurrencyId);
+    }
+  }, [watchedCurrencyId]);
+
+  // Determine which field to show the currency error on
+  const getFieldForCurrencyError = () => {
+    if (isPayment || isTransfer) {
+      return 'debit_ledger_id';
+    } else if (isReceipt) {
+      return 'credit_ledger_id';
+    }
+    return null;
+  };
+
+  const currencyErrorField = getFieldForCurrencyError();
+
+  // Validate ledger currency matches selected currency
+  useEffect(() => {
+    // Only validate if we have a selected currency and a ledger currency
+    if (currencyErrorField && selectedCurrencyId && selectedLedgerCurrencyId !== undefined) {
+      if (selectedCurrencyId !== selectedLedgerCurrencyId) {
+        setError(currencyErrorField, {
+          type: 'manual',
+          message: `Ledger currency does not match the selected currency.`,
+        });
+      } else {
+        clearErrors(currencyErrorField);
+      }
+    }
+  }, [selectedCurrencyId, selectedLedgerCurrencyId, currencyErrorField, setError, clearErrors]);
 
   useEffect(() => {
     setIsDirty(Object.keys(dirtyFields).length > 0);
@@ -155,12 +201,22 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
       setValue('debit_ledger', addedLedger);
       setValue('debit_ledger_id', addedLedger.id);
     }
-  }, [addedLedger]);
+  }, [addedLedger, setValue]);
 
   const updateItems = async (formData: FormValues) => {
+    // Check currency validation before submitting
+    if (currencyErrorField && selectedCurrencyId && selectedLedgerCurrencyId !== undefined && selectedCurrencyId !== selectedLedgerCurrencyId) {
+      setError(currencyErrorField, {
+        type: 'manual',
+        message: 'Ledger currency must match the selected currency.',
+      });
+      return;
+    }
+
     setIsAdding(true);
     const newItem: TransactionItem = {
       debit_ledger_id: formData.debit_ledger_id,
+      item_form_ledger_currency_id: formData.item_form_ledger_currency_id,
       credit_ledger_id: formData.credit_ledger_id,
       amount: formData.amount,
       description: formData.description,
@@ -193,7 +249,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
         setSubmitItemForm(false);
       })();
     }
-  }, [submitItemForm]);
+  }, [submitItemForm, handleSubmit, updateItems, setSubmitItemForm]);
 
   if (isAdding) {
     return <LinearProgress />;
@@ -248,10 +304,13 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                       ? ['Cash and cash equivalents']
                       : []
                 }
-                onChange={(newValue) => {
+                onChange={(newValue: any) => {
                   const selected = Array.isArray(newValue)
                     ? newValue[0]
                     : newValue;
+                  const currencyId = selected?.currency?.id;
+                  setValue('item_form_ledger_currency_id', currencyId);
+                  setSelectedLedgerCurrencyId(currencyId);
                   setValue('debit_ledger', selected || undefined);
                   setValue('debit_ledger_id', selected?.id, {
                     shouldValidate: true,
@@ -290,10 +349,13 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                 defaultValue={ungroupedLedgerOptions.find(
                   (ledger) => ledger.id === watch('credit_ledger_id')
                 )}
-                onChange={(newValue) => {
+                onChange={(newValue: any) => {
                   const selected = Array.isArray(newValue)
                     ? newValue[0]
                     : newValue;
+                  const currencyId = selected?.currency?.id;
+                  setValue('item_form_ledger_currency_id', currencyId);
+                  setSelectedLedgerCurrencyId(currencyId);
                   setValue('credit_ledger', selected || undefined);
                   setValue('credit_ledger_id', selected?.id, {
                     shouldValidate: true,
@@ -341,7 +403,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
               label='Amount'
               fullWidth
               size='small'
-              value={watch('amount')}
+              value={watch('amount') || ''}
               error={!!errors.amount}
               helperText={errors.amount?.message}
               InputProps={{

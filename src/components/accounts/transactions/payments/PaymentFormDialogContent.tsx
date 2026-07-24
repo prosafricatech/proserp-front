@@ -50,6 +50,7 @@ interface Ledger {
 type PaymentItem = {
   debit_ledger_id?: number;
   credit_ledger_id?: number;
+  item_form_ledger_currency_id: any
   amount: number;
   description: string;
 };
@@ -61,6 +62,7 @@ type PaymentResponse = {
 type PaymentFormValues = {
   id?: number;
   credit_ledger_id: number;
+  form_ledger_currency_id: number
   reference?: string;
   narration: string;
   currency_id: number | null;
@@ -109,6 +111,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
+  const [prevKey, setPrevKey]= useState(0)
   const [submitItemForm, setSubmitItemForm] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
 
@@ -268,6 +271,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
       ...data,
       items: items.map((item) => ({
         debit_ledger_id: item.debit_ledger_id,
+        item_form_ledger_currency_id: item.item_form_ledger_currency_id,
         amount: item.amount,
         description: item.description,
       })),
@@ -349,8 +353,12 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                       ) || null
                     }
                     allowedGroups={['Current Assets', 'Current Liabilities', 'Cash and Cash Equivalents', 'Banks', 'Accounts Payable', 'Accounts Receivable']}
-                    onChange={(newValue) => {
+                    onChange={(newValue: any) => {
                       if (Array.isArray(newValue)) return;
+                      setValue(`form_ledger_currency_id`, newValue?.currency?.id)
+                      setValue('currency_id', newValue?.currency?.id)
+                      setValue('exchange_rate', newValue?.currency?.exchangeRate)
+                      setPrevKey(prevKey => prevKey + 1)
                       setValue('credit_ledger_id', newValue ? newValue.id : 0, {
                         shouldValidate: true,
                         shouldDirty: true,
@@ -399,7 +407,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
             </Grid>
           )}
 
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }} key={prevKey}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <CurrencySelector
                 frontError={
@@ -407,7 +415,8 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                     ? { message: errors.currency_id.message }
                     : null
                 }
-                defaultValue={payment?.currency?.id ?? 1}
+                disabled={watch(`form_ledger_currency_id`) as any}
+                defaultValue={watch(`currency_id`) as any}
                 onChange={(newValue) => {
                   setValue('currency_id', newValue ? newValue.id : null, {
                     shouldDirty: true,
@@ -435,6 +444,7 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
                   helperText={errors?.exchange_rate?.message}
                   InputProps={{
                     inputComponent: CommaSeparatedField,
+                    disabled: !!watch(`form_ledger_currency_id`)
                   }}
                   value={watch('exchange_rate')}
                   onChange={(e) => {
@@ -482,8 +492,9 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
           key={clearFormKey}
           setIsDirty={setIsDirty}
           items={items}
-          setItems={setItems}
+          setItems={setItems as any}
           isPayment={true}
+          selectedCurrencyId={watch(`form_ledger_currency_id`)}
         />
 
         {errors?.items?.message && items.length < 1 && (
@@ -496,12 +507,13 @@ const PaymentFormDialogContent: React.FC<PaymentFormDialogContentProps> = ({
             submitMainForm={handleSubmit((data) => savePayment.mutate(data))}
             submitItemForm={submitItemForm}
             setSubmitItemForm={setSubmitItemForm}
+            selectedCurrencyId={watch(`form_ledger_currency_id`)}
             setIsDirty={setIsDirty}
             key={index}
             index={index}
-            item={item}
-            items={items}
-            setItems={setItems}
+            item={item as any}
+            items={items as any}
+            setItems={setItems as any}
             isPayment={true}
           />
         ))}

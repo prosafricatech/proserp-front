@@ -9,6 +9,8 @@ type TransactionItem = {
   debit_ledger?: Ledger;
   debit_ledger_id?: number;
   debitLedgerName?: string;
+  item_form_ledger_currency_id?: number;
+  selectedCurrencyId: number;
   credit_ledger?: Ledger;
   credit_ledger_id?: number;
   creditLedgerName?: string;
@@ -23,6 +25,7 @@ type TransactionItemRowProps = {
   submitItemForm: boolean;
   setIsDirty: React.Dispatch<React.SetStateAction<boolean>>;
   isReceipt?: boolean;
+  selectedCurrencyId: number;
   isPayment?: boolean;
   isTransfer?: boolean;
   item: TransactionItem;
@@ -39,6 +42,7 @@ const TransactionItemRow: React.FC<TransactionItemRowProps> = ({
   setIsDirty,
   isReceipt = false,
   isPayment = false,
+  selectedCurrencyId,
   isTransfer = false,
   item,
   index,
@@ -48,8 +52,8 @@ const TransactionItemRow: React.FC<TransactionItemRowProps> = ({
   const [showForm, setShowForm] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
 
-  const debit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.debit_ledger_id)
-  const credit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.credit_ledger_id)
+  const debit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.debit_ledger_id);
+  const credit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.credit_ledger_id);
 
   const handleRemoveItem = () => {
     setItems(prevItems => {
@@ -135,7 +139,8 @@ const TransactionItemRow: React.FC<TransactionItemRowProps> = ({
           setShowForm={setShowForm}
           index={index}
           items={items}
-          setItems={setItems}
+          selectedCurrencyId={selectedCurrencyId}
+          setItems={setItems as any}
         />
       )}
     </React.Fragment>

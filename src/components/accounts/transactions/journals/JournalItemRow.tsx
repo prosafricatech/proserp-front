@@ -13,9 +13,11 @@ interface JournalItem {
   debit_ledger?: Ledger;
   debit_ledger_id?: number;
   debitLedgerName?: string;
+  debit_ledger_currency_id?: number;
   credit_ledger?: Ledger;
   credit_ledger_id?: number;
   creditLedgerName?: string;
+  credit_ledger_currency_id?: number;
   amount: number;
   description: string;
 }
@@ -30,6 +32,7 @@ interface JournalItemRowProps {
   index: number;
   items?: JournalItem[];
   setItems: (items: JournalItem[] | ((prevItems: JournalItem[]) => JournalItem[])) => void;
+  selectedCurrencyId?: number;
 }
 
 function JournalItemRow({ 
@@ -41,12 +44,13 @@ function JournalItemRow({
   item, 
   index, 
   items = [], 
-  setItems 
+  setItems,
+  selectedCurrencyId,
 }: JournalItemRowProps) {
     const { ungroupedLedgerOptions } = useLedgerSelect();
 
-    const debit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.debit_ledger_id)
-    const credit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.credit_ledger_id)
+    const debit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.debit_ledger_id);
+    const credit_ledger = ungroupedLedgerOptions.find(ledger => ledger.id === item.credit_ledger_id);
     const [showForm, setShowForm] = useState(false);
 
     return (
@@ -120,6 +124,7 @@ function JournalItemRow({
                     index={index}
                     items={items}
                     setItems={setItems}
+                    selectedCurrencyId={selectedCurrencyId}
                 />
             )}
         </React.Fragment>

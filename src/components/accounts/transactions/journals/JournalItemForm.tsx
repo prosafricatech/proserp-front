@@ -16,6 +16,8 @@ import {
   LinearProgress,
   TextField,
   Tooltip,
+  Typography,
+  Stack,
 } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
@@ -26,6 +28,12 @@ import QuickAddLedger from '../../ledgers/forms/QuickAddLedger';
 interface LedgerOption {
   id: number;
   name: string;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
 }
 
 interface Ledger {
@@ -35,11 +43,19 @@ interface Ledger {
   ledger_group_id: number;
   alias: string | null;
   nature_id?: number;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
 }
 
 interface JournalItem {
   debit_ledger_id?: number;
+  debit_ledger_currency_id?: number;
   credit_ledger_id?: number;
+  credit_ledger_currency_id?: number;
   amount: number;
   description: string;
 }
@@ -57,13 +73,16 @@ interface JournalItemFormProps {
   setItems: (
     items: JournalItem[] | ((prevItems: JournalItem[]) => JournalItem[])
   ) => void;
+  selectedCurrencyId?: number;
 }
 
 interface FormValues {
   debit_ledger?: LedgerOption | null;
   debit_ledger_id?: number | null;
+  debit_ledger_currency_id?: number | null;
   credit_ledger?: LedgerOption | null;
   credit_ledger_id?: number | null;
+  credit_ledger_currency_id?: number | null;
   amount: number;
   description: string;
 }
@@ -79,11 +98,12 @@ function JournalItemForm({
   item,
   items = [],
   setItems,
+  selectedCurrencyId,
 }: JournalItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const dob: LedgerOption = { id: 1, name: 'Diff. in Opening Balances' };
-  const [ledgerType, setLedgerType] = useState('credit');
+  const [ledgerType, setLedgerType] = useState<'debit' | 'credit'>('credit');
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
 
@@ -132,6 +152,8 @@ function JournalItemForm({
     handleSubmit,
     watch,
     reset,
+    clearErrors,
+    setError,
     formState: { errors, dirtyFields },
   } = useForm<FormValues>({
     resolver: yupResolver(validationSchema) as any,
@@ -140,24 +162,148 @@ function JournalItemForm({
         ? options.find((option) => option.id === item.credit_ledger_id)
         : null,
       credit_ledger_id: item?.credit_ledger_id,
+      credit_ledger_currency_id: item?.credit_ledger_currency_id,
       debit_ledger: item
         ? options.find((option) => option.id === item.debit_ledger_id)
         : null,
       debit_ledger_id: item?.debit_ledger_id,
+      debit_ledger_currency_id: item?.debit_ledger_currency_id,
       amount: item?.amount || 0,
       description: item?.description || '',
     },
   });
 
+  // Watch the currency IDs from the ledger selections
+  const watchedDebitCurrencyId = watch('debit_ledger_currency_id');
+  const watchedCreditCurrencyId = watch('credit_ledger_currency_id');
+
+  // Get the display names for error messages
+  const getCurrencyName = (currencyId?: number | null) => {
+    if (!currencyId) return '';
+    const found = options.find(opt => opt.currency?.id === currencyId);
+    return found?.currency?.code || '';
+  };
+
+  // Validate debit ledger currency matches selected currency
+  useEffect(() => {
+    if (selectedCurrencyId && watchedDebitCurrencyId !== undefined && watchedDebitCurrencyId !== null) {
+      if (selectedCurrencyId !== watchedDebitCurrencyId) {
+        const currencyCode = getCurrencyName(watchedDebitCurrencyId);
+        setError('debit_ledger_id', {
+          type: 'manual',
+          message: `Debit ledger currency (${currencyCode}) does not match selected currency (TSh).`,
+        });
+      } else {
+        clearErrors('debit_ledger_id');
+      }
+    }
+  }, [selectedCurrencyId, watchedDebitCurrencyId, setError, clearErrors, options]);
+
+  // Validate credit ledger currency matches selected currency
+  useEffect(() => {
+    if (selectedCurrencyId && watchedCreditCurrencyId !== undefined && watchedCreditCurrencyId !== null) {
+      if (selectedCurrencyId !== watchedCreditCurrencyId) {
+        const currencyCode = getCurrencyName(watchedCreditCurrencyId);
+        setError('credit_ledger_id', {
+          type: 'manual',
+          message: `Credit ledger currency (${currencyCode}) does not match selected currency (TSh).`,
+        });
+      } else {
+        clearErrors('credit_ledger_id');
+      }
+    }
+  }, [selectedCurrencyId, watchedCreditCurrencyId, setError, clearErrors, options]);
+
   useEffect(() => {
     setIsDirty(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty, watch]);
 
+  // Handle added ledger from quick add
+  useEffect(() => {
+    if (addedLedger?.id) {
+      if (ledgerType === 'debit') {
+        setValue('debit_ledger', addedLedger);
+        setValue('debit_ledger_id', addedLedger.id);
+        setValue('debit_ledger_currency_id', addedLedger.currency?.id);
+      } else if (ledgerType === 'credit') {
+        setValue('credit_ledger', addedLedger);
+        setValue('credit_ledger_id', addedLedger.id);
+        setValue('credit_ledger_currency_id', addedLedger.currency?.id);
+      }
+    }
+  }, [addedLedger, ledgerType, setValue]);
+
+  // Get option label with currency code
+  const getOptionLabel = (option: LedgerOption) => {
+    if (option.currency) {
+      return `${option.name} (${option.currency.code})`;
+    }
+    return option.name;
+  };
+
+  // Render option with currency chip
+  const renderOption = (
+    props: React.HTMLAttributes<HTMLLIElement>,
+    option: LedgerOption
+  ) => {
+    const { key, ...otherProps } : any = props;
+    
+    // Currency chip - only render if currency exists
+    const currencyChip = option.currency ? (
+      <Typography
+        variant="caption"
+        sx={{
+          backgroundColor: 'primary.light',
+          padding: '0 8px',
+          borderRadius: '4px',
+          fontSize: '0.65rem',
+          fontWeight: 500,
+          color: 'primary.contrastText',
+          ml: 1,
+          height: '18px',
+          display: 'inline-flex',
+          alignItems: 'center',
+        }}
+      >
+        {option.currency.code}
+      </Typography>
+    ) : null;
+
+    return (
+      <li key={option.id} {...otherProps}>
+        <Stack direction="row" spacing={0.5} alignItems="center" flex={1}>
+          <Typography variant="body2">{option.name}</Typography>
+          {currencyChip}
+        </Stack>
+      </li>
+    );
+  };
+
   const updateItems = async (formData: FormValues) => {
+    // Check currency validation before submitting
+    if (selectedCurrencyId) {
+      if (watchedDebitCurrencyId !== undefined && watchedDebitCurrencyId !== null && selectedCurrencyId !== watchedDebitCurrencyId) {
+        setError('debit_ledger_id', {
+          type: 'manual',
+          message: 'Debit ledger currency must match the selected currency.',
+        });
+        return;
+      }
+      if (watchedCreditCurrencyId !== undefined && watchedCreditCurrencyId !== null && selectedCurrencyId !== watchedCreditCurrencyId) {
+        setError('credit_ledger_id', {
+          type: 'manual',
+          message: 'Credit ledger currency must match the selected currency.',
+        });
+        return;
+      }
+    }
+
     setIsAdding(true);
     const newItem: JournalItem = {
       debit_ledger_id: formData.debit_ledger_id || undefined,
+      debit_ledger_currency_id: formData.debit_ledger_currency_id || undefined,
       credit_ledger_id: formData.credit_ledger_id || undefined,
+      credit_ledger_currency_id: formData.credit_ledger_currency_id || undefined,
       amount: formData.amount,
       description: formData.description,
     };
@@ -191,16 +337,6 @@ function JournalItemForm({
     }
   }, [submitItemForm]);
 
-  useEffect(() => {
-    if (addedLedger?.id && ledgerType === 'debit') {
-      setValue('debit_ledger', addedLedger);
-      setValue('debit_ledger_id', addedLedger.id);
-    } else if (addedLedger?.id && ledgerType === 'credit') {
-      setValue('credit_ledger', addedLedger);
-      setValue('credit_ledger_id', addedLedger.id);
-    }
-  }, [addedLedger]);
-
   if (isAdding) {
     return <LinearProgress />;
   }
@@ -220,7 +356,8 @@ function JournalItemForm({
           <Div sx={{ mt: 1 }}>
             <Autocomplete<LedgerOption>
               options={options}
-              getOptionLabel={(option) => option.name}
+              getOptionLabel={getOptionLabel}
+              renderOption={renderOption}
               value={
                 options.find(
                   (option) => option.id === watch('debit_ledger_id')
@@ -232,6 +369,11 @@ function JournalItemForm({
                   shouldValidate: true,
                   shouldDirty: true,
                 });
+                setValue('debit_ledger_currency_id', newValue?.currency?.id || null);
+                // Clear error when user changes selection
+                if (newValue?.currency?.id === selectedCurrencyId) {
+                  clearErrors('debit_ledger_id');
+                }
               }}
               renderInput={(params) => (
                 <TextField
@@ -270,7 +412,8 @@ function JournalItemForm({
           <Div sx={{ mt: 1 }}>
             <Autocomplete<LedgerOption>
               options={options}
-              getOptionLabel={(option) => option.name}
+              getOptionLabel={getOptionLabel}
+              renderOption={renderOption}
               value={
                 options.find(
                   (option) => option.id === watch('credit_ledger_id')
@@ -282,6 +425,11 @@ function JournalItemForm({
                   shouldValidate: true,
                   shouldDirty: true,
                 });
+                setValue('credit_ledger_currency_id', newValue?.currency?.id || null);
+                // Clear error when user changes selection
+                if (newValue?.currency?.id === selectedCurrencyId) {
+                  clearErrors('credit_ledger_id');
+                }
               }}
               renderInput={(params) => (
                 <TextField
@@ -341,7 +489,7 @@ function JournalItemForm({
               label='Amount'
               fullWidth
               size='small'
-              value={watch('amount')}
+              value={watch('amount') || ''}
               error={!!errors.amount}
               helperText={errors.amount?.message}
               InputProps={{

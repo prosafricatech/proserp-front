@@ -36,7 +36,9 @@ import JournalItemRow from './JournalItemRow';
 
 type JournalItem = {
   debit_ledger_id?: number;
+  debit_ledger_currency_id?: number;
   credit_ledger_id?: number;
+  credit_ledger_currency_id?: number;
   amount: number;
   description: string;
 };
@@ -233,6 +235,9 @@ function JournalFormDialogContent({
     await saveJournal.mutate(updatedData);
   };
   
+  // Get the current selected currency ID
+  const selectedCurrencyId = watch('currency_id');
+  
   return (
     <>
       <DialogTitle textAlign={'center'}>
@@ -243,7 +248,6 @@ function JournalFormDialogContent({
             : `New Journal Form`}
       </DialogTitle>
       <DialogContent>
-        {/* <form autoComplete='false'> */}
         <Grid container columnSpacing={1} marginBottom={2}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 1, mb: 1 }}>
@@ -390,6 +394,7 @@ function JournalFormDialogContent({
           setIsDirty={setIsDirty}
           items={items}
           setItems={setItems}
+          selectedCurrencyId={selectedCurrencyId || undefined}
         />
 
         {errors?.items?.message && items.length < 1 && (
@@ -408,6 +413,7 @@ function JournalFormDialogContent({
             item={item}
             items={items}
             setItems={setItems}
+            selectedCurrencyId={selectedCurrencyId || undefined}
           />
         ))}
 
@@ -443,7 +449,6 @@ function JournalFormDialogContent({
             </Div>
           </Grid>
         </Grid>
-        {/* </form> */}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>

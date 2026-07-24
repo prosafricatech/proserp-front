@@ -40,6 +40,7 @@ import receiptServices from './receipt-services';
 
 interface ReceiptItem {
   credit_ledger_id?: number;
+  item_form_ledger_currency_id?: number;
   amount: number;
   description: string;
 }
@@ -60,6 +61,7 @@ interface ReceiptResponse {
 interface ReceiptFormValues {
   id?: number;
   debit_ledger_id: number;
+  form_ledger_currency_id?: number;
   reference?: string;
   narration: string;
   currency_id: number | null;
@@ -114,7 +116,7 @@ function ReceiptFormDialogContent({
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
 
-  const [ledgerType, setLedgerType] = useState('credit');
+  const [ledgerType, setLedgerType] = useState<'debit' | 'credit'>('debit');
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
 
@@ -264,6 +266,7 @@ function ReceiptFormDialogContent({
       ...data,
       items: items.map((item) => ({
         credit_ledger_id: item.credit_ledger_id,
+        item_form_ledger_currency_id: item.item_form_ledger_currency_id,
         amount: item.amount,
         description: item.description,
       })),
@@ -277,7 +280,6 @@ function ReceiptFormDialogContent({
         {receipt ? `Edit ${receipt.voucherNo}` : `New Receipt Form`}
       </DialogTitle>
       <DialogContent>
-        {/* <form autoComplete='false' onSubmit={handleSubmit(onSubmit)}> */}
         <Grid container columnSpacing={1} marginBottom={2}>
           {!openLedgerQuickAdd && (
             <>
@@ -337,8 +339,11 @@ function ReceiptFormDialogContent({
                       ) || null
                     }
                     allowedGroups={['Cash and cash equivalents']}
-                    onChange={(newValue) => {
+                    onChange={(newValue: any) => {
                       if (Array.isArray(newValue)) return;
+                      setValue('form_ledger_currency_id', newValue?.currency?.id);
+                      setValue('currency_id', newValue?.currency?.id);
+                      setValue('exchange_rate', newValue?.currency?.exchangeRate);
                       setValue('debit_ledger_id', newValue ? newValue.id : 0, {
                         shouldValidate: true,
                         shouldDirty: true,
@@ -395,7 +400,8 @@ function ReceiptFormDialogContent({
                     ? { message: errors.currency_id.message }
                     : null
                 }
-                defaultValue={receipt?.currency?.id ?? 1}
+                disabled={watch('form_ledger_currency_id') as any}
+                defaultValue={watch('currency_id') as any}
                 onChange={(newValue) => {
                   setValue('currency_id', newValue ? newValue.id : null, {
                     shouldDirty: true,
@@ -421,6 +427,7 @@ function ReceiptFormDialogContent({
                   helperText={errors?.exchange_rate?.message}
                   InputProps={{
                     inputComponent: CommaSeparatedField,
+                    disabled: !!watch('form_ledger_currency_id')
                   }}
                   value={watch('exchange_rate')}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -471,8 +478,9 @@ function ReceiptFormDialogContent({
           key={clearFormKey}
           setIsDirty={setIsDirty}
           items={items}
-          setItems={setItems}
+          setItems={setItems as any}
           isReceipt={true}
+          selectedCurrencyId={watch('currency_id') as any}
         />
 
         {errors?.items?.message && items.length < 1 && (
@@ -485,12 +493,13 @@ function ReceiptFormDialogContent({
             submitMainForm={handleSubmit((data) => saveReceipt.mutate(data))}
             submitItemForm={submitItemForm}
             setSubmitItemForm={setSubmitItemForm}
+            selectedCurrencyId={watch('currency_id') as any}
             setIsDirty={setIsDirty}
             key={index}
             index={index}
-            item={item}
-            items={items}
-            setItems={setItems}
+            item={item as any}
+            items={items as any}
+            setItems={setItems as any}
             isReceipt={true}
           />
         ))}
@@ -524,7 +533,6 @@ function ReceiptFormDialogContent({
             </Div>
           </Grid>
         </Grid>
-        {/* </form> */}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>
