@@ -60,7 +60,7 @@ function BankTransferListDialogPDF({
           </View>
           <View style={{ flex: 1, textAlign: 'right' }}>
             <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
-              Salary Sheet (Bank Transfer List)
+              Bank Transfer List
             </Text>
             <Text style={{ ...pdfStyles.minInfo }}>{payrollPeriod}</Text>
           </View>

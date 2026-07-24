@@ -156,7 +156,7 @@ const BankTransferListDialog = ({
                   }}
                 >
                   <Typography variant='h4' sx={{ color: headerColor }}>
-                    Salary Sheet (Bank Transfer List)
+                    Bank Transfer List
                   </Typography>
                 </Box>
               </Grid>
