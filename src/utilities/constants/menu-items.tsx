@@ -374,12 +374,12 @@ export async function getMenus(locale: string) {
           type: 'nav-item',
           icon: icon('reports'),
         },
-        {
-          uri: `/${locale}/humanResources/myHr`,
-          label: sidebar.menuItem.myHr,
-          type: 'nav-item',
-          icon: icon('myHr'),
-        },
+        // {
+        //   uri: `/${locale}/humanResources/myHr`,
+        //   label: sidebar.menuItem.myHr,
+        //   type: 'nav-item',
+        //   icon: icon('myHr'),
+        // },
         {
           label: sidebar.menuItem.masters,
           type: 'collapsible',
