@@ -804,9 +804,9 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                               : '-'}
                           </TableCell>
                           <TableCell align='right'>
-                            {po.amount.toLocaleString('en-US', {
+                            {po.amount_display.toLocaleString('en-US', {
                               style: 'currency',
-                              currency: baseCurrency?.code,
+                              currency: po.currency || baseCurrency?.code,
                             })}
                           </TableCell>
                         </TableRow>
