@@ -804,26 +804,19 @@ function Sidebar({ menus }) {
             }
         }
 
-        if (authOrganization?.organization?.name) {
-            const canAccessStakeholders = checkOrganizationPermission([
-                PERMISSIONS.STAKEHOLDERS_READ,
-                PERMISSIONS.STAKEHOLDERS_CREATE,
-            ]);
+        // Pros Control > Bulk Imports
+        const prosControlMenuIndex = updatedMenus.findIndex(
+            menu => menu.label === dictionary.sidebar.menu.prosControl
+        )
 
-            const canAccessTransactions = checkOrganizationPermission([
-                PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
-                PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
-            ]);
+        if (prosControlMenuIndex >= 0) {
+            const hasOrganization = !!authOrganization?.organization?.id;
 
-            const canAccessBulkImports = canAccessStakeholders || canAccessTransactions;
-
-            if (canAccessBulkImports) {
-                const prosControlMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.prosControl);
-                if (prosControlMenuIndex >= 0) {
-                    updatedMenus[prosControlMenuIndex].children = updatedMenus[prosControlMenuIndex].children.filter(
+            if (!hasOrganization) {
+                updatedMenus[prosControlMenuIndex].children =
+                    updatedMenus[prosControlMenuIndex].children.filter(
                         child => child.label !== dictionary.sidebar.menuItem.bulkImports
                     );
-                }
             }
         }
 

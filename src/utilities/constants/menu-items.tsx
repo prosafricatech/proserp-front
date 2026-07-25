@@ -500,10 +500,10 @@ export async function getMenus(locale: string) {
           icon: icon('usersManagement'),
         },
         {
-          uri: `/${locale}/prosControl/BulkImports`,
-          label: sidebar.menuItem.BulkImports,
+          uri: `/${locale}/prosControl/bulkImports`,
+          label: sidebar.menuItem.bulkImports,
           type: 'nav-item',
-          icon: icon('BulkImports'),
+          icon: icon('bulkImports'),
         },
         {
           uri: `/${locale}/prosControl/nextSMS`,

@@ -128,8 +128,8 @@ const TransactionsBulkImportsContent = () => {
       queryClient.invalidateQueries({ queryKey: ['ledger-groups'] });
 
       const totalErrors = response.errors?.length || 0;
-      const totalImported = Object.values(response.imported || {}).reduce((a: number, b: number) => a + b, 0);
-      const totalSkipped = Object.values(response.skipped || {}).reduce((a: number, b: number) => a + b, 0);
+      const totalImported: any = Object.values(response.imported || {}).reduce((a: any, b: any) => a + b, 0);
+      const totalSkipped: any = Object.values(response.skipped || {}).reduce((a: any, b: any) => a + b, 0);
 
       if (totalErrors > 0) {
         enqueueSnackbar(
