@@ -317,8 +317,10 @@ export const PayrollRunActions = ({
 
   const isPayFormValid = payForm.credit_ledger_id > 0;
 
-  const canViewBankTransferList =
-    payrollRun?.status === 'paid' || 'approved' || 'finalized';
+  const canViewBankTransferList = ['paid', 'approved', 'finalized'].includes(
+    payrollRun?.status
+  );
+  // payrollRun?.status === 'paid' || 'approved' || 'finalized';
 
   return (
     <>
