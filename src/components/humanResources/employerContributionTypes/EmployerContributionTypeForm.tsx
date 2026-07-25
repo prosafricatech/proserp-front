@@ -465,10 +465,10 @@ const EmployerContributionTypeForm = ({
                           field.onChange(raw);
                         }
                       }}
-                      inputProps={{
-                        inputMode: 'decimal',
-                        pattern: '^\\d*\\.?\\d*$',
-                      }}
+                      // inputProps={{
+                      //   inputMode: 'decimal',
+                      //   pattern: '^\\d*\\.?\\d*$',
+                      // }}
                       error={
                         !!errors?.default_value ||
                         !!getValidationMessage(

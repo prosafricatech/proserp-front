@@ -105,6 +105,19 @@ export async function ExportPayrollToExcel(exportedData: any) {
       contributionTypes = [],
     } = exportedData;
 
+    const getDesignation = (run: PayrollRunType) => {
+      if (run.contract?.designation?.title) {
+        return run.contract.designation.title;
+      }
+      if ((run as any).designation) {
+        return (run as any).designation;
+      }
+      if ((run as any).employee?.designation) {
+        return (run as any).employee?.designation;
+      }
+      return '-';
+    };
+
     // FIX: Deduplicate the type lists before using them for columns
     const uniqueAllowanceTypes = getUniqueTypes(allowanceTypes).filter(
       (type) => type.allowance_type_id !== null
@@ -334,7 +347,7 @@ export async function ExportPayrollToExcel(exportedData: any) {
 
       setTxt(COL_SN, String(index + 1));
       setTxt(COL_NAME, name || '-');
-      setTxt(COL_DESIGNATION, entry.run.contract?.designation?.title || '-');
+      setTxt(COL_DESIGNATION, getDesignation(entry.run));
       setNum(COL_BASIC, entry.computed.basicSalary);
 
       processedAllowanceTypes.forEach((t: any, i: number) =>
