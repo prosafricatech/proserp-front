@@ -11,6 +11,9 @@ import {
   Box,
   Checkbox,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { DeleteOutline } from '@mui/icons-material';
@@ -208,18 +211,19 @@ const RFQResponseItemRow: React.FC<RFQResponseItemRowProps> = ({
         </Grid>
 
         <Grid size={{ xs: 5, md: vat_factor > 0 ? 1.5 : 2}}>
-          <TextField
-            label="Lead Time"
-            fullWidth
-            size="small"
-            value={item.lead_time_days || ''}
-            onChange={(e) => {
-              const value = e.target.value ? Number(e.target.value) : undefined;
-              onUpdate(index, 'lead_time_days', value);
-            }}
-            inputProps={{ min: 0 }}
-            placeholder="Days"
-          />
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker
+              label="Delivery Date"
+              value={item.delivery_date || null}
+              onChange={(newValue) => onUpdate(index, 'delivery_date', newValue)}
+              slotProps={{
+                textField: {
+                  size: 'small',
+                  fullWidth: true,
+                },
+              }}
+            />
+          </LocalizationProvider>
         </Grid>
 
         <Grid size={{ xs: 12, md: 12 }}>

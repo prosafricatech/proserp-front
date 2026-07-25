@@ -48,6 +48,7 @@ import {
   SendOutlined,
   AddOutlined,
   VisibilityOutlined,
+  PrintOutlined,
 } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -69,6 +70,8 @@ import RFQResponsesForm from '../listItem/form/RFQResponsesForm';
 import RFQPurchaseOrderForm from './purchases/RFQPurchaseOrderForm';
 import RFQComparisonUI from './RFQComparisonUI';
 import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import RFQPDF from '../RFQPDF';
+import PDFContent from '@/components/pdf/PDFContent';
 
 interface RFQDetailProps {
   rfqId?: string;
@@ -77,7 +80,8 @@ interface RFQDetailProps {
 function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
   const params = useParams();
   const [mounted, setMounted] = useState(false);
-  const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+  const { checkOrganizationPermission, organizationHasSubscribed, authOrganization } = useJumboAuth();
+  const organization = authOrganization?.organization;
   const router = useRouter();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
@@ -94,6 +98,8 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
   const [selectedStakeholder, setSelectedStakeholder] = useState<any | null>(null);
   const [selectedQuoteByItem, setSelectedQuoteByItem] = useState<Record<number, any>>({});
   const [openPurchaseOrderDialog, setOpenPurchaseOrderDialog] = useState(false);
+  const [openPrintDialog, setOpenPrintDialog] = useState(false);
+  const [printSupplier, setPrintSupplier] = useState<any | null>(null);
   const [selectedSupplierForPO, setSelectedSupplierForPO] = useState<any | null>(null);
   const [poItems, setPoItems] = useState<any[]>([]);
   const [pendingOrders, setPendingOrders] = useState<any[]>([]);
@@ -351,10 +357,23 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
               </Grid>
               <Grid size={{ xs: 12, md: 6 }}>
                 <Stack direction="row" spacing={1} justifyContent="flex-end" flexWrap="wrap">
+                  {!!rfq?.stakeholders?.length && (
+                    <Button
+                      variant="outlined"
+                      startIcon={<PrintOutlined />}
+                      onClick={() => {
+                        setPrintSupplier(null);
+                        setOpenPrintDialog(true);
+                      }}
+                      size="small"
+                    >
+                      Print
+                    </Button>
+                  )}
                   {checkOrganizationPermission(PERMISSIONS.RFQS_EDIT) && (
-                    <Button 
-                      variant="outlined" 
-                      startIcon={<EditOutlined />} 
+                    <Button
+                      variant="outlined"
+                      startIcon={<EditOutlined />}
                       onClick={() => setOpenEdit(true)}
                       size="small"
                     >
@@ -626,21 +645,30 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                               <VisibilityOutlined fontSize="small" />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Edit Response">
-                            <IconButton size="small" onClick={() => setEditResponseId(response.id)}>
-                              <EditOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Delete Response">
-                            <IconButton 
-                              size="small" 
-                              color="error"
-                              onClick={() => openDeleteConfirmation('response', response.id, response.stakeholder?.name)}
-                              disabled={isDeleting}
-                            >
-                              <DeleteOutlined fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
+                          {!response.has_purchase_orders && (
+                            <Tooltip title="Edit Response">
+                              <IconButton size="small" onClick={() => setEditResponseId(response.id)}>
+                                <EditOutlined fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {!response.has_purchase_orders && (
+                            <Tooltip title="Delete Response">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => openDeleteConfirmation('response', response.id, response.stakeholder?.name)}
+                                disabled={isDeleting}
+                              >
+                                <DeleteOutlined fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          )}
+                          {response.has_purchase_orders && (
+                            <Tooltip title="This response has already been used to create a Purchase Order">
+                              <Chip label="Ordered" size="small" color="success" variant="outlined" />
+                            </Tooltip>
+                          )}
                         </Grid>
                       </Grid>
                     </Paper>
@@ -681,10 +709,10 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
         )}
 
         {/* View Response Dialog */}
-        <Dialog 
-          fullWidth 
-          maxWidth="md" 
-          fullScreen={belowLargeScreen} 
+        <Dialog
+          fullWidth
+          maxWidth="lg"
+          fullScreen={belowLargeScreen}
           scroll={belowLargeScreen ? 'body' : 'paper'}
           open={!!viewResponseId} 
           onClose={handleViewResponseClose}
@@ -732,7 +760,7 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                         <TableCell align="right">Rate</TableCell>
                         <TableCell align="right">VAT %</TableCell>
                         <TableCell align="right">Amount</TableCell>
-                        <TableCell align="right">Lead Time</TableCell>
+                        <TableCell align="right">Delivery Date</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
@@ -750,7 +778,7 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
                           <TableCell align="right">{item.vat_percentage || 0}%</TableCell>
                           <TableCell align="right">{item.amount?.toLocaleString()}</TableCell>
                           <TableCell align="right">
-                            {item.lead_time_days !== null && item.lead_time_days !== undefined ? `${item.lead_time_days}d` : '-'}
+                            {item.delivery_date ? readableDate(item.delivery_date, false) : '-'}
                           </TableCell>
                         </TableRow>
                       ))}
@@ -832,6 +860,63 @@ function RFQDetail({ rfqId: rfqIdProp }: RFQDetailProps) {
             rfqDetails={rfq}
             rfqId={Number(rfqId)}
           />
+        </Dialog>
+
+        {/* Print RFQ Dialog */}
+        <Dialog
+          fullWidth
+          maxWidth="lg"
+          fullScreen={belowLargeScreen}
+          scroll={belowLargeScreen ? 'body' : 'paper'}
+          open={openPrintDialog}
+          onClose={() => setOpenPrintDialog(false)}
+        >
+          <DialogTitle>
+            {printSupplier ? `RFQ for ${printSupplier.name}` : 'Select a Supplier'}
+          </DialogTitle>
+          <DialogContent dividers={!!printSupplier}>
+            {!printSupplier ? (
+              <Stack spacing={1}>
+                <Typography variant="body2" color="text.secondary">
+                  Each supplier receives their own copy, addressed to them.
+                </Typography>
+                {(rfq?.stakeholders || []).map((stakeholder: any) => (
+                  <Paper
+                    key={stakeholder.id}
+                    variant="outlined"
+                    sx={{ p: 1.5, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}
+                  >
+                    <Typography variant="body2">{stakeholder.name}</Typography>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      startIcon={<PrintOutlined />}
+                      onClick={() => setPrintSupplier(stakeholder)}
+                    >
+                      View / Download
+                    </Button>
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              rfq && organization && (
+                <PDFContent
+                  fileName={`${rfq.rfqNo} - ${printSupplier.name}`}
+                  document={<RFQPDF rfq={rfq} supplier={printSupplier} organization={organization} />}
+                />
+              )
+            )}
+          </DialogContent>
+          <DialogActions>
+            {printSupplier && (
+              <Button size="small" onClick={() => setPrintSupplier(null)}>
+                Back to Suppliers
+              </Button>
+            )}
+            <Button size="small" onClick={() => setOpenPrintDialog(false)}>
+              Close
+            </Button>
+          </DialogActions>
         </Dialog>
 
         {/* Confirmation Dialog */}

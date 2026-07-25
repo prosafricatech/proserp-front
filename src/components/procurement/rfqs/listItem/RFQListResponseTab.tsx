@@ -141,14 +141,14 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                                 <VisibilityOutlined fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            {canEdit && (
+                            {canEdit && !response.has_purchase_orders && (
                               <Tooltip title="Edit Response">
                                 <IconButton size="small" onClick={() => setEditResponseId(response.id)}>
                                   <EditOutlined fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                             )}
-                            {canDelete && (
+                            {canDelete && !response.has_purchase_orders && (
                               <Tooltip title="Delete Response">
                                 <IconButton
                                   size="small"
@@ -157,6 +157,11 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                                 >
                                   <DeleteOutlined fontSize="small" />
                                 </IconButton>
+                              </Tooltip>
+                            )}
+                            {response.has_purchase_orders && (
+                              <Tooltip title="This response has already been used to create a Purchase Order">
+                                <Chip label="Ordered" size="small" color="success" variant="outlined" />
                               </Tooltip>
                             )}
                           </Stack>
@@ -200,7 +205,7 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
       </Dialog>
 
       {/* View */}
-      <Dialog fullWidth maxWidth="md" fullScreen={belowLargeScreen} scroll={belowLargeScreen ? 'body' : 'paper'}
+      <Dialog fullWidth maxWidth="lg" fullScreen={belowLargeScreen} scroll={belowLargeScreen ? 'body' : 'paper'}
         open={!!viewResponseId} onClose={() => setViewResponseId(null)}>
         <DialogTitle>
           Response Details{viewResponseData?.stakeholder?.name ? ` — ${viewResponseData.stakeholder.name}` : ''}
@@ -245,7 +250,7 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                       <TableCell align="right">Rate</TableCell>
                       <TableCell align="right">VAT %</TableCell>
                       <TableCell align="right">Amount</TableCell>
-                      <TableCell align="right">Lead Time</TableCell>
+                      <TableCell align="right">Delivery Date</TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
@@ -263,7 +268,7 @@ const RFQListResponseTab: React.FC<RFQListResponseTabProps> = ({ details, rfqId 
                         <TableCell align="right">{item.vat_percentage || 0}%</TableCell>
                         <TableCell align="right">{item.amount?.toLocaleString()}</TableCell>
                         <TableCell align="right">
-                          {item.lead_time_days !== null && item.lead_time_days !== undefined ? `${item.lead_time_days}d` : '-'}
+                          {item.delivery_date ? readableDate(item.delivery_date, false) : '-'}
                         </TableCell>
                       </TableRow>
                     ))}

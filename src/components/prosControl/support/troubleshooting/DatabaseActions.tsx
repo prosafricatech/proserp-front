@@ -21,11 +21,23 @@ interface DatabaseFormData {
   databases: OrganizationOption[];
   action: string;
   password: string;
+  confirmText: string;
 }
 
 interface DatabaseActionRequest extends DatabaseFormData {
   password: string;
 }
+
+const actionLabels: Record<string, string> = {
+    up: 'Migrate:Up',
+    down: 'Migrate:Down',
+    refresh: 'Migrate:Refresh',
+    constantsReseed: 'Constants:Reseed',
+    runScripts: 'Run Scripts',
+    removeTrashed: 'Database:RemoveTrashed',
+};
+
+const getActionLabel = (action?: string) => (action && actionLabels[action]) || 'Unknown Action';
 
 function DatabaseActions() {
     const { data: organizations = [], isLoading } = useQuery<OrganizationOption[]>({
@@ -59,6 +71,18 @@ function DatabaseActions() {
                 }
                 return true;
         }),
+        confirmText: yup
+            .string()
+            .test('matches-action-if-dialog-open', function (value) {
+                if (!openDialog) {
+                    return true;
+                }
+                const expected = getActionLabel(this.parent.action);
+                if (value !== expected) {
+                    return this.createError({ message: `Please type "${expected}" exactly to confirm` });
+                }
+                return true;
+        }),
     });
 
     const { handleSubmit, setValue, watch, trigger, getValues, formState: { errors } } = useForm<DatabaseFormData>({
@@ -66,7 +90,8 @@ function DatabaseActions() {
         defaultValues: {
             databases: [],
             action: '',
-            password: ''
+            password: '',
+            confirmText: ''
         }
     });
 
@@ -109,7 +134,14 @@ function DatabaseActions() {
         }
 
         setValue('password', '');
+        setValue('confirmText', '');
         setIsLoadingSubmit(false);
+    };
+
+    const handleCloseDialog = () => {
+        setOpenDialog(false);
+        setValue('password', '');
+        setValue('confirmText', '');
     };
 
     if (isLoading) {
@@ -131,6 +163,8 @@ function DatabaseActions() {
     const currentDatabases = watch('databases');
     const currentAction = watch('action');
     const currentPassword = watch('password');
+    const currentConfirmText = watch('confirmText');
+    const selectedActionLabel = getActionLabel(selectedData?.action);
 
     return (
         <>
@@ -235,29 +269,37 @@ function DatabaseActions() {
                 </Collapse>
             </form>
 
-            <Dialog open={openDialog} onClose={() => setOpenDialog(false)} maxWidth="xs" fullWidth>
+            <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="xs" fullWidth>
                 <DialogTitle sx={{ textAlign: "center" }}>
                     <Typography
                         component="span"
                         fontWeight="bold"
                         sx={{ color: 'red', fontSize: '1.2rem' }}
                     >
-                        {
-                            selectedData?.action === "up" ? "Migrate:Up?" :
-                            selectedData?.action === "down" ? "Migrate:Down?" :
-                            selectedData?.action === "refresh" ? "Migrate:Refresh?" :
-                            selectedData?.action === "constantsReseed" ? "Constants:Reseed?" :
-                            selectedData?.action === "runScripts" ? "Run Scripts?" :
-                            selectedData?.action === "removeTrashed" ? "Database:RemoveTrashed?" :
-                            "Unknown Action"
-                        }
-                    </Typography> 
+                        {selectedActionLabel}?
+                    </Typography>
 
                     <Typography variant="body1" mt={1}>
-                       Please enter your password below to confirm
+                       Please confirm the action below and enter your password
                     </Typography>
                 </DialogTitle>
                 <DialogContent>
+                    <TextField
+                        fullWidth
+                        label={`Type "${selectedActionLabel}" to confirm`}
+                        value={currentConfirmText}
+                        onChange={(e) => {
+                            setValue('confirmText', e.target.value, { shouldValidate: true, shouldDirty: true });
+                        }}
+                        onPaste={(e) => e.preventDefault()}
+                        onDrop={(e) => e.preventDefault()}
+                        onContextMenu={(e) => e.preventDefault()}
+                        error={!!errors.confirmText}
+                        helperText={errors.confirmText?.message}
+                        size="small"
+                        margin="dense"
+                        autoComplete="off"
+                    />
                     <TextField
                         fullWidth
                         type="password"
@@ -273,7 +315,7 @@ function DatabaseActions() {
                     />
                 </DialogContent>
                 <DialogActions>
-                    <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
+                    <Button onClick={handleCloseDialog}>Cancel</Button>
                     <Button onClick={handleConfirm} variant="contained">Confirm</Button>
                 </DialogActions>
             </Dialog>

@@ -67,7 +67,7 @@ interface ResponseItem {
   rate: number;
   vat_percentage?: number;
   remarks?: string;
-  lead_time_days?: number;
+  delivery_date?: dayjs.Dayjs | null;
   total?: number;
   isRemoved?: boolean;
   uniqueKey: string;
@@ -150,7 +150,7 @@ function RFQResponsesFormContent({
           rate: existing?.rate || 0,
           vat_percentage: existing?.vat_percentage || 0,
           remarks: existing?.remarks ?? item?.remarks,
-          lead_time_days: existing?.lead_time_days,
+          delivery_date: existing?.delivery_date ? dayjs(existing.delivery_date) : null,
           total: existing?.amount || 0,
           isRemoved: false,
           uniqueKey: generateUniqueKey('active', item.id),
@@ -231,7 +231,7 @@ function RFQResponsesFormContent({
       quantity: 0,
       rate: 0,
       total: 0,
-      lead_time_days: undefined,
+      delivery_date: null,
     };
 
     // Update responseItems - mark as removed
@@ -243,7 +243,7 @@ function RFQResponsesFormContent({
         quantity: 0,
         rate: 0,
         total: 0,
-        lead_time_days: undefined,
+        delivery_date: null,
       };
       return next;
     });
@@ -271,7 +271,7 @@ function RFQResponsesFormContent({
         quantity: 0,
         rate: 0,
         total: 0,
-        lead_time_days: undefined,
+        delivery_date: null,
       };
       
       // Remove from removedItems
@@ -298,7 +298,7 @@ function RFQResponsesFormContent({
         quantity: 0,
         rate: 0,
         total: 0,
-        lead_time_days: undefined,
+        delivery_date: null,
       };
       return next;
     });
@@ -334,7 +334,7 @@ function RFQResponsesFormContent({
             quantity: 0,
             rate: 0,
             total: 0,
-            lead_time_days: undefined,
+            delivery_date: null,
           };
           return next;
         });
@@ -347,7 +347,7 @@ function RFQResponsesFormContent({
           quantity: 0,
           rate: 0,
           total: 0,
-          lead_time_days: undefined,
+          delivery_date: null,
         };
         setResponseItems((prev) => [...prev, restoredItem]);
       }
@@ -369,7 +369,7 @@ function RFQResponsesFormContent({
         rate: Number(item.rate) || 0,
         vat_percentage: Number(item.vat_percentage) || 0,
         remarks: item.remarks || '',
-        lead_time_days: item.lead_time_days ? Number(item.lead_time_days) : undefined,
+        delivery_date: item.delivery_date ? item.delivery_date.toISOString() : undefined,
       }));
 
     if (itemsToSend.length === 0) {

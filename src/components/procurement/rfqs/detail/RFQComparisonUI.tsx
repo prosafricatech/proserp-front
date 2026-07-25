@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import { AssessmentOutlined, ReceiptOutlined, TrendingDown, ShoppingCartOutlined } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
+import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 
 interface Quote {
   id: number;
@@ -30,7 +31,7 @@ interface Quote {
   awarded_quantity: number;
   unawarded_quantity: number;
   vat_percentage: number;
-  lead_time_days: number | null;
+  delivery_date: string | null;
 }
 
 interface ComparisonItem {
@@ -242,8 +243,8 @@ const RFQComparisonUI: React.FC<RFQComparisonProps> = ({ comparison, rfqDetails,
                               Qty: {getDisplayQuantity(quote).toLocaleString()}
                               {quote.quantity !== getDisplayQuantity(quote) && ` (awarded ${quote.awarded_quantity})`}
                             </Typography>
-                            {quote.lead_time_days !== null && (
-                              <Chip label={`${quote.lead_time_days}d`} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
+                            {quote.delivery_date && (
+                              <Chip label={readableDate(quote.delivery_date, false)} size="small" variant="outlined" sx={{ height: 18, fontSize: '0.65rem' }} />
                             )}
                             <Tooltip title={isAvailable ? 'Select this quote' : 'No quantity remaining to award'}>
                               <span>

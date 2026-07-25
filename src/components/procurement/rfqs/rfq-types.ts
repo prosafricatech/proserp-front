@@ -37,6 +37,11 @@ export interface RFQItem {
 export interface RFQStakeholder {
   id: number;
   name: string;
+  phone?: string | null;
+  email?: string | null;
+  tin?: string | null;
+  vrn?: string | null;
+  address?: string | null;
   status?: 'pending' | 'responded' | string;
   sent_at?: string | null;
 }
@@ -47,7 +52,7 @@ export interface RFQResponseItem {
   quantity: number;
   rate: number;
   vat_percentage?: number;
-  lead_time_days?: number | null;
+  delivery_date?: string | null;
   remarks?: string;
 }
 
@@ -66,6 +71,7 @@ export interface RFQResponse {
   response_date: string;
   validity_date: string;
   remarks?: string;
+  has_purchase_orders?: boolean;
   items: RFQResponseItem[];
 }
 
@@ -78,7 +84,7 @@ export interface RFQQuote {
   quantity: number;
   rate: number;
   vat_percentage?: number;
-  lead_time_days?: number | null;
+  delivery_date?: string | null;
   amount: number;
   awarded_quantity: number;
   unawarded_quantity: number;
