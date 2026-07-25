@@ -13,7 +13,7 @@
 /test.*
 
 # next.js
-/.next/
+.next/
 /out/
 
 # production

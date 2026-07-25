@@ -1,13 +1,17 @@
 'use client';
 
 import {
+  AddCircleOutline,
   CheckCircleOutline,
+  ClearOutlined,
   DeleteOutline,
   DescriptionOutlined,
   DownloadOutlined,
   EditOutlined,
   ErrorOutline,
   InsertDriveFileOutlined,
+  RemoveCircleOutline,
+  SearchOutlined,
   UploadOutlined,
 } from '@mui/icons-material';
 import {
@@ -19,6 +23,7 @@ import {
   CircularProgress,
   Dialog,
   IconButton,
+  InputAdornment,
   LinearProgress,
   DialogActions as MuiDialogActions,
   DialogContent as MuiDialogContent,
@@ -30,6 +35,7 @@ import {
   TableBody,
   TableCell,
   TableContainer,
+  TableFooter,
   TableHead,
   TableRow,
   Tabs,
@@ -156,6 +162,9 @@ const PayrollPeriodAdjustmentsTab = ({
   const isDark = theme.type === 'dark';
 
   const [tabValue, setTabValue] = useState(0);
+  const [allowanceSearch, setAllowanceSearch] = useState('');
+  const [deductionSearch, setDeductionSearch] = useState('');
+  const [uploadDialogOpen, setUploadDialogOpen] = useState(false);
   const [file, setFile] = useState<File | null>(null);
   const [importResult, setImportResult] = useState<ImportResult | null>(null);
 
@@ -185,7 +194,6 @@ const PayrollPeriodAdjustmentsTab = ({
     queryKey: ['periodAdjustments', String(payrollPeriodId)],
     queryFn: () =>
       humanResourcesServices.periodAdjustmentReview(payrollPeriodId),
-    enabled: tabValue === 0,
   });
 
   const adjustments: PeriodAdjustments = adjustmentsData?.data ||
@@ -229,7 +237,6 @@ const PayrollPeriodAdjustmentsTab = ({
         enqueueSnackbar(result.message || 'Adjustments imported successfully', {
           variant: 'success',
         });
-        setTabValue(0);
         refetchAdjustments();
       } else if (result.imported > 0 && result.skipped > 0) {
         enqueueSnackbar(
@@ -324,14 +331,14 @@ const PayrollPeriodAdjustmentsTab = ({
     setImportResult(null);
   };
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+  const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    if (newValue === 0) {
-      refetchAdjustments();
-    }
-    if (newValue === 1) {
-      setImportResult(null);
-    }
+  };
+
+  const handleCloseUploadDialog = () => {
+    setUploadDialogOpen(false);
+    setFile(null);
+    setImportResult(null);
   };
 
   const handleEditClick = (
@@ -383,21 +390,74 @@ const PayrollPeriodAdjustmentsTab = ({
     }
   };
 
-  const renderAdjustmentsTable = () => {
-    const allowances = adjustments?.allowances || [];
-    const deductions = adjustments?.deductions || [];
+  const getTypeName = (
+    item: PeriodAllowance | PeriodDeduction,
+    type: 'allowance' | 'deduction'
+  ) =>
+    type === 'allowance'
+      ? (item as PeriodAllowance).allowance_type?.name ||
+        (item as PeriodAllowance).allowanceType?.name ||
+        'N/A'
+      : (item as PeriodDeduction).deduction_type?.name ||
+        (item as PeriodDeduction).deductionType?.name ||
+        'N/A';
 
-    if (allowances.length === 0 && deductions.length === 0) {
+  const filterAdjustments = (
+    items: (PeriodAllowance | PeriodDeduction)[],
+    type: 'allowance' | 'deduction',
+    query: string
+  ): (PeriodAllowance | PeriodDeduction)[] => {
+    const q = query.trim().toLowerCase();
+    if (!q) return items;
+
+    return items.filter((item) => {
+      const employee = item.employee;
+      const haystack = [
+        employee?.employee_number,
+        employee?.first_name,
+        employee?.last_name,
+        getTypeName(item, type),
+        item.remarks,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(q);
+    });
+  };
+
+  const renderAdjustmentsTable = (
+    type: 'allowance' | 'deduction',
+    searchQuery: string
+  ) => {
+    const allItems: PeriodAllowance[] | PeriodDeduction[] =
+      (type === 'allowance' ? adjustments?.allowances : adjustments?.deductions) ||
+      [];
+
+    if (allItems.length === 0) {
       return (
         <Alert severity='info' sx={{ borderRadius: 2 }}>
-          No adjustments uploaded for this period. Go to the "Upload" tab to add
-          ad-hoc allowances or deductions.
+          No {type === 'allowance' ? 'allowances' : 'deductions'} uploaded for
+          this period. Use the "Upload Adjustments" button to add some.
         </Alert>
       );
     }
 
+    const items = filterAdjustments(allItems, type, searchQuery);
+
+    if (items.length === 0) {
+      return (
+        <Alert severity='info' sx={{ borderRadius: 2 }}>
+          No {type === 'allowance' ? 'allowances' : 'deductions'} match "
+          {searchQuery}".
+        </Alert>
+      );
+    }
+
+    const total = items.reduce((sum, item) => sum + (item.amount || 0), 0);
+
     const renderTableRows = (
-      items: PeriodAllowance[] | PeriodDeduction[],
+      items: (PeriodAllowance | PeriodDeduction)[],
       type: 'allowance' | 'deduction'
     ) => {
       if (items.length === 0) return null;
@@ -405,13 +465,7 @@ const PayrollPeriodAdjustmentsTab = ({
       return items.map((item) => {
         const isAllowance = type === 'allowance';
         const employee = item.employee;
-        const typeName = isAllowance
-          ? (item as PeriodAllowance).allowance_type?.name ||
-            (item as PeriodAllowance).allowanceType?.name ||
-            'N/A'
-          : (item as PeriodDeduction).deduction_type?.name ||
-            (item as PeriodDeduction).deductionType?.name ||
-            'N/A';
+        const typeName = getTypeName(item, type);
 
         return (
           <TableRow key={item.id} hover>
@@ -482,10 +536,26 @@ const PayrollPeriodAdjustmentsTab = ({
               <TableCell align='center'>Actions</TableCell>
             </TableRow>
           </TableHead>
-          <TableBody>
-            {renderTableRows(allowances, 'allowance')}
-            {renderTableRows(deductions, 'deduction')}
-          </TableBody>
+          <TableBody>{renderTableRows(items, type)}</TableBody>
+          <TableFooter>
+            <TableRow sx={{ bgcolor: isDark ? 'action.hover' : 'grey.50' }}>
+              <TableCell colSpan={2}>
+                <Typography variant='body2' fontWeight={700}>
+                  Total ({items.length}
+                  {items.length !== allItems.length
+                    ? ` of ${allItems.length}`
+                    : ''}
+                  )
+                </Typography>
+              </TableCell>
+              <TableCell align='right'>
+                <Typography variant='body2' fontWeight={700}>
+                  {total.toLocaleString()}
+                </Typography>
+              </TableCell>
+              <TableCell colSpan={2} />
+            </TableRow>
+          </TableFooter>
         </Table>
       </TableContainer>
     );
@@ -493,12 +563,21 @@ const PayrollPeriodAdjustmentsTab = ({
 
   return (
     <Box>
-      <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          borderBottom: 1,
+          borderColor: 'divider',
+        }}
+      >
         <Tabs
           value={tabValue}
           onChange={handleTabChange}
-          variant='fullWidth'
           sx={{
+            flex: 1,
+            minWidth: 0,
             '& .MuiTab-root': {
               textTransform: 'none',
               fontWeight: 500,
@@ -515,21 +594,25 @@ const PayrollPeriodAdjustmentsTab = ({
           }}
         >
           <Tab
-            icon={<DescriptionOutlined />}
-            label='View Adjustments'
+            icon={<AddCircleOutline />}
+            label='Allowances'
             iconPosition='start'
           />
           <Tab
-            icon={<UploadOutlined />}
-            label='Upload Adjustments'
+            icon={<RemoveCircleOutline />}
+            label='Deductions'
             iconPosition='start'
           />
         </Tabs>
+        <Button
+          variant='contained'
+          startIcon={<UploadOutlined />}
+          onClick={() => setUploadDialogOpen(true)}
+          sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 600 }}
+        >
+          Upload Adjustments
+        </Button>
       </Box>
-
-      {(isDownloading || isImporting) && (
-        <LinearProgress sx={{ mt: 2, borderRadius: 1 }} />
-      )}
 
       <TabPanel value={tabValue} index={0}>
         <Stack spacing={3}>
@@ -545,27 +628,117 @@ const PayrollPeriodAdjustmentsTab = ({
             }}
           >
             <Typography variant='body2' fontWeight={600} gutterBottom>
-              Current Adjustments — {monthName} {year}
+              Ad-hoc Allowances — {monthName} {year}
             </Typography>
             <Typography variant='body2' color='text.secondary'>
-              These ad-hoc allowances and deductions will appear in payslips
-              when the payroll run is submitted. You can edit the amount and
-              remarks, or delete entries as needed.
+              These will appear in payslips when the payroll run is submitted.
+              You can edit the amount and remarks, or delete entries as needed.
             </Typography>
           </Alert>
+
+          <TextField
+            size='small'
+            placeholder='Search by employee number, name, type, or remarks'
+            value={allowanceSearch}
+            onChange={(e) => setAllowanceSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchOutlined fontSize='small' />
+                </InputAdornment>
+              ),
+              endAdornment: allowanceSearch && (
+                <InputAdornment position='end'>
+                  <IconButton
+                    size='small'
+                    onClick={() => setAllowanceSearch('')}
+                  >
+                    <ClearOutlined fontSize='small' />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
 
           {isLoadingAdjustments ? (
             <Box display='flex' justifyContent='center' py={4}>
               <CircularProgress size={30} />
             </Box>
           ) : (
-            renderAdjustmentsTable()
+            renderAdjustmentsTable('allowance', allowanceSearch)
           )}
         </Stack>
       </TabPanel>
 
       <TabPanel value={tabValue} index={1}>
         <Stack spacing={3}>
+          <Alert
+            severity='info'
+            icon={<DescriptionOutlined />}
+            sx={{
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
+                alignItems: 'center',
+              },
+              bgcolor: isDark ? alpha(theme.palette.info.main, 0.1) : undefined,
+            }}
+          >
+            <Typography variant='body2' fontWeight={600} gutterBottom>
+              Ad-hoc Deductions — {monthName} {year}
+            </Typography>
+            <Typography variant='body2' color='text.secondary'>
+              These will appear in payslips when the payroll run is submitted.
+              You can edit the amount and remarks, or delete entries as needed.
+            </Typography>
+          </Alert>
+
+          <TextField
+            size='small'
+            placeholder='Search by employee number, name, type, or remarks'
+            value={deductionSearch}
+            onChange={(e) => setDeductionSearch(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position='start'>
+                  <SearchOutlined fontSize='small' />
+                </InputAdornment>
+              ),
+              endAdornment: deductionSearch && (
+                <InputAdornment position='end'>
+                  <IconButton
+                    size='small'
+                    onClick={() => setDeductionSearch('')}
+                  >
+                    <ClearOutlined fontSize='small' />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+
+          {isLoadingAdjustments ? (
+            <Box display='flex' justifyContent='center' py={4}>
+              <CircularProgress size={30} />
+            </Box>
+          ) : (
+            renderAdjustmentsTable('deduction', deductionSearch)
+          )}
+        </Stack>
+      </TabPanel>
+
+      {/* Upload Adjustments Dialog */}
+      <Dialog
+        open={uploadDialogOpen}
+        onClose={handleCloseUploadDialog}
+        maxWidth='sm'
+        fullWidth
+      >
+        <MuiDialogTitle>Upload Adjustments</MuiDialogTitle>
+        <MuiDialogContent>
+        {(isDownloading || isImporting) && (
+          <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />
+        )}
+        <Stack spacing={3} sx={{ pt: 1 }}>
           <Alert
             severity='info'
             sx={{
@@ -685,21 +858,23 @@ const PayrollPeriodAdjustmentsTab = ({
           </Paper>
 
           <Stack direction='row' spacing={2} justifyContent='flex-end'>
-            <Button
-              variant='contained'
-              startIcon={<DownloadOutlined />}
-              onClick={() => downloadTemplate()}
-              disabled={isDownloading}
-              size='large'
-              sx={{
-                minWidth: 200,
-                borderRadius: 2,
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
-            >
-              {isDownloading ? 'Downloading...' : 'Download Template'}
-            </Button>
+            {!file && (
+              <Button
+                variant='contained'
+                startIcon={<DownloadOutlined />}
+                onClick={() => downloadTemplate()}
+                disabled={isDownloading}
+                size='large'
+                sx={{
+                  minWidth: 200,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 600,
+                }}
+              >
+                {isDownloading ? 'Downloading...' : 'Download Template'}
+              </Button>
+            )}
             {file && (
               <Button
                 variant='contained'
@@ -954,7 +1129,11 @@ const PayrollPeriodAdjustmentsTab = ({
             </Paper>
           )}
         </Stack>
-      </TabPanel>
+        </MuiDialogContent>
+        <MuiDialogActions>
+          <Button onClick={handleCloseUploadDialog}>Close</Button>
+        </MuiDialogActions>
+      </Dialog>
       {/* Edit Dialog */}
       <Dialog
         open={!!editingAllowance || !!editingDeduction}

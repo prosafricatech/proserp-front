@@ -14,6 +14,7 @@ import {
   Inventory2Outlined,
   PaidOutlined,
   TimelineOutlined,
+  VisibilityOutlined,
 } from '@mui/icons-material';
 import {
   Alert,
@@ -37,6 +38,12 @@ import {
   Select,
   Skeleton,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tabs,
   Tooltip,
   Typography,
@@ -59,14 +66,35 @@ const EditProject = ({ project, setOpenEditDialog }) => {
   return <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />;
 };
 
-const StatItem = ({ label, value, valueColor }) => (
+const StatItem = ({ label, value, valueColor, onClick }) => (
   <Box mb={2}>
     <Typography variant='body2' color='text.secondary'>
       {label}
     </Typography>
-    <Typography variant='h4' color={valueColor || 'text.primary'}>
-      {typeof value === 'number' ? value.toFixed(2) : value}
-    </Typography>
+    <Box
+      display='flex'
+      alignItems='center'
+      gap={0.5}
+      onClick={onClick}
+      sx={
+        onClick
+          ? {
+              cursor: 'pointer',
+              width: 'fit-content',
+              '&:hover': { color: 'primary.main' },
+              '&:hover .MuiTypography-root': { color: 'primary.main' },
+              '&:hover .MuiSvgIcon-root': { color: 'primary.main' },
+            }
+          : undefined
+      }
+    >
+      {onClick && (
+        <VisibilityOutlined fontSize='small' color='action' />
+      )}
+      <Typography variant='h4' color={valueColor || 'text.primary'}>
+        {typeof value === 'number' ? value.toFixed(2) : value}
+      </Typography>
+    </Box>
   </Box>
 );
 
@@ -338,6 +366,7 @@ function ProjectDashboard() {
   const [debitorsTotal, setDebitorsTotal] = useState(0);
   const [openDialog, setOpenDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
+  const [openCommitmentsDialog, setOpenCommitmentsDialog] = useState(false);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -360,6 +389,13 @@ function ProjectDashboard() {
     queryKey: ['projectDashboardFigures', project?.id],
     queryFn: () => projectsServices.getProjectDashboardFigures(project?.id),
     enabled: !!project?.id,
+  });
+
+  // Only fetched when the commitments drill-down dialog is opened
+  const { data: commitments, isLoading: isLoadingCommitments } = useQuery({
+    queryKey: ['projectCommitments', project?.id],
+    queryFn: () => projectsServices.getProjectCommitments(project?.id),
+    enabled: !!project?.id && openCommitmentsDialog,
   });
 
   const processInventoryValues = (data, aggregateBy) => {
@@ -475,6 +511,17 @@ function ProjectDashboard() {
       maximumFractionDigits: 2,
     });
     return `${currencyCode ? currencyCode + ' ' : ''}${formatted}`;
+  };
+
+  // Same as formatCurrency, but for figures already in a specific
+  // (non-base) currency, e.g. commitments rows kept in their own currency
+  const formatCurrencyIn = (value, code) => {
+    const amount = Number(value) || 0;
+    const formatted = amount.toLocaleString('en-TZ', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    return `${code ? code + ' ' : ''}${formatted}`;
   };
 
   const liabilityRows = (creditors?.creditors || []).map((creditor) => ({
@@ -839,6 +886,13 @@ function ProjectDashboard() {
                       value={formatCurrency(dashboardFigures?.remaining_budget)}
                     />
                   </Grid>
+                  <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                    <StatItem
+                      label='Committed'
+                      value={formatCurrency(dashboardFigures?.committed_cost)}
+                      onClick={() => setOpenCommitmentsDialog(true)}
+                    />
+                  </Grid>
                   <Grid size={{ xs: 12 }} paddingBottom={3}>
                     <Box
                       display='flex'
@@ -860,6 +914,17 @@ function ProjectDashboard() {
                         sx={{ height: 8, borderRadius: 5, mt: 1, flex: 1 }}
                       />
                     </Box>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+                    <StatItem
+                      label='Available Budget'
+                      value={formatCurrency(dashboardFigures?.available_budget)}
+                      valueColor={
+                        Number(dashboardFigures?.available_budget) < 0
+                          ? 'error.main'
+                          : undefined
+                      }
+                    />
                   </Grid>
                 </Grid>
               )}
@@ -1190,6 +1255,187 @@ function ProjectDashboard() {
 
       <Dialog open={openEditDialog} scroll='paper' fullWidth maxWidth='md'>
         <EditProject project={project} setOpenEditDialog={setOpenEditDialog} />
+      </Dialog>
+
+      <Dialog
+        open={openCommitmentsDialog}
+        onClose={() => setOpenCommitmentsDialog(false)}
+        fullWidth
+        fullScreen={belowLargeScreen}
+        maxWidth='xl'
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+      >
+        <DialogContent>
+          <Typography variant='h6' fontWeight={600} mb={2}>
+            Committed Cost
+          </Typography>
+
+          {isLoadingCommitments ? (
+            <Skeleton variant='rectangular' height={200} />
+          ) : (
+            <>
+              <Typography variant='subtitle2' color='text.secondary' mb={1}>
+                Ordered Material — Open Purchase Orders (
+                {formatCurrency(commitments?.committed_purchase_orders)})
+              </Typography>
+              <TableContainer sx={{ mb: 3 }}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>P.O No</TableCell>
+                      <TableCell>Supplier</TableCell>
+                      <TableCell>Order Date</TableCell>
+                      <TableCell>Status</TableCell>
+                      <TableCell align='right'>Ordered</TableCell>
+                      <TableCell align='right'>Received</TableCell>
+                      <TableCell align='right'>Paid in Advance</TableCell>
+                      <TableCell align='right'>Outstanding</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(commitments?.purchase_orders || []).length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={8} align='center'>
+                          No open purchase orders
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {(commitments?.purchase_orders || []).map((po) => (
+                      <TableRow key={po.id}>
+                        <TableCell>{po.order_no}</TableCell>
+                        <TableCell>{po.stakeholder}</TableCell>
+                        <TableCell>
+                          {po.order_date
+                            ? dayjs(po.order_date).format('DD-MM-YYYY')
+                            : '-'}
+                        </TableCell>
+                        <TableCell>{po.status}</TableCell>
+                        <TableCell align='right'>
+                          {formatCurrencyIn(po.inventory_amount, po.currency)}
+                        </TableCell>
+                        <TableCell align='right'>
+                          {formatCurrencyIn(po.received_amount, po.currency)}
+                        </TableCell>
+                        <TableCell align='right'>
+                          {formatCurrencyIn(po.paid_amount, po.currency)}
+                        </TableCell>
+                        <TableCell align='right'>
+                          {formatCurrencyIn(po.outstanding_amount, po.currency)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Typography variant='subtitle2' color='text.secondary' mb={1}>
+                Stock On Hand — Received, Not Yet Consumed (
+                {formatCurrency(commitments?.committed_stock_on_hand)})
+              </Typography>
+              <TableContainer sx={{ mb: 3 }}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Category</TableCell>
+                      <TableCell align='right'>Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(commitments?.stock_on_hand || []).length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={2} align='center'>
+                          No stock currently on hand
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {(commitments?.stock_on_hand || []).map((stock) => (
+                      <TableRow key={stock.category_id ?? 'uncategorized'}>
+                        <TableCell>{stock.category}</TableCell>
+                        <TableCell align='right'>
+                          {formatCurrency(stock.value)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {commitments?.process_approval_active !== false && (
+                <>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    mb={1}
+                  >
+                    Payments to Suppliers — Approved, Not Yet Paid (
+                    {formatCurrency(commitments?.committed_payments)})
+                  </Typography>
+                  <TableContainer>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Requisition No</TableCell>
+                          <TableCell>Ledger</TableCell>
+                          <TableCell>Requester</TableCell>
+                          <TableCell>Date Required</TableCell>
+                          <TableCell align='right'>Approved</TableCell>
+                          <TableCell align='right'>Paid</TableCell>
+                          <TableCell align='right'>Unpaid</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(commitments?.payments || []).length === 0 && (
+                          <TableRow>
+                            <TableCell colSpan={7} align='center'>
+                              No pending supplier payments
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {(commitments?.payments || []).map((payment) => (
+                          <TableRow key={payment.id}>
+                            <TableCell>{payment.requisition_no}</TableCell>
+                            <TableCell>{payment.ledger}</TableCell>
+                            <TableCell>{payment.requester}</TableCell>
+                            <TableCell>
+                              {payment.date_required
+                                ? dayjs(payment.date_required).format(
+                                    'DD-MM-YYYY'
+                                  )
+                                : '-'}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {formatCurrencyIn(
+                                payment.amount,
+                                payment.currency
+                              )}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {formatCurrencyIn(
+                                payment.paid_amount,
+                                payment.currency
+                              )}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {formatCurrencyIn(
+                                payment.unpaid_amount,
+                                payment.currency
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenCommitmentsDialog(false)}>
+            Close
+          </Button>
+        </DialogActions>
       </Dialog>
     </>
   );
