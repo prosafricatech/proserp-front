@@ -237,7 +237,6 @@ const PayrollPeriodAdjustmentsTab = ({
         enqueueSnackbar(result.message || 'Adjustments imported successfully', {
           variant: 'success',
         });
-        refetchAdjustments();
       } else if (result.imported > 0 && result.skipped > 0) {
         enqueueSnackbar(
           `${result.message}. ${result.imported} imported, ${result.skipped} skipped.`,
@@ -249,6 +248,12 @@ const PayrollPeriodAdjustmentsTab = ({
             'No adjustments were imported. Please check the errors below.',
           { variant: 'error' }
         );
+      }
+
+      // Any successful row (even alongside some skipped/errored ones) changes
+      // what the active Allowances/Deductions tab should be showing.
+      if (result.imported > 0) {
+        refetchAdjustments();
       }
     },
     onError: (error: any) => {
@@ -333,6 +338,7 @@ const PayrollPeriodAdjustmentsTab = ({
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
+    refetchAdjustments();
   };
 
   const handleCloseUploadDialog = () => {
