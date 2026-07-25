@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useStakeholderSelect } from './StakeholderSelectProvider';
 import { Autocomplete, Checkbox, Chip, TextField } from '@mui/material';
 import { CheckBox, CheckBoxOutlineBlank } from '@mui/icons-material';
@@ -14,7 +14,7 @@ interface StakeholderSelectorProps {
   startAdornment?: React.ReactNode;
   readOnly?: boolean;
   disabled?: boolean;
-  defaultValue?: number | Stakeholder | Stakeholder[] | null;
+  defaultValue?: number | null;
 }
 
 function StakeholderSelector(props: StakeholderSelectorProps) {
@@ -41,13 +41,7 @@ function StakeholderSelector(props: StakeholderSelectorProps) {
 
   const comingStakeholderValue =
     (addedStakeholder && addedStakeholder) ||
-    (Array.isArray(defaultValue)
-      ? defaultValue
-      : defaultValue && typeof defaultValue === 'object'
-      ? defaultValue
-      : defaultValue
-      ? options.find(stakeholder => stakeholder.id === defaultValue)
-      : null) ||
+    (defaultValue && options.find(stakeholder => stakeholder.id === defaultValue)) ||
     options.find(
       stakeholder =>
         stakeholder.name === 'Cash Purchase' ||
@@ -58,10 +52,6 @@ function StakeholderSelector(props: StakeholderSelectorProps) {
   const [stakeholderValue, setStakeholderValue] = useState<Stakeholder | Stakeholder[] | null>(
     comingStakeholderValue ? comingStakeholderValue : multiple ? [] : null
   );
-
-  useEffect(() => {
-    setStakeholderValue(comingStakeholderValue ? comingStakeholderValue : multiple ? [] : null);
-  }, [comingStakeholderValue, multiple]);
 
   const handleOnChange = (event: React.SyntheticEvent, newValue: Stakeholder | Stakeholder[] | null) => {
     onChange?.(newValue);

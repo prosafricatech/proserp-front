@@ -33,10 +33,13 @@ import * as yup from 'yup';
 import journalServices from './journal-services';
 import JournalItemForm from './JournalItemForm';
 import JournalItemRow from './JournalItemRow';
+import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
 
 type JournalItem = {
   debit_ledger_id?: number;
+  debit_ledger_currency_id?: number;
   credit_ledger_id?: number;
+  credit_ledger_currency_id?: number;
   amount: number;
   description: string;
 };
@@ -62,6 +65,7 @@ type JournalData = {
   reference?: string;
   narration?: string;
   currency_id?: number;
+  currency: any
   exchange_rate?: number;
   cost_centers?: CostCenter[];
   transaction_date?: string;
@@ -83,7 +87,7 @@ function JournalFormDialogContent({
 }: JournalFormDialogContentProps) {
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const costCenters = authOrganization?.costCenters;
-  const [items, setItems] = useState<JournalItem[]>(journal?.items || []);
+  const { ungroupedLedgerOptions } = useLedgerSelect();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<Record<string, string> | null>(
@@ -103,6 +107,28 @@ function JournalFormDialogContent({
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
+
+  // Helper function to find currency ID for a ledger
+  const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
+    if (!ledgerId) return undefined;
+    const ledger = ungroupedLedgerOptions.find(l => l.id === ledgerId);
+    return ledger?.currency?.id;
+  };
+
+  // Initialize items with currency IDs from ledger options
+  const getInitialItems = (): JournalItem[] => {
+    if (!journal?.items) return [];
+    return journal.items.map((item: JournalItem) => ({
+      ...item,
+      // Find the currency IDs from the ledger options
+      debit_ledger_currency_id: item.debit_ledger_currency_id || 
+        findLedgerCurrencyId(item.debit_ledger_id),
+      credit_ledger_currency_id: item.credit_ledger_currency_id || 
+        findLedgerCurrencyId(item.credit_ledger_id),
+    }));
+  };
+
+  const [items, setItems] = useState<JournalItem[]>(getInitialItems());
 
   const addJournal = useMutation<JournalResponse, Error, JournalFormValues>({
     mutationFn: journalServices.add,
@@ -182,7 +208,7 @@ function JournalFormDialogContent({
     defaultValues: {
       reference: journal?.reference,
       narration: journal?.narration || '',
-      currency_id: journal?.currency_id || 1,
+      currency_id: journal?.currency_id ?? journal?.currency?.id ?? 1,
       exchange_rate: journal?.exchange_rate || 1,
       cost_centers:
         journal?.cost_centers || (costCenters.length === 1 ? costCenters : []),
@@ -195,6 +221,14 @@ function JournalFormDialogContent({
   useEffect(() => {
     setValue('items', items);
   }, [items, setValue]);
+
+  // Update items when journal changes (for edit mode)
+  useEffect(() => {
+    if (journal?.items) {
+      const updatedItems = getInitialItems();
+      setItems(updatedItems);
+    }
+  }, [journal]);
 
   const totalAmount = items.reduce(
     (totalAmount, item) => totalAmount + item.amount,
@@ -229,9 +263,22 @@ function JournalFormDialogContent({
   };
 
   const handleSubmitForm = async (data: JournalFormValues) => {
-    const updatedData = { ...data, items };
+    const updatedData = { 
+      ...data, 
+      items: items.map(item => ({
+        debit_ledger_id: item.debit_ledger_id,
+        debit_ledger_currency_id: item.debit_ledger_currency_id,
+        credit_ledger_id: item.credit_ledger_id,
+        credit_ledger_currency_id: item.credit_ledger_currency_id,
+        amount: item.amount,
+        description: item.description,
+      }))
+    };
     await saveJournal.mutate(updatedData);
   };
+  
+  // Get the current selected currency ID
+  const selectedCurrencyId = watch('currency_id');
   
   return (
     <>
@@ -243,7 +290,6 @@ function JournalFormDialogContent({
             : `New Journal Form`}
       </DialogTitle>
       <DialogContent>
-        {/* <form autoComplete='false'> */}
         <Grid container columnSpacing={1} marginBottom={2}>
           <Grid size={{ xs: 12, md: 4 }}>
             <Div sx={{ mt: 1, mb: 1 }}>
@@ -296,7 +342,7 @@ function JournalFormDialogContent({
                     ? { message: errors.currency_id.message }
                     : null
                 }
-                defaultValue={journal?.currency_id ?? 1}
+                defaultValue={journal?.currency_id ?? journal?.currency?.id ?? 1}
                 onChange={(newValue) => {
                   setValue('currency_id', newValue ? newValue.id : null, {
                     shouldDirty: true,
@@ -390,6 +436,7 @@ function JournalFormDialogContent({
           setIsDirty={setIsDirty}
           items={items}
           setItems={setItems}
+          selectedCurrencyId={selectedCurrencyId || undefined}
         />
 
         {errors?.items?.message && items.length < 1 && (
@@ -408,6 +455,7 @@ function JournalFormDialogContent({
             item={item}
             items={items}
             setItems={setItems}
+            selectedCurrencyId={selectedCurrencyId || undefined}
           />
         ))}
 
@@ -443,7 +491,6 @@ function JournalFormDialogContent({
             </Div>
           </Grid>
         </Grid>
-        {/* </form> */}
 
         <Dialog open={showWarning} onClose={() => setShowWarning(false)}>
           <DialogTitle>

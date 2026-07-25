@@ -804,6 +804,29 @@ function Sidebar({ menus }) {
             }
         }
 
+        if (authOrganization?.organization?.name) {
+            const canAccessStakeholders = checkOrganizationPermission([
+                PERMISSIONS.STAKEHOLDERS_READ,
+                PERMISSIONS.STAKEHOLDERS_CREATE,
+            ]);
+
+            const canAccessTransactions = checkOrganizationPermission([
+                PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+                PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+            ]);
+
+            const canAccessBulkImports = canAccessStakeholders || canAccessTransactions;
+
+            if (canAccessBulkImports) {
+                const prosControlMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.prosControl);
+                if (prosControlMenuIndex >= 0) {
+                    updatedMenus[prosControlMenuIndex].children = updatedMenus[prosControlMenuIndex].children.filter(
+                        child => child.label !== dictionary.sidebar.menuItem.bulkImports
+                    );
+                }
+            }
+        }
+
         if (!checkPermission([
             PROS_CONTROL_PERMISSIONS.USERS_READ,
             PROS_CONTROL_PERMISSIONS.USERS_MANAGE,

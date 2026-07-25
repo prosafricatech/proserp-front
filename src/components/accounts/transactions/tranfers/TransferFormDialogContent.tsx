@@ -39,8 +39,24 @@ import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
 
 interface TransferItem {
   debit_ledger_id?: number;
+  item_form_ledger_currency_id?: number;
   amount: number;
   description: string;
+}
+
+interface Ledger {
+  id: number;
+  name: string;
+  code: string | null;
+  ledger_group_id: number;
+  alias: string | null;
+  nature_id?: number;
+  currency?: {
+    id: number;
+    name: string;
+    code: string;
+    symbol: string;
+  } | null;
 }
 
 interface TransferResponse {
@@ -50,6 +66,7 @@ interface TransferResponse {
 interface TransferFormValues {
   id?: number;
   credit_ledger_id: number;
+  form_ledger_currency_id?: number;
   reference?: string;
   narration: string;
   currency_id: number | null;
@@ -85,7 +102,6 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const { ungroupedLedgerOptions } = useLedgerSelect();
     const { enqueueSnackbar } = useSnackbar();
     const [serverError, setServerError] = useState<Record<string, string> | null>(null);
-    const [items, setItems] = useState<TransferItem[]>(transfer?.items || []);
 
     const haveAllCostCenters = checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL);
 
@@ -93,6 +109,26 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const [isDirty, setIsDirty] = useState(false);
     const [clearFormKey, setClearFormKey] = useState(0);
     const [submitItemForm, setSubmitItemForm] = useState(false);
+
+    // Helper function to find currency ID for a ledger
+    const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
+        if (!ledgerId) return undefined;
+        const ledger = ungroupedLedgerOptions.find(l => l.id === ledgerId);
+        return ledger?.currency?.id;
+    };
+
+    // Initialize items with currency IDs from ledger options
+    const getInitialItems = (): TransferItem[] => {
+        if (!transfer?.items) return [];
+        return transfer.items.map((item: TransferItem) => ({
+            ...item,
+            // Find the currency ID from the ledger options
+            item_form_ledger_currency_id: item.item_form_ledger_currency_id || 
+                findLedgerCurrencyId(item.debit_ledger_id),
+        }));
+    };
+
+    const [items, setItems] = useState<TransferItem[]>(getInitialItems());
 
     const addTransfer = useMutation<TransferResponse, Error, TransferFormValues>({
         mutationFn: fundTransferServices.add,
@@ -191,6 +227,14 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
         setValue('items', items);
     }, [items, setValue]);
 
+    // Update items when transfer changes (for edit mode)
+    useEffect(() => {
+        if (transfer?.items) {
+            const updatedItems = getInitialItems();
+            setItems(updatedItems);
+        }
+    }, [transfer]);
+
     const totalAmount = items.reduce((totalAmount, item) => totalAmount + item.amount, 0);
 
     const saveTransfer = React.useMemo(() => {
@@ -222,6 +266,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
             ...data, 
             items: items.map(item => ({
                 debit_ledger_id: item.debit_ledger_id,
+                item_form_ledger_currency_id: item.item_form_ledger_currency_id,
                 amount: item.amount,
                 description: item.description
             }))
@@ -274,8 +319,11 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                                     frontError={errors.credit_ledger_id}
                                     defaultValue={ungroupedLedgerOptions.find(ledger => ledger.id === transfer?.credit_ledger_id) || null}
                                     allowedGroups={['Cash and cash equivalents']}
-                                    onChange={(newValue) => {
+                                    onChange={(newValue: any) => {
                                         if (Array.isArray(newValue)) return;
+                                        setValue('form_ledger_currency_id', newValue?.currency?.id);
+                                        setValue('currency_id', newValue?.currency?.id);
+                                        setValue('exchange_rate', newValue?.currency?.exchangeRate);
                                         setValue('credit_ledger_id', newValue ? newValue.id : 0, {
                                             shouldValidate: true,
                                             shouldDirty: true
@@ -304,7 +352,8 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                             <Div sx={{mt: 1, mb: 1}}>
                                 <CurrencySelector
                                     frontError={errors?.currency_id?.message ? { message: errors.currency_id.message } : null}
-                                    defaultValue={transfer?.currency?.id ?? 1}
+                                    disabled={watch('form_ledger_currency_id') as any}
+                                    defaultValue={watch('currency_id') as any}
                                     onChange={(newValue) => {
                                         setValue('currency_id', newValue ? newValue.id : null, {
                                             shouldDirty: true,
@@ -327,6 +376,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                                         helperText={errors?.exchange_rate?.message}
                                         InputProps={{
                                             inputComponent: CommaSeparatedField,
+                                            disabled: !!watch('form_ledger_currency_id')
                                         }}
                                         value={watch('exchange_rate')}
                                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -375,6 +425,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                         items={items} 
                         setItems={setItems}
                         isTransfer={true}
+                        selectedCurrencyId={watch('currency_id') as any}
                     />
 
                     {errors?.items?.message && items.length < 1 && (
@@ -390,10 +441,11 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                             setIsDirty={setIsDirty} 
                             key={index} 
                             index={index} 
-                            item={item} 
-                            items={items} 
-                            setItems={setItems}
+                            item={item as any} 
+                            items={items as any} 
+                            setItems={setItems as any}
                             isTransfer={true}
+                            selectedCurrencyId={watch('currency_id') as any}
                         />
                     ))}
 

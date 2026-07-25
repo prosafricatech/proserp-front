@@ -22,12 +22,19 @@ import {
   Skeleton,
   Stack,
   Switch,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
+import { Fragment, useEffect, useState } from 'react';
 import projectsServices from '../../project-services';
 import { useProjectProfile } from '../ProjectProfileProvider';
 import BudgetsOnscreen from './preview/BudgetsOnscreen';
@@ -303,6 +310,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
   const [ledgerFilters, setLedgerFilters] = useState(null);
   const [budgetedPdfDialogOpen, setBudgetedPdfDialogOpen] = useState(false);
   const [budgetedPdfDetails, setBudgetedPdfDetails] = useState(null);
+  const [committedDialogItem, setCommittedDialogItem] = useState(null);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const {
@@ -332,6 +340,13 @@ function BudgetsAccordionDetails({ budget, expanded }) {
     filteredExpenses?.reduce((total, item) => total + item?.budgeted, 0) || 0;
   const totalSpentAmount =
     filteredExpenses?.reduce((total, item) => total + item?.spent, 0) || 0;
+  const totalCommittedAmount =
+    filteredExpenses?.reduce(
+      (total, item) => total + (item?.committed || 0),
+      0
+    ) || 0;
+  const totalAvailableAmount =
+    totalBudgetedAmount - totalSpentAmount - totalCommittedAmount;
 
   const handleViewLedger = (item) => {
     setLedgerFilters({
@@ -344,6 +359,21 @@ function BudgetsAccordionDetails({ budget, expanded }) {
     });
     setLedgerDialogOpen(true);
   };
+
+  const handleViewCommitted = (item) => {
+    setCommittedDialogItem(item);
+  };
+
+  const { data: committedItemsDetails, isLoading: isLoadingCommittedItems } =
+    useQuery({
+      queryKey: ['committedCostItems', budget.id, committedDialogItem?.ledger_id],
+      queryFn: () =>
+        projectsServices.getCommittedCostItems(
+          budget.id,
+          committedDialogItem.ledger_id
+        ),
+      enabled: !!committedDialogItem,
+    });
 
   const handleViewBudgeted = async (item) => {
     try {
@@ -465,7 +495,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             width={'100%'}
             paddingBottom={1}
           >
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 6, md: 2.2 }}>
               <Typography variant='subtitle1' color='textSecondary'>
                 Total Budgeted
               </Typography>
@@ -476,7 +506,18 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 })}
               </Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 4 }}>
+            <Grid size={{ xs: 6, md: 2.2 }}>
+              <Typography variant='subtitle1' color='textSecondary'>
+                Total Committed
+              </Typography>
+              <Typography variant='h5'>
+                {totalCommittedAmount?.toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: baseCurrency?.code,
+                })}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 6, md: 2.2 }}>
               <Typography variant='subtitle1' color='textSecondary'>
                 Total Spent
               </Typography>
@@ -487,7 +528,21 @@ function BudgetsAccordionDetails({ budget, expanded }) {
                 })}
               </Typography>
             </Grid>
-            <Grid size={{ xs: 12, md: 3 }} container alignItems='center'>
+            <Grid size={{ xs: 6, md: 2.2 }}>
+              <Typography variant='subtitle1' color='textSecondary'>
+                Available
+              </Typography>
+              <Typography
+                variant='h5'
+                color={totalAvailableAmount < 0 ? 'error.main' : undefined}
+              >
+                {totalAvailableAmount?.toLocaleString('en-US', {
+                  style: 'currency',
+                  currency: baseCurrency?.code,
+                })}
+              </Typography>
+            </Grid>
+            <Grid size={{ xs: 12, md: 2.2 }} container alignItems='center'>
               <Grid size={{ xs: 11, md: 11 }}>
                 <Typography variant='subtitle1' color='textSecondary'>
                   Percentage Spent
@@ -530,121 +585,143 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           {/* Expenses */}
           <Grid size={12} paddingTop={1} width={'100%'}>
             {filteredExpenses?.length > 0 ? (
-              filteredExpenses.map((item, index) => {
-                const percentageSpent =
-                  item?.budgeted === 0
-                    ? Infinity
-                    : (item?.spent / item?.budgeted) * 100;
+              <TableContainer>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Name</TableCell>
+                      <TableCell align='right'>Budgeted</TableCell>
+                      <TableCell align='right'>Committed</TableCell>
+                      <TableCell align='right'>Spent</TableCell>
+                      <TableCell align='right'>% Spent</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredExpenses.map((item, index) => {
+                      const committed = item?.committed || 0;
+                      const percentageSpent =
+                        item?.budgeted === 0
+                          ? Infinity
+                          : (item?.spent / item?.budgeted) * 100;
+                      const isLastRow = index === filteredExpenses.length - 1;
 
-                return (
-                  <Grid
-                    key={index}
-                    container
-                    size={12}
-                    width={'100%'}
-                    columnSpacing={2}
-                    alignItems='center'
-                    sx={{
-                      cursor: 'pointer',
-                      borderTop: 1,
-                      borderColor: 'divider',
-                      '&:hover': { bgcolor: 'action.hover' },
-                      padding: 1,
-                    }}
-                  >
-                    <Grid size={{ xs: 7, md: 5.7 }}>
-                      <Tooltip title='Name'>
-                        <Typography variant='h6'>{item?.name}</Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 5, md: 2.3 }}>
-                      <Tooltip title='Budgeted, click to view'>
-                        <Typography
-                          variant='h6'
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewBudgeted(item);
-                          }}
-                          sx={{
-                            cursor: 'pointer',
-                            '&:hover': { color: 'primary.main' },
-                          }}
-                        >
-                          {item?.budgeted.toLocaleString('en-US', {
-                            style: 'currency',
-                            currency: baseCurrency?.code,
-                          })}
-                        </Typography>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 8, md: 2 }}>
-                      <Tooltip title='Spent, click to view'>
-                        <Box display='flex' alignItems='center' gap={0.5}>
-                          <Typography
-                            variant='h6'
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleViewLedger(item);
-                            }}
+                      return (
+                        <Fragment key={index}>
+                          <TableRow
+                            hover
+                            sx={{ '& > .MuiTableCell-root': { border: 0 } }}
+                          >
+                            <TableCell>
+                              <Typography variant='body1' fontWeight={500}>
+                                {item?.name}
+                              </Typography>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Budgeted, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewBudgeted(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {item?.budgeted.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Committed, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewCommitted(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {committed.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Tooltip title='Spent, click to view'>
+                                <Typography
+                                  variant='body1'
+                                  onClick={() => handleViewLedger(item)}
+                                  sx={{
+                                    cursor: 'pointer',
+                                    '&:hover': { color: 'primary.main' },
+                                  }}
+                                >
+                                  {item?.spent.toLocaleString('en-US', {
+                                    style: 'currency',
+                                    currency: baseCurrency?.code,
+                                  })}
+                                </Typography>
+                              </Tooltip>
+                            </TableCell>
+                            <TableCell align='right'>
+                              <Chip
+                                label={
+                                  percentageSpent === Infinity
+                                    ? 'unbudgeted'
+                                    : `${percentageSpent.toFixed(2)}%`
+                                }
+                                color={getPercentageColor(percentageSpent)}
+                                size='small'
+                              />
+                            </TableCell>
+                          </TableRow>
+                          <TableRow
                             sx={{
-                              cursor: 'pointer',
-                              '&:hover': { color: 'primary.main' },
+                              '& > .MuiTableCell-root': {
+                                borderBottom: isLastRow ? 0 : 1,
+                                borderColor: 'divider',
+                              },
                             }}
                           >
-                            {item?.spent.toLocaleString('en-US', {
-                              style: 'currency',
-                              currency: baseCurrency?.code,
-                            })}
-                          </Typography>
-                        </Box>
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={{ xs: 4, md: 2 }}>
-                      <Tooltip title='Percentage Spent'>
-                        <Chip
-                          label={
-                            percentageSpent === Infinity
-                              ? 'unbudgeted'
-                              : `${percentageSpent.toFixed(2)}%`
-                          }
-                          color={getPercentageColor(percentageSpent)}
-                          size='small'
-                        />
-                      </Tooltip>
-                    </Grid>
-                    <Grid size={12} paddingTop={1}>
-                      <Tooltip title='Percentage Spent'>
-                        <Box sx={{ width: '100%', textAlign: 'center' }}>
-                          <LinearProgress
-                            variant='determinate'
-                            value={
-                              percentageSpent === Infinity
-                                ? 100
-                                : percentageSpent
-                            }
-                            color={getPercentageColor(percentageSpent)}
-                            sx={{
-                              height: 15,
-                              borderRadius: 5,
-                              ...(percentageSpent === Infinity ||
-                              percentageSpent >= 100
-                                ? {
-                                    backgroundColor: (theme) =>
-                                      theme.palette.error.main,
-                                    '& .MuiLinearProgress-bar': {
-                                      backgroundColor: (theme) =>
-                                        theme.palette.error.main,
-                                    },
+                            <TableCell colSpan={5} sx={{ pt: 0, pb: 1.5 }}>
+                              <Tooltip title='Percentage Spent'>
+                                <LinearProgress
+                                  variant='determinate'
+                                  value={
+                                    percentageSpent === Infinity
+                                      ? 100
+                                      : percentageSpent
                                   }
-                                : {}),
-                            }}
-                          />
-                        </Box>
-                      </Tooltip>
-                    </Grid>
-                  </Grid>
-                );
-              })
+                                  color={getPercentageColor(percentageSpent)}
+                                  sx={{
+                                    height: 10,
+                                    borderRadius: 5,
+                                    ...(percentageSpent === Infinity ||
+                                    percentageSpent >= 100
+                                      ? {
+                                          backgroundColor: (theme) =>
+                                            theme.palette.error.main,
+                                          '& .MuiLinearProgress-bar': {
+                                            backgroundColor: (theme) =>
+                                              theme.palette.error.main,
+                                          },
+                                        }
+                                      : {}),
+                                  }}
+                                />
+                              </Tooltip>
+                            </TableCell>
+                          </TableRow>
+                        </Fragment>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             ) : (
               <Alert variant='outlined' severity='info'>
                 No expenses budgeted found
@@ -679,6 +756,165 @@ function BudgetsAccordionDetails({ budget, expanded }) {
           forceWithDetails={true}
         />
       )}
+
+      <Dialog
+        open={!!committedDialogItem}
+        onClose={() => setCommittedDialogItem(null)}
+        maxWidth='lg'
+        fullWidth
+        fullScreen={belowLargeScreen}
+      >
+        <DialogTitle>
+          Committed — {committedDialogItem?.name}
+        </DialogTitle>
+        <DialogContent>
+          {isLoadingCommittedItems ? (
+            <Skeleton variant='rectangular' height={200} />
+          ) : (
+            <>
+              <Typography variant='subtitle2' color='text.secondary' mb={1}>
+                Ordered Material — Open Purchase Orders
+              </Typography>
+              <TableContainer sx={{ mb: 3 }}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>P.O No</TableCell>
+                      <TableCell>Supplier</TableCell>
+                      <TableCell>Order Date</TableCell>
+                      <TableCell align='right'>Outstanding</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(committedItemsDetails?.purchase_orders || [])
+                      .length === 0 && (
+                      <TableRow>
+                        <TableCell colSpan={4} align='center'>
+                          No open purchase orders
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {(committedItemsDetails?.purchase_orders || []).map(
+                      (po) => (
+                        <TableRow key={po.order_id}>
+                          <TableCell>{po.order_no}</TableCell>
+                          <TableCell>{po.stakeholder}</TableCell>
+                          <TableCell>
+                            {po.order_date
+                              ? dayjs(po.order_date).format('DD-MM-YYYY')
+                              : '-'}
+                          </TableCell>
+                          <TableCell align='right'>
+                            {po.amount_display.toLocaleString('en-US', {
+                              style: 'currency',
+                              currency: po.currency || baseCurrency?.code,
+                            })}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              <Typography variant='subtitle2' color='text.secondary' mb={1}>
+                Stock On Hand — Received, Not Yet Consumed
+              </Typography>
+              <TableContainer sx={{ mb: 3 }}>
+                <Table size='small'>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Category</TableCell>
+                      <TableCell align='right'>Value</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {(committedItemsDetails?.stock_on_hand || []).length ===
+                      0 && (
+                      <TableRow>
+                        <TableCell colSpan={2} align='center'>
+                          No stock currently on hand
+                        </TableCell>
+                      </TableRow>
+                    )}
+                    {(committedItemsDetails?.stock_on_hand || []).map(
+                      (stock) => (
+                        <TableRow key={stock.category_id ?? 'uncategorized'}>
+                          <TableCell>{stock.category}</TableCell>
+                          <TableCell align='right'>
+                            {stock.amount.toLocaleString('en-US', {
+                              style: 'currency',
+                              currency: baseCurrency?.code,
+                            })}
+                          </TableCell>
+                        </TableRow>
+                      )
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {committedItemsDetails?.process_approval_active !== false && (
+                <>
+                  <Typography
+                    variant='subtitle2'
+                    color='text.secondary'
+                    mb={1}
+                  >
+                    Payments to Suppliers — Approved, Not Yet Paid
+                  </Typography>
+                  <TableContainer>
+                    <Table size='small'>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Requisition No</TableCell>
+                          <TableCell>Requester</TableCell>
+                          <TableCell>Date Required</TableCell>
+                          <TableCell align='right'>Unpaid</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {(committedItemsDetails?.payments || []).length ===
+                          0 && (
+                          <TableRow>
+                            <TableCell colSpan={4} align='center'>
+                              No pending supplier payments
+                            </TableCell>
+                          </TableRow>
+                        )}
+                        {(committedItemsDetails?.payments || []).map(
+                          (payment) => (
+                            <TableRow key={payment.requisition_id}>
+                              <TableCell>{payment.requisition_no}</TableCell>
+                              <TableCell>{payment.requester}</TableCell>
+                              <TableCell>
+                                {payment.date_required
+                                  ? dayjs(payment.date_required).format(
+                                      'DD-MM-YYYY'
+                                    )
+                                  : '-'}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {payment.amount.toLocaleString('en-US', {
+                                  style: 'currency',
+                                  currency: baseCurrency?.code,
+                                })}
+                              </TableCell>
+                            </TableRow>
+                          )
+                        )}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCommittedDialogItem(null)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
