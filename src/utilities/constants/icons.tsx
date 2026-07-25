@@ -44,6 +44,7 @@ import {
   StraightenOutlined,
   TroubleshootOutlined,
   TuneOutlined,
+  UploadFileOutlined,
   ViewAgendaOutlined,
 } from '@mui/icons-material';
 
@@ -74,6 +75,7 @@ export const ICONS = {
   measurement_units: StraightenOutlined,
   filesShelf: faFolderOpen,
   usersManagement: ManageAccountsOutlined,
+  BulkImports: UploadFileOutlined,
   reports: AssessmentOutlined,
   product_categories: Inventory2Outlined,
   products: Inventory2Outlined,
