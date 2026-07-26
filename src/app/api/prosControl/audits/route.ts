@@ -3,18 +3,14 @@ import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL!;
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+export async function GET(request: NextRequest) {
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
 
   const queryString = new URL(request.url).searchParams.toString();
   const endpoint = queryString
-    ? `${API_BASE}/audits/${id}?${queryString}`
-    : `${API_BASE}/audits/${id}`;
+    ? `${API_BASE}/pros-audits?${queryString}`
+    : `${API_BASE}/pros-audits`;
 
   const res = await fetch(endpoint, {
     headers,

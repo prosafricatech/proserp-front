@@ -5,18 +5,13 @@ const API_BASE = process.env.API_BASE_URL!;
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ request_id: string }> }
 ) {
-  const { id } = await params;
+  const { request_id } = await params;
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
 
-  const queryString = new URL(request.url).searchParams.toString();
-  const endpoint = queryString
-    ? `${API_BASE}/audits/${id}?${queryString}`
-    : `${API_BASE}/audits/${id}`;
-
-  const res = await fetch(endpoint, {
+  const res = await fetch(`${API_BASE}/pros-audits/request/${request_id}`, {
     headers,
     credentials: 'include',
   });
