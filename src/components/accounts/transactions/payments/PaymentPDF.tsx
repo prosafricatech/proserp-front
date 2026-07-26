@@ -26,6 +26,7 @@ interface Transaction {
     name: string
   };
   currency: Currency;
+  exchange_rate?: number;
 }
 
 interface PaymentPDFProps {
@@ -37,9 +38,11 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
   const currencyCode = transaction.currency.code;
   const { authUser: { user } } = authObject;
   const { authOrganization: { organization } } = authObject;
+  const baseCurrencyCode = organization.base_currency?.code || 'BASE';
   const mainColor = organization.settings?.main_color || "#2113AD";
   const lightColor = organization.settings?.light_color || "#bec5da";
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+  const showExchangeRate = !!transaction.exchange_rate && transaction.exchange_rate !== 1;
     
   return (
     <Document
@@ -73,6 +76,10 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
             <Text style={{...pdfStyles.minInfo, color: mainColor }}>From (Credit)</Text>
             <Text style={{...pdfStyles.minInfo }}>{transaction.creditLedgerName}</Text>
           </View>
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text style={{...pdfStyles.minInfo, color: mainColor }}>Transaction Currency</Text>
+            <Text style={{...pdfStyles.minInfo }}>{transaction.currency.name} ({currencyCode})</Text>
+          </View>
           {transaction.cost_centers.length > 0 && (
             <View style={{flex: 1, padding: 2}}>
               <Text style={{...pdfStyles.minInfo, color: mainColor }}>Cost center</Text>
@@ -85,6 +92,17 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
             <View style={{ flex: 1, padding: 2.5 }}>
               <Text style={{...pdfStyles.minInfo, color: mainColor, fontFamily: 'Helvetica-Bold' }}>Reference</Text>
               <Text style={{...pdfStyles.minInfo }}>{transaction.requisitionNo}</Text>
+            </View>
+          )}
+          {showExchangeRate && (
+            <View style={{ flex: 1, padding: 2.5 }}>
+              <Text style={{...pdfStyles.minInfo, color: mainColor, fontFamily: 'Helvetica-Bold' }}>Exchange Rate</Text>
+              <Text style={{...pdfStyles.minInfo}}>
+                {transaction.exchange_rate?.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+              </Text>
             </View>
           )}
         </View>
@@ -114,7 +132,7 @@ const PaymentPDF: React.FC<PaymentPDFProps> = ({ transaction, authObject }) => {
               backgroundColor: mainColor, 
               color: contrastText, 
               flex: 1.5 
-            }}>Amount</Text>
+            }}>Amount ({currencyCode})</Text>
           </View>
           
           {transaction.items.map((transactionItem, index) => (

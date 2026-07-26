@@ -40,6 +40,7 @@ type TransactionItemFormProps = {
   isReceipt?: boolean;
   isPayment?: boolean;
   selectedCurrencyId: number;
+  onLedgerCurrencyDetected?: (currencyId?: number) => void;
   isTransfer?: boolean;
   index?: number;
   setShowForm?: React.Dispatch<React.SetStateAction<boolean>>;
@@ -69,6 +70,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
   isPayment = false,
   isTransfer = false,
   selectedCurrencyId,
+  onLedgerCurrencyDetected,
   index = -1,
   setShowForm = null,
   item,
@@ -311,6 +313,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                   const currencyId = selected?.currency?.id;
                   setValue('item_form_ledger_currency_id', currencyId);
                   setSelectedLedgerCurrencyId(currencyId);
+                  onLedgerCurrencyDetected?.(currencyId);
                   setValue('debit_ledger', selected || undefined);
                   setValue('debit_ledger_id', selected?.id, {
                     shouldValidate: true,
@@ -356,6 +359,7 @@ const TransactionItemForm: React.FC<TransactionItemFormProps> = ({
                   const currencyId = selected?.currency?.id;
                   setValue('item_form_ledger_currency_id', currencyId);
                   setSelectedLedgerCurrencyId(currencyId);
+                  onLedgerCurrencyDetected?.(currencyId);
                   setValue('credit_ledger', selected || undefined);
                   setValue('credit_ledger_id', selected?.id, {
                     shouldValidate: true,

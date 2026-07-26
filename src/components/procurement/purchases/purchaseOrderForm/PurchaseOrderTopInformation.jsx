@@ -13,7 +13,7 @@ import { DatePicker, DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
 import React, { useEffect } from 'react'
 
-function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, register, order, setStakeholderQuickAddDisplay, setAddedStakeholder, stakeholderQuickAddDisplay, addedStakeholder, order_date, costCenters}) {
+function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, register, order, setStakeholderQuickAddDisplay, setAddedStakeholder, stakeholderQuickAddDisplay, addedStakeholder, order_date, costCenters, lockedCurrencyId = null, isCurrencyLocked = false}) {
     const {authOrganization,checkOrganizationPermission} = useJumboAuth();
     const cp = {id:null,name: 'Cash Purchase'};
 
@@ -143,8 +143,10 @@ function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, regi
                 <Grid size={{xs: 12, md: 4}}>
                     <Div sx={{mt: 0.3}}>
                         <CurrencySelector
+                            key={watch('currency_id') || 1}
                             frontError={errors?.currency_id}
-                            defaultValue={order ? order.currency_id : 1}
+                            disabled={isCurrencyLocked}
+                            defaultValue={watch('currency_id') || 1}
                             onChange={(newValue) => {
                                 setValue('currency_id', newValue ? newValue.id : null,{
                                 shouldDirty: true,
@@ -171,6 +173,7 @@ function PurchaseOrderTopInformation({setValue, errors, clearErrors, watch, regi
                                 helperText={errors?.exchange_rate?.message}
                                 InputProps={{
                                 inputComponent: CommaSeparatedField,
+                                disabled: isCurrencyLocked,
                                 }}
                                 value={watch('exchange_rate')}
                                 onChange={(e) => {

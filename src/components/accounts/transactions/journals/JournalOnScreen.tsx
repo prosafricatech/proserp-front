@@ -31,6 +31,7 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: JournalItem[];
   currency: Currency;
+  exchange_rate?: number;
   narration: string;
   creator: {
     name: string
@@ -46,11 +47,13 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
   const theme = useTheme();
   const currencyCode = transaction.currency.code;
   const { authOrganization: { organization } } = authObject;
+  const baseCurrencyCode = organization.base_currency?.code || 'BASE';
   const mainColor = organization.settings?.main_color || "#2113AD";
   const headerColor = theme.type === 'dark' ? '#29f096' : (organization.settings?.main_color || "#2113AD");
   const contrastText = organization.settings?.contrast_text || "#FFFFFF";
 
   const totalAmount = transaction.items.reduce((total, item) => total + item.amount, 0);
+  const showExchangeRate = !!transaction.exchange_rate && transaction.exchange_rate !== 1;
 
   return (
     <div>
@@ -71,6 +74,21 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
           <Grid size={6}>
             <Typography variant="body2" color={headerColor} fontWeight="bold">Cost Center:</Typography>
             <Typography variant="body2">{transaction.cost_centers.map(cc => cc.name).join(', ')}</Typography>
+          </Grid>
+        )}
+        <Grid size={6}>
+          <Typography variant="body2" color={headerColor} fontWeight="bold">Transaction Currency:</Typography>
+          <Typography variant="body2">{transaction.currency.name} ({currencyCode})</Typography>
+        </Grid>
+        {showExchangeRate && (
+          <Grid size={6}>
+            <Typography variant="body2" color={headerColor} fontWeight="bold">Exchange Rate:</Typography>
+            <Typography variant="body2">
+              1 {currencyCode} = {transaction.exchange_rate?.toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })} {baseCurrencyCode}
+            </Typography>
           </Grid>
         )}
       </Grid>
@@ -100,7 +118,7 @@ function JournalOnScreen({ transaction, authObject }: JournalOnScreenProps) {
                 Debit Account
               </TableCell>
               <TableCell sx={{ backgroundColor: mainColor, color: contrastText }} align="right">
-                Amount
+                Amount ({currencyCode})
               </TableCell>
             </TableRow>
           </TableHead>

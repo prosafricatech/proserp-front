@@ -3,6 +3,7 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
@@ -88,6 +89,7 @@ function JournalFormDialogContent({
   const { authOrganization, checkOrganizationPermission } = useJumboAuth();
   const costCenters = authOrganization?.costCenters;
   const { ungroupedLedgerOptions } = useLedgerSelect();
+  const { currencies = [] } = useCurrencySelect();
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
   const [serverError, setServerError] = useState<Record<string, string> | null>(
@@ -106,7 +108,33 @@ function JournalFormDialogContent({
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
+  const [prevKey, setPrevKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
+  const [lockedJournalCurrencyId, setLockedJournalCurrencyId] = useState<number | null>(null);
+
+  const getExchangeRateByCurrencyId = (currencyId?: number) => {
+    if (!currencyId) return 1;
+    const foundCurrency = currencies.find((currency) => currency.id === currencyId);
+    return foundCurrency?.exchangeRate || 1;
+  };
+
+  const applyJournalCurrencyLock = (currencyId?: number) => {
+    if (!currencyId) {
+      setLockedJournalCurrencyId(null);
+      return;
+    }
+
+    setLockedJournalCurrencyId(currencyId);
+    setValue('currency_id', currencyId, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setValue('exchange_rate', getExchangeRateByCurrencyId(currencyId), {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+    setPrevKey((prev) => prev + 1);
+  };
 
   // Helper function to find currency ID for a ledger
   const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
@@ -139,8 +167,15 @@ function JournalFormDialogContent({
     },
     onError: (error: Error & { response?: any }) => {
       if (error.response) {
-        if (error.response.status === 400) {
-          setServerError(error.response?.data?.validation_errors);
+        const validationErrors = error.response?.data?.validation_errors;
+        if (validationErrors?.currency_id?.[0]) {
+          setError('currency_id', {
+            type: 'manual',
+            message: validationErrors.currency_id[0],
+          });
+        }
+        if (error.response.status === 400 || error.response.status === 422) {
+          setServerError(validationErrors);
         } else {
           enqueueSnackbar(error.response?.data?.message, { variant: 'error' });
         }
@@ -157,8 +192,15 @@ function JournalFormDialogContent({
     },
     onError: (error: Error & { response?: any }) => {
       if (error.response) {
-        if (error.response.status === 400) {
-          setServerError(error.response?.data?.validation_errors);
+        const validationErrors = error.response?.data?.validation_errors;
+        if (validationErrors?.currency_id?.[0]) {
+          setError('currency_id', {
+            type: 'manual',
+            message: validationErrors.currency_id[0],
+          });
+        }
+        if (error.response.status === 400 || error.response.status === 422) {
+          setServerError(validationErrors);
         } else {
           enqueueSnackbar(error.response?.data?.message, { variant: 'error' });
         }
@@ -220,6 +262,16 @@ function JournalFormDialogContent({
 
   useEffect(() => {
     setValue('items', items);
+
+    const detectedForeignCurrencyId = items.find(
+      (entry) => entry.debit_ledger_currency_id || entry.credit_ledger_currency_id
+    )?.debit_ledger_currency_id || items.find((entry) => entry.credit_ledger_currency_id)?.credit_ledger_currency_id;
+
+    if (detectedForeignCurrencyId) {
+      applyJournalCurrencyLock(detectedForeignCurrencyId);
+    } else {
+      setLockedJournalCurrencyId(null);
+    }
   }, [items, setValue]);
 
   // Update items when journal changes (for edit mode)
@@ -263,6 +315,23 @@ function JournalFormDialogContent({
   };
 
   const handleSubmitForm = async (data: JournalFormValues) => {
+    const hasDifferentForeignCurrencies = (items || []).some((entry) => {
+      return (
+        !!entry.debit_ledger_currency_id &&
+        !!entry.credit_ledger_currency_id &&
+        entry.debit_ledger_currency_id !== entry.credit_ledger_currency_id
+      );
+    });
+
+    if (hasDifferentForeignCurrencies) {
+      setError('currency_id', {
+        type: 'manual',
+        message:
+          "Entries between two different foreign currencies are not supported directly. Post through a base-currency clearing entry instead.",
+      });
+      return;
+    }
+
     const updatedData = { 
       ...data, 
       items: items.map(item => ({
@@ -334,7 +403,7 @@ function JournalFormDialogContent({
               />
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }} key={prevKey}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <CurrencySelector
                 frontError={
@@ -342,7 +411,8 @@ function JournalFormDialogContent({
                     ? { message: errors.currency_id.message }
                     : null
                 }
-                defaultValue={journal?.currency_id ?? journal?.currency?.id ?? 1}
+                disabled={!!lockedJournalCurrencyId}
+                defaultValue={watch('currency_id') as any}
                 onChange={(newValue) => {
                   setValue('currency_id', newValue ? newValue.id : null, {
                     shouldDirty: true,
@@ -370,6 +440,7 @@ function JournalFormDialogContent({
                   helperText={errors?.exchange_rate?.message}
                   InputProps={{
                     inputComponent: CommaSeparatedField,
+                    disabled: !!lockedJournalCurrencyId,
                   }}
                   value={watch('exchange_rate')}
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
@@ -437,6 +508,7 @@ function JournalFormDialogContent({
           items={items}
           setItems={setItems}
           selectedCurrencyId={selectedCurrencyId || undefined}
+          onLedgerCurrencyDetected={(currencyId) => applyJournalCurrencyLock(currencyId)}
         />
 
         {errors?.items?.message && items.length < 1 && (
