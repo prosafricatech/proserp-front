@@ -15,7 +15,6 @@ import {
   alpha,
   Box,
   Button,
-  CircularProgress,
   LinearProgress,
   Paper,
   Stack,
@@ -24,7 +23,6 @@ import {
   Typography,
   useTheme,
   Grid,
-  Chip,
 } from '@mui/material';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
@@ -96,9 +94,11 @@ const StakeholdersBulkImportsContent = () => {
 
   // Upload stakeholders mutation
   const { mutate: importStakeholders, isPending: isImporting } = useMutation({
-    mutationFn: (file: File) =>
-      supportServices.importStakeholdersRegistrationExcel?.(file) ||
-      Promise.reject(new Error('Import function not implemented')),
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('stakeholders_excel', file);
+      return supportServices.importStakeholdersRegistrationExcel(formData);
+    },
     onSuccess: (response: any) => {
       setImportResult(response);
       setFile(null);
@@ -151,6 +151,8 @@ const StakeholdersBulkImportsContent = () => {
     setTabValue(0);
   };
 
+  const hasErrors = (importResult?.errors || []).length > 0;
+
   return (
     <Box>
       <Typography variant="h6" gutterBottom>
@@ -193,29 +195,29 @@ const StakeholdersBulkImportsContent = () => {
       {/* Tab 0: Download Template */}
       <TabPanel value={tabValue} index={0}>
         <Stack spacing={3} sx={{ mt: 2 }}>
-            <Alert
+          <Alert
             severity="info"
             icon={<DescriptionOutlined />}
             sx={{
-                borderRadius: 2,
-                '& .MuiAlert-icon': {
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
                 alignItems: 'center',
                 color: isDark ? theme.palette.info.light : undefined,
-                },
-                bgcolor: isDark ? alpha(theme.palette.info.main, 0.12) : undefined,
-                color: isDark ? theme.palette.common.white : undefined,
-                border: isDark ? `1px solid ${alpha(theme.palette.info.main, 0.3)}` : undefined,
+              },
+              bgcolor: isDark ? alpha(theme.palette.info.main, 0.12) : undefined,
+              color: isDark ? theme.palette.common.white : undefined,
+              border: isDark ? `1px solid ${alpha(theme.palette.info.main, 0.3)}` : undefined,
             }}
-            >
+          >
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
-                Getting Started
+              Getting Started
             </Typography>
             <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
-                Download the Excel template below. Fill in stakeholder details
-                following the format provided. The template includes dropdown
-                validation for Type and Yes/No fields.
+              Download the Excel template below. Fill in stakeholder details
+              following the format provided. The template includes dropdown
+              validation for Type and Yes/No fields.
             </Typography>
-            </Alert>
+          </Alert>
 
           <Paper
             variant="outlined"
@@ -287,28 +289,28 @@ const StakeholdersBulkImportsContent = () => {
       {/* Tab 1: Upload Excel */}
       <TabPanel value={tabValue} index={1}>
         <Stack spacing={3} sx={{ mt: 2 }}>
-            <Alert
+          <Alert
             severity="info"
             sx={{
-                borderRadius: 2,
-                '& .MuiAlert-icon': {
+              borderRadius: 2,
+              '& .MuiAlert-icon': {
                 alignItems: 'center',
                 color: isDark ? theme.palette.info.light : undefined,
-                },
-                bgcolor: isDark ? alpha(theme.palette.info.main, 0.12) : undefined,
-                color: isDark ? theme.palette.common.white : undefined,
-                border: isDark ? `1px solid ${alpha(theme.palette.info.main, 0.3)}` : undefined,
+              },
+              bgcolor: isDark ? alpha(theme.palette.info.main, 0.12) : undefined,
+              color: isDark ? theme.palette.common.white : undefined,
+              border: isDark ? `1px solid ${alpha(theme.palette.info.main, 0.3)}` : undefined,
             }}
-            >
+          >
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
-                Upload Instructions
+              Upload Instructions
             </Typography>
             <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
-                Upload the filled Excel file. Stakeholders with existing names will
-                be skipped. You can create both Receivable and Payable ledgers for
-                each stakeholder.
+              Upload the filled Excel file. Stakeholders with existing names will
+              be skipped. You can create both Receivable and Payable ledgers for
+              each stakeholder.
             </Typography>
-            </Alert>
+          </Alert>
 
           <Paper
             variant="outlined"
@@ -426,72 +428,74 @@ const StakeholdersBulkImportsContent = () => {
 
           {/* Import Results */}
           {importResult && (
-            <Paper
-              variant="outlined"
+            <Box
               sx={{
-                p: 3,
-                borderRadius: 2,
+                width: '100%',
               }}
             >
               <Stack spacing={3}>
                 <Alert
-                  severity={
-                    (importResult.errors || []).length > 0
-                      ? 'warning'
-                      : 'success'
-                  }
-                  icon={
-                    importResult.errors?.length > 0 ? (
-                      <ErrorOutline />
-                    ) : (
-                      <CheckCircleOutline />
-                    )
-                  }
+                  severity={hasErrors ? 'warning' : 'success'}
+                  icon={hasErrors ? <ErrorOutline /> : <CheckCircleOutline />}
                   sx={{
                     borderRadius: 2,
+                    width: '100%',
                     '& .MuiAlert-icon': {
                       alignItems: 'center',
+                      color: isDark
+                        ? (hasErrors ? theme.palette.warning.light : theme.palette.success.light)
+                        : undefined,
                     },
+                    bgcolor: isDark
+                      ? alpha(hasErrors ? theme.palette.warning.main : theme.palette.success.main, 0.12)
+                      : undefined,
+                    color: isDark ? theme.palette.common.white : undefined,
+                    border: isDark
+                      ? `1px solid ${alpha(hasErrors ? theme.palette.warning.main : theme.palette.success.main, 0.3)}`
+                      : undefined,
                   }}
                 >
                   <Typography variant="body2" fontWeight={600} gutterBottom>
                     Import Summary
                   </Typography>
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Imported
-                      </Typography>
-                      <Typography variant="h6" color="success.main" fontWeight={700}>
-                        {importResult.imported ?? 0}
-                      </Typography>
+                  
+                  <Box sx={{ width: '100%', mt: 1 }}>
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Imported
+                        </Typography>
+                        <Typography variant="h6" color="success.main" fontWeight={700}>
+                          {importResult.imported ?? 0}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Skipped
+                        </Typography>
+                        <Typography variant="h6" color="warning.main" fontWeight={700}>
+                          {importResult.skipped ?? 0}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Errors
+                        </Typography>
+                        <Typography variant="h6" color="error.main" fontWeight={700}>
+                          {importResult.errors?.length ?? 0}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Total Processed
+                        </Typography>
+                        <Typography variant="h6" fontWeight={700}>
+                          {(importResult.imported ?? 0) + (importResult.skipped ?? 0)}
+                        </Typography>
+                      </Grid>
                     </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Skipped
-                      </Typography>
-                      <Typography variant="h6" color="warning.main" fontWeight={700}>
-                        {importResult.skipped ?? 0}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Errors
-                      </Typography>
-                      <Typography variant="h6" color="error.main" fontWeight={700}>
-                        {importResult.errors?.length ?? 0}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography variant="caption" color="text.secondary" display="block">
-                        Total Processed
-                      </Typography>
-                      <Typography variant="h6" fontWeight={700}>
-                        {(importResult.imported ?? 0) +
-                          (importResult.skipped ?? 0)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                  </Box>
+                  
                   {importResult.message && (
                     <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       {importResult.message}
@@ -501,7 +505,7 @@ const StakeholdersBulkImportsContent = () => {
 
                 {/* Error Rows */}
                 {importResult.errors && importResult.errors.length > 0 && (
-                  <Box>
+                  <Box sx={{ width: '100%' }}>
                     <Typography
                       variant="subtitle2"
                       gutterBottom
@@ -527,6 +531,7 @@ const StakeholdersBulkImportsContent = () => {
                         overflow: 'hidden',
                         maxHeight: 320,
                         overflowY: 'auto',
+                        width: '100%',
                       }}
                     >
                       <Box
@@ -587,6 +592,7 @@ const StakeholdersBulkImportsContent = () => {
                         borderColor: isDark
                           ? alpha(theme.palette.info.main, 0.15)
                           : alpha(theme.palette.info.main, 0.1),
+                        width: '100%',
                       }}
                     >
                       <Typography variant="body2" color="text.secondary">
@@ -600,7 +606,7 @@ const StakeholdersBulkImportsContent = () => {
                 {/* Success Message */}
                 {(!importResult.errors || importResult.errors.length === 0) &&
                   importResult.imported > 0 && (
-                    <Alert severity="success">
+                    <Alert severity="success" sx={{ width: '100%' }}>
                       <Typography variant="body2">
                         ✅ All {importResult.imported} stakeholder
                         {importResult.imported > 1 ? 's' : ''} were imported
@@ -619,7 +625,7 @@ const StakeholdersBulkImportsContent = () => {
                   Import Another File
                 </Button>
               </Stack>
-            </Paper>
+            </Box>
           )}
         </Stack>
       </TabPanel>

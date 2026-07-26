@@ -63,9 +63,11 @@ supportServices.downloadStakeholdersRegistrationTemplate = async () => {
   return data;
 };
 
-supportServices.importStakeholdersRegistrationExcel = async (file) => {
-  const { data } = await axios.post('/api/prosControl/bulkImports/importStakeholdersRegistrationExcel', file, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+supportServices.importStakeholdersRegistrationExcel = async (payload) => {
+  const { data } = await axios.post('/api/prosControl/bulkImports/importStakeholdersRegistrationExcel', payload, {
+    headers: { 
+      'Content-Type': 'multipart/form-data',
+    },
   });
   return data;
 };
@@ -77,9 +79,11 @@ supportServices.downloadTransactionsBulkImportTemplate = async () => {
   return data;
 };
 
-supportServices.importTransactionsBulkExcel = async (file) => {
-  const { data } = await axios.post('/api/prosControl/bulkImports/importTransactionsBulkExcel', file, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+supportServices.importTransactionsBulkExcel = async (payload) => {
+  const { data } = await axios.post('/api/prosControl/bulkImports/importTransactionsBulkExcel', payload, {
+    headers: { 
+      'Content-Type': 'multipart/form-data',
+    },
   });
   return data;
 };

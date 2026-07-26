@@ -16,7 +16,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Grid,
   LinearProgress,
   Paper,
@@ -113,9 +112,11 @@ const TransactionsBulkImportsContent = () => {
 
   // Upload transactions mutation
   const { mutate: importTransactions, isPending: isImporting } = useMutation({
-    mutationFn: (file: File) =>
-      supportServices.importTransactionsBulkExcel?.(file) ||
-      Promise.reject(new Error('Import function not implemented')),
+    mutationFn: (file: File) => {
+      const formData = new FormData();
+      formData.append('transactions_excel', file);
+      return supportServices.importTransactionsBulkExcel(formData);
+    },
     onSuccess: (response: any) => {
       setImportResult(response);
       setFile(null);
@@ -256,10 +257,7 @@ const TransactionsBulkImportsContent = () => {
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
               Getting Started
             </Typography>
-            <Typography
-              variant="body2"
-              color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}
-            >
+            <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
               Download the Excel template below. The workbook has separate sheets
               for Payments, Receipts, and Fund Transfers. You can also add new
               ledgers and ledger groups directly in the template.
@@ -282,10 +280,7 @@ const TransactionsBulkImportsContent = () => {
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
               ⚠️ Important: Reference Column
             </Typography>
-            <Typography
-              variant="body2"
-              color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}
-            >
+            <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
               Rows without a Reference will be <strong>duplicated</strong> if you upload
               this file twice. Make sure this is the first time you're uploading,
               or remove already-imported rows first.
@@ -379,10 +374,7 @@ const TransactionsBulkImportsContent = () => {
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
               Upload Instructions
             </Typography>
-            <Typography
-              variant="body2"
-              color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}
-            >
+            <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
               Upload the filled Excel file. New ledgers and ledger groups added
               in the reference sheets will be created automatically.
             </Typography>
@@ -404,10 +396,7 @@ const TransactionsBulkImportsContent = () => {
             <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
               ⚠️ Re-upload Warning
             </Typography>
-            <Typography
-              variant="body2"
-              color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}
-            >
+            <Typography variant="body2" color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}>
               Rows <strong>without a Reference</strong> will be duplicated if you upload
               this file twice. Use the Reference column to prevent duplicates.
             </Typography>
@@ -534,6 +523,7 @@ const TransactionsBulkImportsContent = () => {
               sx={{
                 p: 3,
                 borderRadius: 2,
+                width: '100%',
               }}
             >
               <Stack spacing={3}>
@@ -542,6 +532,7 @@ const TransactionsBulkImportsContent = () => {
                   icon={hasErrors ? <ErrorOutline /> : <CheckCircleOutline />}
                   sx={{
                     borderRadius: 2,
+                    width: '100%',
                     '& .MuiAlert-icon': {
                       alignItems: 'center',
                       color: isDark
@@ -557,63 +548,49 @@ const TransactionsBulkImportsContent = () => {
                       : undefined,
                   }}
                 >
-                  <Typography variant="body2" fontWeight={600} gutterBottom color={isDark ? 'inherit' : undefined}>
+                  <Typography variant="body2" fontWeight={600} gutterBottom>
                     Import Summary
                   </Typography>
-
-                  <Grid container spacing={2} sx={{ mt: 1 }}>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography
-                        variant="caption"
-                        color={isDark ? alpha(theme.palette.common.white, 0.7) : 'text.secondary'}
-                        display="block"
-                      >
-                        Total Imported
-                      </Typography>
-                      <Typography variant="h6" color="success.main" fontWeight={700}>
-                        {getTotalImported()}
-                      </Typography>
+                  
+                  <Box sx={{ width: '100%', mt: 1 }}>
+                    <Grid container spacing={2} sx={{ width: '100%' }}>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Total Imported
+                        </Typography>
+                        <Typography variant="h6" color="success.main" fontWeight={700}>
+                          {getTotalImported()}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Total Skipped
+                        </Typography>
+                        <Typography variant="h6" color="warning.main" fontWeight={700}>
+                          {getTotalSkipped()}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Ledgers Created
+                        </Typography>
+                        <Typography variant="h6" color="info.main" fontWeight={700}>
+                          {importResult.ledgers_created || 0}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          Ledger Groups Created
+                        </Typography>
+                        <Typography variant="h6" color="info.main" fontWeight={700}>
+                          {importResult.ledger_groups_created || 0}
+                        </Typography>
+                      </Grid>
                     </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography
-                        variant="caption"
-                        color={isDark ? alpha(theme.palette.common.white, 0.7) : 'text.secondary'}
-                        display="block"
-                      >
-                        Total Skipped
-                      </Typography>
-                      <Typography variant="h6" color="warning.main" fontWeight={700}>
-                        {getTotalSkipped()}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography
-                        variant="caption"
-                        color={isDark ? alpha(theme.palette.common.white, 0.7) : 'text.secondary'}
-                        display="block"
-                      >
-                        Ledgers Created
-                      </Typography>
-                      <Typography variant="h6" color="info.main" fontWeight={700}>
-                        {importResult.ledgers_created || 0}
-                      </Typography>
-                    </Grid>
-                    <Grid size={{ xs: 6, md: 3 }}>
-                      <Typography
-                        variant="caption"
-                        color={isDark ? alpha(theme.palette.common.white, 0.7) : 'text.secondary'}
-                        display="block"
-                      >
-                        Ledger Groups Created
-                      </Typography>
-                      <Typography variant="h6" color="info.main" fontWeight={700}>
-                        {importResult.ledger_groups_created || 0}
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                  </Box>
 
                   {/* Per Sheet Stats */}
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap', width: '100%' }}>
                     {Object.entries(importResult.imported || {}).map(([sheet, count]) => (
                       <Chip
                         key={sheet}
@@ -621,20 +598,12 @@ const TransactionsBulkImportsContent = () => {
                         color={sheetColors[sheet] || 'default'}
                         variant="outlined"
                         size="small"
-                        sx={{
-                          color: isDark ? theme.palette.common.white : undefined,
-                          borderColor: isDark ? alpha(theme.palette.common.white, 0.3) : undefined,
-                        }}
                       />
                     ))}
                   </Box>
 
                   {importResult.message && (
-                    <Typography
-                      variant="body2"
-                      color={isDark ? alpha(theme.palette.common.white, 0.8) : 'text.secondary'}
-                      sx={{ mt: 1 }}
-                    >
+                    <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                       {importResult.message}
                     </Typography>
                   )}
@@ -642,7 +611,7 @@ const TransactionsBulkImportsContent = () => {
 
                 {/* Errors by Sheet */}
                 {importResult.errors && importResult.errors.length > 0 && (
-                  <Box>
+                  <Box sx={{ width: '100%' }}>
                     <Typography
                       variant="subtitle2"
                       gutterBottom
@@ -660,7 +629,7 @@ const TransactionsBulkImportsContent = () => {
                       if (sheetErrors.length === 0) return null;
 
                       return (
-                        <Box key={sheet} sx={{ mb: 2 }}>
+                        <Box key={sheet} sx={{ mb: 2, width: '100%' }}>
                           <Typography variant="subtitle2" color="text.primary" sx={{ mb: 1 }}>
                             {sheet} ({sheetErrors.length} error{sheetErrors.length > 1 ? 's' : ''})
                           </Typography>
@@ -677,6 +646,7 @@ const TransactionsBulkImportsContent = () => {
                               overflow: 'hidden',
                               maxHeight: 200,
                               overflowY: 'auto',
+                              width: '100%',
                             }}
                           >
                             <Box
@@ -697,18 +667,10 @@ const TransactionsBulkImportsContent = () => {
                                 zIndex: 1,
                               }}
                             >
-                              <Typography
-                                variant="caption"
-                                fontWeight={700}
-                                color={isDark ? theme.palette.common.white : undefined}
-                              >
+                              <Typography variant="caption" fontWeight={700}>
                                 Row No.
                               </Typography>
-                              <Typography
-                                variant="caption"
-                                fontWeight={700}
-                                color={isDark ? theme.palette.common.white : undefined}
-                              >
+                              <Typography variant="caption" fontWeight={700}>
                                 Error Description
                               </Typography>
                             </Box>
@@ -726,10 +688,7 @@ const TransactionsBulkImportsContent = () => {
                                 <Typography variant="body2" color="warning.main">
                                   {item.row}.
                                 </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color={isDark ? theme.palette.common.white : undefined}
-                                >
+                                <Typography variant="body2">
                                   {item.error || item.message}
                                 </Typography>
                               </Box>
@@ -751,12 +710,10 @@ const TransactionsBulkImportsContent = () => {
                         borderColor: isDark
                           ? alpha(theme.palette.info.main, 0.15)
                           : alpha(theme.palette.info.main, 0.1),
+                        width: '100%',
                       }}
                     >
-                      <Typography
-                        variant="body2"
-                        color={isDark ? alpha(theme.palette.common.white, 0.85) : 'text.secondary'}
-                      >
+                      <Typography variant="body2" color="text.secondary">
                         💡 <strong>Tip:</strong> Correct the errors above and
                         re-upload the Excel file to import these transactions.
                         Use the Reference column to prevent duplicates.
@@ -768,19 +725,8 @@ const TransactionsBulkImportsContent = () => {
                 {/* Success Message */}
                 {(!importResult.errors || importResult.errors.length === 0) &&
                   getTotalImported() > 0 && (
-                    <Alert
-                      severity="success"
-                      sx={{
-                        borderRadius: 2,
-                        '& .MuiAlert-icon': {
-                          color: isDark ? theme.palette.success.light : undefined,
-                        },
-                        bgcolor: isDark ? alpha(theme.palette.success.main, 0.12) : undefined,
-                        color: isDark ? theme.palette.common.white : undefined,
-                        border: isDark ? `1px solid ${alpha(theme.palette.success.main, 0.3)}` : undefined,
-                      }}
-                    >
-                      <Typography variant="body2" color={isDark ? 'inherit' : undefined}>
+                    <Alert severity="success" sx={{ width: '100%' }}>
+                      <Typography variant="body2">
                         ✅ All transactions were imported successfully!
                         {importResult.ledgers_created > 0 && ` Created ${importResult.ledgers_created} new ledger(s).`}
                         {importResult.ledger_groups_created > 0 && ` Created ${importResult.ledger_groups_created} new ledger group(s).`}

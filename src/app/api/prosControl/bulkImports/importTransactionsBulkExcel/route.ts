@@ -1,24 +1,21 @@
-import { getAuthHeaders, handleJsonResponse } from "@/lib/utils/apiUtils";
-import { NextRequest } from "next/server";
+import { getAuthHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
+import { NextRequest } from 'next/server';
 
-const API_BASE = process.env.API_BASE_URL!;
+const API_BASE = process.env.API_BASE_URL;
 
 export async function POST(req: NextRequest) {
-  const { headers: authHeaders, response } = await getAuthHeaders(req);
+  const { headers, response } = await getAuthHeaders(req);
   if (response) return response;
 
-  const form = await req.formData();
-  if (authHeaders["Content-Type"]) {
-    delete authHeaders["Content-Type"];
-  }
+  const formData = await req.formData();
+  const proxyHeaders = new Headers(headers);
+  proxyHeaders.delete('content-type');
 
   const res = await fetch(`${API_BASE}/accounts/transactions-bulk-import`, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      ...authHeaders,
-    },
-    body: form,
+    method: 'POST',
+    headers: proxyHeaders,
+    credentials: 'include',
+    body: formData,
   });
 
   return handleJsonResponse(res);
