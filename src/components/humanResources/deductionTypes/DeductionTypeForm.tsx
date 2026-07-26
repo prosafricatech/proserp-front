@@ -8,6 +8,7 @@ import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelec
 import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
 import { MODULES } from '@/utilities/constants/modules';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { AddOutlined } from '@mui/icons-material';
@@ -192,7 +193,7 @@ const DeductionTypeForm = ({
     } else if (mutationError instanceof Error) {
       message = mutationError.message;
     }
-    enqueueSnackbar(message, { variant: 'error' });
+    enqueueSnackbar(getErrorMessage(mutationError), { variant: 'error' });
   };
 
   const handleConfirmBulkUpdate = () => {
@@ -445,10 +446,10 @@ const DeductionTypeForm = ({
                           field.onChange(raw);
                         }
                       }}
-                      inputProps={{
-                        inputMode: 'decimal',
-                        pattern: '^\\d*\\.?\\d*$',
-                      }}
+                      // inputProps={{
+                      //   inputMode: 'decimal',
+                      //   pattern: '^\\d*\\.?\\d*$',
+                      // }}
                       error={
                         !!errors?.default_value ||
                         !!getValidationMessage(
