@@ -309,6 +309,7 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
 
       {canEditOrDeleteDate &&
         !hideOtherActions &&
+        !approval.is_superseded &&
         (approvals && approvals[approvals.length - 1]?.id) === approval?.id &&
         approval?.creator?.id === authUser?.user?.id &&
         !(approval.has_orders || approval.has_payments) && (
@@ -320,6 +321,7 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
         )}
 
       {!hideOtherActions &&
+        !approval.is_superseded &&
         hasOrganizationRole(
           requisition?.next_approval_level?.role?.name ?? ''
         ) &&
@@ -338,6 +340,7 @@ const ApprovalItemAction: React.FC<ApprovalItemActionProps> = ({
 
       {canEditOrDeleteDate &&
         !hideOtherActions &&
+        !approval.is_superseded &&
         (approvals && approvals[approvals.length - 1]?.id) === approval?.id &&
         (approval?.creator?.id === authUser?.user?.id ||
           checkOrganizationPermission(

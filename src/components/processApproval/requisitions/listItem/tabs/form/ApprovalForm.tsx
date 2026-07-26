@@ -4,6 +4,7 @@ import {
 } from '@/app/helpers/input-sanitization-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import userLedgerServices from '@/components/accounts/ledgers/user-ledger-services';
+import approvalChainsServices from '@/components/masters/approvalChains/approvalChainsServices';
 import {
   Approval,
   Requisition,
@@ -17,16 +18,28 @@ import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
   Autocomplete,
+  Box,
   Button,
+  ButtonGroup,
   DialogActions,
   DialogContent,
   DialogTitle,
+  Divider,
   Grid,
+  ListItemIcon,
+  ListItemText,
+  Menu,
+  MenuItem,
   Tab,
   Tabs,
   TextField,
   Typography,
 } from '@mui/material';
+import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
+import HighlightOffIcon from '@mui/icons-material/HighlightOff';
+import UndoIcon from '@mui/icons-material/Undo';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs, { Dayjs } from 'dayjs';
@@ -58,6 +71,7 @@ interface FormValues {
   imprest_ledger_id?: number | null;
   chain_level_id?: number;
   submit_type?: string;
+  returned_to_level_id?: number | null;
 }
 
 type ImprestLedgerOption = {
@@ -344,6 +358,57 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
     requisition?.approval_chain?.process_type?.toLowerCase() ===
     'leave_request';
 
+  // "Send back" — an approver can return the requisition to an earlier level
+  // (or to the requester) instead of only approving/holding/rejecting forward.
+  // Not offered for leave requests, which use a separate approval mechanism.
+  const canReturn = !isLeaveType;
+  const [returnMode, setReturnMode] = useState(false);
+  const [returnTargetId, setReturnTargetId] = useState<number | 'requester' | ''>('');
+
+  // Approve stays the one prominent button (it's the common case); Hold,
+  // Reject and Return collapse into a menu next to it — keeps the action bar
+  // to two elements instead of up to five, which is what actually matters for
+  // fitting on a phone screen without wrapping.
+  const [actionMenuAnchor, setActionMenuAnchor] = useState<null | HTMLElement>(null);
+  const closeActionMenu = () => setActionMenuAnchor(null);
+
+  const { data: approvalChainLevels = [], isLoading: levelsLoading } = useQuery({
+    queryKey: ['approvalChainLevels', { approvalChainId: requisition?.approval_chain?.id }],
+    queryFn: () =>
+      approvalChainsServices.getApprovalChainLevels(requisition.approval_chain.id),
+    enabled: canReturn && !!requisition?.approval_chain?.id,
+  });
+
+  const actingLevelId = isEdit
+    ? approval?.approval_chain_level_id
+    : requisition?.next_approval_level?.id;
+
+  const actingPositionIndex = extractList(approvalChainLevels).find(
+    (level: any) => level.id === actingLevelId
+  )?.position_index;
+
+  // Levels an approver may send this back to: strictly earlier than their own.
+  const earlierLevels = React.useMemo(
+    () =>
+      actingPositionIndex === undefined
+        ? []
+        : extractList(approvalChainLevels)
+            .filter((level: any) => level.position_index < actingPositionIndex)
+            .sort((a: any, b: any) => a.position_index - b.position_index),
+    [approvalChainLevels, actingPositionIndex]
+  );
+
+  const returnTargetOptions = React.useMemo(
+    () => [
+      { id: 'requester' as const, label: 'Requester' },
+      ...earlierLevels.map((level: any) => ({
+        id: level.id as number,
+        label: `${level.label}${level.role?.name ? ` — ${level.role.name}` : ''}`,
+      })),
+    ],
+    [earlierLevels]
+  );
+
   const validationSchema = yup.object().shape({
     approval_date: yup
       .string()
@@ -465,6 +530,7 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
     handleSubmit,
     setValue,
     watch,
+    getValues,
     register,
     formState: { errors },
   } = useForm<FormValues>({
@@ -705,6 +771,28 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
     }
 
     saveMutation(payload);
+  };
+
+  const canConfirmReturn = returnTargetId !== '' && !!(watch('remarks') || '').trim();
+
+  // A return is an instruction, not a decision — it carries no line items, so it
+  // deliberately bypasses the item-level yup schema (rate/quantity requirements
+  // etc. don't apply) rather than going through handleSubmit(onSubmit).
+  const handleReturnSubmit = () => {
+    if (!canConfirmReturn) return;
+
+    const values = getValues();
+    saveMutation({
+      id: values.id,
+      requisition_id: values.requisition_id,
+      approval_date: values.approval_date,
+      date_required: values.date_required,
+      chain_level_id: values.chain_level_id,
+      remarks: values.remarks,
+      submit_type: 'returned',
+      returned_to_level_id:
+        returnTargetId === 'requester' ? null : (returnTargetId as number),
+    } as FormValues);
   };
 
   return (
@@ -1037,30 +1125,45 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
           />
         )}
       </DialogContent>
-      <DialogActions>
-        <Button size='small' onClick={() => toggleOpen(false)}>
-          Cancel
-        </Button>
-        {isPurchaseType && activePurchaseTab === 0 && (
-          <Button
-            size='small'
-            variant='outlined'
-            onClick={() => setActivePurchaseTab(1)}
-          >
-            Next &gt;
-          </Button>
-        )}
-        {isPurchaseType && activePurchaseTab === 1 && (
-          <Button
-            size='small'
-            variant='outlined'
-            onClick={() => setActivePurchaseTab(0)}
-          >
-            &lt; Prev
-          </Button>
-        )}
-        {(!isPurchaseType || activePurchaseTab === 1) && (
+      <DialogActions
+        sx={{
+          flexWrap: 'wrap',
+          gap: 1,
+          justifyContent: returnMode ? 'flex-start' : 'flex-end',
+        }}
+      >
+        {returnMode ? (
           <>
+            <Div sx={{ minWidth: 260, flexGrow: 1 }}>
+              <Autocomplete
+                size='small'
+                options={returnTargetOptions}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                value={
+                  returnTargetOptions.find(
+                    (option) => option.id === returnTargetId
+                  ) || null
+                }
+                onChange={(_, selected) =>
+                  setReturnTargetId(selected ? selected.id : '')
+                }
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label='Send back to'
+                    helperText={
+                      !(watch('remarks') || '').trim()
+                        ? 'Remarks are required when returning a requisition'
+                        : ' '
+                    }
+                  />
+                )}
+              />
+            </Div>
+            <Button size='small' onClick={() => setReturnMode(false)}>
+              Cancel
+            </Button>
             <LoadingButton
               loading={
                 approveRequisition.isPending ||
@@ -1068,46 +1171,124 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
               }
               size='small'
               variant='contained'
-              color='error'
-              type='submit'
-              onClick={(e) => {
-                setValue('submit_type', 'rejected');
-                handleSubmit(onSubmit)(e);
-              }}
+              color='warning'
+              disabled={!canConfirmReturn}
+              onClick={handleReturnSubmit}
             >
-              Reject
+              Confirm Return
             </LoadingButton>
-            <LoadingButton
-              loading={
-                approveRequisition.isPending ||
-                editApprovalRequisition.isPending
-              }
-              size='small'
-              variant='contained'
-              type='submit'
-              onClick={(e) => {
-                setValue('submit_type', 'on hold');
-                handleSubmit(onSubmit)(e);
-              }}
-            >
-              Hold
-            </LoadingButton>
-            <LoadingButton
-              loading={
-                approveRequisition.isPending ||
-                editApprovalRequisition.isPending
-              }
-              variant='contained'
-              color='success'
-              type='submit'
-              size='small'
-              onClick={(e) => {
-                setValue('submit_type', 'approved');
-                handleSubmit(onSubmit)(e);
-              }}
-            >
-              Approve
-            </LoadingButton>
+          </>
+        ) : (
+          <>
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button size='small' onClick={() => toggleOpen(false)}>
+                Cancel
+              </Button>
+              {isPurchaseType && activePurchaseTab === 0 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => setActivePurchaseTab(1)}
+                >
+                  Next &gt;
+                </Button>
+              )}
+              {isPurchaseType && activePurchaseTab === 1 && (
+                <Button
+                  size='small'
+                  variant='outlined'
+                  onClick={() => setActivePurchaseTab(0)}
+                >
+                  &lt; Prev
+                </Button>
+              )}
+            </Box>
+
+            {(!isPurchaseType || activePurchaseTab === 1) && (
+              <Box sx={{ display: 'flex' }}>
+                <ButtonGroup variant='contained' color='success' size='small'>
+                  <LoadingButton
+                    loading={
+                      approveRequisition.isPending ||
+                      editApprovalRequisition.isPending
+                    }
+                    startIcon={<CheckCircleOutlineIcon />}
+                    type='submit'
+                    onClick={(e) => {
+                      setValue('submit_type', 'approved');
+                      handleSubmit(onSubmit)(e);
+                    }}
+                  >
+                    Approve
+                  </LoadingButton>
+                  <Button
+                    size='small'
+                    disabled={
+                      approveRequisition.isPending ||
+                      editApprovalRequisition.isPending
+                    }
+                    onClick={(e) => setActionMenuAnchor(e.currentTarget)}
+                    sx={{ px: 0.5 }}
+                  >
+                    <ArrowDropDownIcon />
+                  </Button>
+                </ButtonGroup>
+
+                <Menu
+                  anchorEl={actionMenuAnchor}
+                  open={!!actionMenuAnchor}
+                  onClose={closeActionMenu}
+                  anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  transformOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                >
+                  <MenuItem
+                    onClick={(e) => {
+                      closeActionMenu();
+                      setValue('submit_type', 'on hold');
+                      handleSubmit(onSubmit)(e as any);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <PauseCircleOutlineIcon fontSize='small' />
+                    </ListItemIcon>
+                    <ListItemText>Hold</ListItemText>
+                  </MenuItem>
+                  <MenuItem
+                    onClick={(e) => {
+                      closeActionMenu();
+                      setValue('submit_type', 'rejected');
+                      handleSubmit(onSubmit)(e as any);
+                    }}
+                  >
+                    <ListItemIcon>
+                      <HighlightOffIcon fontSize='small' color='error' />
+                    </ListItemIcon>
+                    <ListItemText sx={{ color: 'error.main' }}>
+                      Reject
+                    </ListItemText>
+                  </MenuItem>
+                  {canReturn && (
+                    <>
+                      <Divider />
+                      <MenuItem
+                        disabled={levelsLoading}
+                        onClick={() => {
+                          closeActionMenu();
+                          setReturnMode(true);
+                        }}
+                      >
+                        <ListItemIcon>
+                          <UndoIcon fontSize='small' color='warning' />
+                        </ListItemIcon>
+                        <ListItemText sx={{ color: 'warning.main' }}>
+                          Return to earlier level…
+                        </ListItemText>
+                      </MenuItem>
+                    </>
+                  )}
+                </Menu>
+              </Box>
+            )}
           </>
         )}
       </DialogActions>

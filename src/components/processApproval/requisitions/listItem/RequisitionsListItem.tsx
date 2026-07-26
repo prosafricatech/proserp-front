@@ -158,10 +158,12 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                     ? 'error'
                     : requisition.status?.toLowerCase() === 'on hold'
                     ? 'warning'
+                    : requisition.status?.toLowerCase() === 'returned'
+                    ? 'warning'
                     : (requisition.status?.toLowerCase() === 'submitted' && requisition.status_label?.toLowerCase() === 'completed')
                     ? 'success'
                     : 'info'
-                }                
+                }
               /> 
             </Tooltip>
           </Grid>

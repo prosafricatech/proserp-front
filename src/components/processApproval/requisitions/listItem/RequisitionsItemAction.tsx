@@ -237,12 +237,19 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
     });
   };
 
-  const canEditOrDelete =
-    requisition.approvals.length === 0 &&
-    (checkOrganizationPermission(PERMISSIONS.REQUISITIONS_BACKDATE) ||
-      dayjs(requisition.requisition_date).isSameOrAfter(
-        dayjs().startOf('day')
-      ));
+  const dateAllowed =
+    checkOrganizationPermission(PERMISSIONS.REQUISITIONS_BACKDATE) ||
+    dayjs(requisition.requisition_date).isSameOrAfter(dayjs().startOf('day'));
+
+  // A requisition returned to the requester for correction is the one
+  // exception to "can't edit once approval activity exists" — editing and
+  // resubmitting is exactly what a return-to-requester asks for. Deletion
+  // stays off-limits either way; only a still-untouched draft can be deleted.
+  const canEdit =
+    (requisition.approvals.length === 0 ||
+      requisition.is_returned_to_requester) &&
+    dateAllowed;
+  const canDelete = requisition.approvals.length === 0 && dateAllowed;
 
   return (
     <>
@@ -294,26 +301,26 @@ const RequisitionsItemAction: React.FC<RequisitionsItemActionProps> = ({
         </IconButton>
       </Tooltip>
 
-      {canEditOrDelete && (
-        <>
-          <Tooltip title='Edit'>
-            <IconButton
-              onClick={() => {
-                setIsDuplicate(false);
-                setOpenEditDialog(true);
-                setIsEditAction(true);
-              }}
-            >
-              <EditOutlined />
-            </IconButton>
-          </Tooltip>
+      {canEdit && (
+        <Tooltip title='Edit'>
+          <IconButton
+            onClick={() => {
+              setIsDuplicate(false);
+              setOpenEditDialog(true);
+              setIsEditAction(true);
+            }}
+          >
+            <EditOutlined />
+          </IconButton>
+        </Tooltip>
+      )}
 
-          <Tooltip title='Delete'>
-            <IconButton onClick={handleDelete}>
-              <DeleteOutlined color='error' />
-            </IconButton>
-          </Tooltip>
-        </>
+      {canDelete && (
+        <Tooltip title='Delete'>
+          <IconButton onClick={handleDelete}>
+            <DeleteOutlined color='error' />
+          </IconButton>
+        </Tooltip>
       )}
     </>
   );

@@ -61,11 +61,13 @@ function ApprovalsListItem({ requisition, approvals }: ApprovalsListItemProps) {
                       ? 'error'
                       : approval?.status?.toLowerCase() === 'on hold'
                       ? 'warning'
+                      : approval?.status?.toLowerCase() === 'returned'
+                      ? 'warning'
                       : (approval?.status?.toLowerCase() === 'submitted' && approval?.status_label?.toLowerCase() === 'completed')
                       ? 'success'
                       : 'info'
-                  }                
-                /> 
+                  }
+                />
               </Tooltip>
             </Grid>
             <Grid size={{xs: 12, md: 2, lg: 2}} textAlign={'right'}>
