@@ -19,7 +19,7 @@ import {
   Typography,
   Stack,
 } from '@mui/material';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useLedgerSelect } from '../../ledgers/forms/LedgerSelectProvider';
@@ -104,13 +104,15 @@ function JournalItemForm({
 }: JournalItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
-  const dob: LedgerOption = { id: 1, name: 'Diff. in Opening Balances' };
   const [ledgerType, setLedgerType] = useState<'debit' | 'credit'>('credit');
   const [openLedgerQuickAdd, setOpenLedgerQuickAdd] = useState(false);
   const [addedLedger, setAddedLedger] = useState<Ledger | null>(null);
 
   // Combine dob with ungroupedLedgerOptions
-  const options: LedgerOption[] = [dob, ...ungroupedLedgerOptions];
+  const options: LedgerOption[] = useMemo(
+    () => [{ id: 1, name: 'Diff. in Opening Balances' }, ...ungroupedLedgerOptions],
+    [ungroupedLedgerOptions]
+  );
 
   // Define validation schema
   const validationSchema = yup.object().shape({
@@ -179,6 +181,11 @@ function JournalItemForm({
   const watchedDebitCurrencyId = watch('debit_ledger_currency_id');
   const watchedCreditCurrencyId = watch('credit_ledger_currency_id');
 
+  const isCurrencyMismatchMessage = (message?: string) => {
+    if (!message) return false;
+    return message.toLowerCase().includes('currency');
+  };
+
   // Get the display names for error messages
   const getCurrencyName = (currencyId?: number | null) => {
     if (!currencyId) return '';
@@ -186,35 +193,71 @@ function JournalItemForm({
     return found?.currency?.code || '';
   };
 
+  const debitCurrencyMismatchMessage = useMemo(() => {
+    if (
+      !selectedCurrencyId ||
+      watchedDebitCurrencyId === undefined ||
+      watchedDebitCurrencyId === null ||
+      selectedCurrencyId === watchedDebitCurrencyId
+    ) {
+      return null;
+    }
+
+    const currencyCode = getCurrencyName(watchedDebitCurrencyId);
+    return `Debit ledger currency (${currencyCode}) does not match the selected transaction currency.`;
+  }, [selectedCurrencyId, watchedDebitCurrencyId, options]);
+
+  const creditCurrencyMismatchMessage = useMemo(() => {
+    if (
+      !selectedCurrencyId ||
+      watchedCreditCurrencyId === undefined ||
+      watchedCreditCurrencyId === null ||
+      selectedCurrencyId === watchedCreditCurrencyId
+    ) {
+      return null;
+    }
+
+    const currencyCode = getCurrencyName(watchedCreditCurrencyId);
+    return `Credit ledger currency (${currencyCode}) does not match the selected transaction currency.`;
+  }, [selectedCurrencyId, watchedCreditCurrencyId, options]);
+
   // Validate debit ledger currency matches selected currency
   useEffect(() => {
-    if (selectedCurrencyId && watchedDebitCurrencyId !== undefined && watchedDebitCurrencyId !== null) {
-      if (selectedCurrencyId !== watchedDebitCurrencyId) {
-        const currencyCode = getCurrencyName(watchedDebitCurrencyId);
+    if (debitCurrencyMismatchMessage) {
+      if (errors.debit_ledger_id?.message !== debitCurrencyMismatchMessage) {
         setError('debit_ledger_id', {
           type: 'manual',
-          message: `Debit ledger currency (${currencyCode}) does not match the selected transaction currency.`,
+          message: debitCurrencyMismatchMessage,
         });
-      } else {
-        clearErrors('debit_ledger_id');
       }
+    } else if (isCurrencyMismatchMessage(errors.debit_ledger_id?.message)) {
+        clearErrors('debit_ledger_id');
     }
-  }, [selectedCurrencyId, watchedDebitCurrencyId, setError, clearErrors, options]);
+  }, [
+    debitCurrencyMismatchMessage,
+    setError,
+    clearErrors,
+    errors.debit_ledger_id?.message,
+  ]);
 
   // Validate credit ledger currency matches selected currency
   useEffect(() => {
-    if (selectedCurrencyId && watchedCreditCurrencyId !== undefined && watchedCreditCurrencyId !== null) {
-      if (selectedCurrencyId !== watchedCreditCurrencyId) {
-        const currencyCode = getCurrencyName(watchedCreditCurrencyId);
+    if (creditCurrencyMismatchMessage) {
+      if (errors.credit_ledger_id?.message !== creditCurrencyMismatchMessage) {
         setError('credit_ledger_id', {
           type: 'manual',
-          message: `Credit ledger currency (${currencyCode}) does not match the selected transaction currency.`,
+          message: creditCurrencyMismatchMessage,
         });
-      } else {
-        clearErrors('credit_ledger_id');
       }
+    } else if (isCurrencyMismatchMessage(errors.credit_ledger_id?.message)) {
+        clearErrors('credit_ledger_id');
     }
-  }, [selectedCurrencyId, watchedCreditCurrencyId, setError, clearErrors, options]);
+  }, [
+    creditCurrencyMismatchMessage,
+    setError,
+    clearErrors,
+    errors.credit_ledger_id?.message,
+  ]);
 
   useEffect(() => {
     setIsDirty(Object.keys(dirtyFields).length > 0);
@@ -374,7 +417,10 @@ function JournalItemForm({
                 setValue('debit_ledger_currency_id', newValue?.currency?.id || null);
                 onLedgerCurrencyDetected?.(newValue?.currency?.id);
                 // Clear error when user changes selection
-                if (newValue?.currency?.id === selectedCurrencyId) {
+                if (
+                  newValue?.currency?.id === selectedCurrencyId &&
+                  isCurrencyMismatchMessage(errors.debit_ledger_id?.message)
+                ) {
                   clearErrors('debit_ledger_id');
                 }
               }}
@@ -431,7 +477,10 @@ function JournalItemForm({
                 setValue('credit_ledger_currency_id', newValue?.currency?.id || null);
                 onLedgerCurrencyDetected?.(newValue?.currency?.id);
                 // Clear error when user changes selection
-                if (newValue?.currency?.id === selectedCurrencyId) {
+                if (
+                  newValue?.currency?.id === selectedCurrencyId &&
+                  isCurrencyMismatchMessage(errors.credit_ledger_id?.message)
+                ) {
                   clearErrors('credit_ledger_id');
                 }
               }}

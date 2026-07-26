@@ -22,6 +22,7 @@ interface Transaction {
   cost_centers: CostCenter[];
   items: ReceiptItem[];
   currency: Currency;
+    exchange_rate?: number;
   narration: string;
   creator: {
     name: string;
@@ -37,9 +38,11 @@ function ReceiptPDF({ transaction, authObject }: ReceiptPDFProps) {
     const currencyCode = transaction.currency.code;
     const { authUser: { user } } = authObject;
     const { authOrganization: { organization } } = authObject;
+    const baseCurrencyCode = organization.base_currency?.code || 'BASE';
     const mainColor = organization.settings?.main_color || "#2113AD";
     const lightColor = organization.settings?.light_color || "#bec5da";
     const contrastText = organization.settings?.contrast_text || "#FFFFFF";
+    const showExchangeRate = !!transaction.exchange_rate && transaction.exchange_rate !== 1;
 
     return (
         <Document
@@ -72,11 +75,26 @@ function ReceiptPDF({ transaction, authObject }: ReceiptPDFProps) {
                         <Text style={{...pdfStyles.minInfo, color: mainColor }}>Receiving Account (Debit)</Text>
                         <Text style={{...pdfStyles.minInfo }}>{transaction.debitLedgerName}</Text>
                     </View>
+                    <View style={{ flex: 1, padding: 2 }}>
+                        <Text style={{...pdfStyles.minInfo, color: mainColor }}>Transaction Currency</Text>
+                        <Text style={{...pdfStyles.minInfo }}>{transaction.currency.name} ({currencyCode})</Text>
+                    </View>
                     {transaction.cost_centers.length > 0 && (
                         <View style={{flex: 1, padding: 2}}>
                             <Text style={{...pdfStyles.minInfo, color: mainColor }}>Cost center</Text>
                             <Text style={{...pdfStyles.minInfo }}>
                                 {transaction.cost_centers.map((cost_center) => cost_center.name).join(', ')}
+                            </Text>
+                        </View>
+                    )}
+                    {showExchangeRate && (
+                        <View style={{ flex: 1, padding: 2 }}>
+                            <Text style={{...pdfStyles.minInfo, color: mainColor }}>Exchange Rate</Text>
+                            <Text style={{...pdfStyles.minInfo}}>
+                                {transaction.exchange_rate?.toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                })}
                             </Text>
                         </View>
                     )}
@@ -113,7 +131,7 @@ function ReceiptPDF({ transaction, authObject }: ReceiptPDFProps) {
                             color: contrastText, 
                             flex: 1.5 
                         }}>
-                            Amount
+                            Amount ({currencyCode})
                         </Text>
                     </View>
                     {transaction.items.map((transactionItem, index) => (

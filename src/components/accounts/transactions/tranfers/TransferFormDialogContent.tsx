@@ -110,6 +110,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const [showWarning, setShowWarning] = useState(false);
     const [isDirty, setIsDirty] = useState(false);
     const [clearFormKey, setClearFormKey] = useState(0);
+    const [prevKey, setPrevKey] = useState(0);
     const [submitItemForm, setSubmitItemForm] = useState(false);
 
     const getExchangeRateByCurrencyId = (currencyId?: number) => {
@@ -138,6 +139,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
             shouldValidate: true,
             shouldDirty: true,
         });
+        setPrevKey((prev) => prev + 1);
     };
 
     // Helper function to find currency ID for a ledger
@@ -405,7 +407,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                                 <span style={{ color: 'red' }}>{serverError?.reference}</span>
                             </Div>
                         </Grid>
-                        <Grid size={{xs: 12, md: 4}}>
+                        <Grid size={{xs: 12, md: 4}} key={prevKey}>
                             <Div sx={{mt: 1, mb: 1}}>
                                 <CurrencySelector
                                     frontError={errors?.currency_id?.message ? { message: errors.currency_id.message } : null}

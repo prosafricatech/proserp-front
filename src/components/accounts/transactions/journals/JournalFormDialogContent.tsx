@@ -108,6 +108,7 @@ function JournalFormDialogContent({
   const [showWarning, setShowWarning] = useState(false);
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
+  const [prevKey, setPrevKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
   const [lockedJournalCurrencyId, setLockedJournalCurrencyId] = useState<number | null>(null);
 
@@ -132,6 +133,7 @@ function JournalFormDialogContent({
       shouldDirty: true,
       shouldValidate: true,
     });
+    setPrevKey((prev) => prev + 1);
   };
 
   // Helper function to find currency ID for a ledger
@@ -401,7 +403,7 @@ function JournalFormDialogContent({
               />
             </Div>
           </Grid>
-          <Grid size={{ xs: 12, md: 4 }}>
+          <Grid size={{ xs: 12, md: 4 }} key={prevKey}>
             <Div sx={{ mt: 1, mb: 1 }}>
               <CurrencySelector
                 frontError={
@@ -410,7 +412,7 @@ function JournalFormDialogContent({
                     : null
                 }
                 disabled={!!lockedJournalCurrencyId}
-                defaultValue={journal?.currency_id ?? journal?.currency?.id ?? 1}
+                defaultValue={watch('currency_id') as any}
                 onChange={(newValue) => {
                   setValue('currency_id', newValue ? newValue.id : null, {
                     shouldDirty: true,
