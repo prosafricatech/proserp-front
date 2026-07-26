@@ -38,17 +38,29 @@ const LoanRequestItemAction = ({
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
+  const hasLoanEditPermission = checkOrganizationPermission(
+    PERMISSIONS.LOANS_EDIT
+  );
+
+  const hasLoanDeletePermission = checkOrganizationPermission(
+    PERMISSIONS.LOANS_DELETE
+  );
+
   const [decisionMode, setDecisionMode] =
     useState<LoanDirectDecisionMode | null>(null);
   const [openDisburseDialog, setOpenDisburseDialog] = useState(false);
   const [openMarkDisbursedDialog, setOpenMarkDisbursedDialog] = useState(false);
 
   const isDirectFlow = !loanRequest.approval_chain_id;
-  const canDirectDecide = isDirectFlow && loanRequest.status === 'in_review';
+  const canDirectDecide =
+    isDirectFlow && loanRequest.status === 'in_review' && hasLoanEditPermission;
 
   const canCancel =
     ['in_review', 'approved'].includes(loanRequest.status) &&
-    !loanRequest.disbursed_at;
+    !loanRequest.disbursed_at &&
+    hasLoanEditPermission;
+
+  const canDelete = hasLoanDeletePermission;
 
   const isApprovedNotDisbursed =
     loanRequest.status === 'approved' && !loanRequest.disbursed_at;
@@ -199,11 +211,13 @@ const LoanRequestItemAction = ({
         </Tooltip>
       )}
 
-      <Tooltip title='Delete'>
-        <IconButton size='small' disabled={isDeleting} onClick={handleDelete}>
-          <DeleteForeverOutlined color='error' />
-        </IconButton>
-      </Tooltip>
+      {canDelete && (
+        <Tooltip title='Delete'>
+          <IconButton size='small' disabled={isDeleting} onClick={handleDelete}>
+            <DeleteForeverOutlined color='error' />
+          </IconButton>
+        </Tooltip>
+      )}
     </>
   );
 };

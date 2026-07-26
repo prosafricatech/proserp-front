@@ -1,7 +1,8 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import { PaidOutlined } from '@mui/icons-material';
 import { Chip, Divider, Grid, Stack, Tooltip, Typography } from '@mui/material';
-import { LoanRequest } from './LoanRequestType';
+import { MyHrLoanRequestType } from './LoanRequestType';
+// import { LoanRequest } from './LoanRequestType';
 
 const formatCurrency = (value?: number | null) =>
   value != null ? Number(value).toLocaleString() : '—';
@@ -25,7 +26,7 @@ const STATUS_LABEL: Record<string, string> = {
 const MyHrLoanRequestsListItem = ({
   loanRequest,
 }: {
-  loanRequest: LoanRequest;
+  loanRequest: MyHrLoanRequestType;
 }) => {
   const statusColor = STATUS_COLOR[loanRequest.status] || 'default';
   const statusLabel =

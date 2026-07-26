@@ -1,14 +1,24 @@
 'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
-import { Autocomplete, Card, Grid, TextField, Typography } from '@mui/material';
+import {
+  Autocomplete,
+  Card,
+  Grid,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
 import EmployeeSelector from '../employees/EmployeeSelector';
 import { EmployeesProvider } from '../employees/EmployeesProvider';
 import { Employee } from '../employees/EmployeesType';
 import humanResourcesServices from '../humanResourcesServices';
+import LoanRequestsActionTail from './LoanRequestsActionTail';
 import LoanRequestsListItem from './LoanRequestsListItem';
 import { LoanRequestType } from './LoanRequestType';
 
@@ -23,6 +33,7 @@ const STATUS_OPTIONS = [
 const LoanRequests = () => {
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
+  const { checkOrganizationPermission } = useJumboAuth();
   const [status, setStatus] = useState<any>(null);
   const [mounted, setMounted] = useState(false);
   const [selectedEmployees, setSelectedEmployees] = useState<Employee | null>(
@@ -150,6 +161,13 @@ const LoanRequests = () => {
                     />
                   </Grid>
                 </Grid>
+              }
+              actionTail={
+                <Stack direction='row' justifyContent={'end'}>
+                  {checkOrganizationPermission(PERMISSIONS.LOANS_CREATE) && (
+                    <LoanRequestsActionTail />
+                  )}
+                </Stack>
               }
             />
           }

@@ -166,6 +166,14 @@ export const PERMISSIONS = {
   EMPLOYEES_DELETE: 'Employees:Delete',
   PAYROLLRUNS_CREATE: 'PayrollRuns:Create',
   PAYROLL_READ: 'Payroll:Read',
+  LOANS_READ: 'Loans:Read',
+  LOANS_CREATE: 'Loans:Create',
+  LOANS_EDIT: 'Loans:Edit',
+  LOANS_DELETE: 'Loans:Delete',
+  LEAVE_ALLOCATIONS_READ: 'LeaveAllocations:Read',
+  LEAVE_ALLOCATIONS_CREATE: 'LeaveAllocations:Create',
+  LEAVE_ALLOCATIONS_EDIT: 'LeaveAllocations:Edit',
+  LEAVE_ALLOCATIONS_DELETE: 'LeaveAllocations:Delete',
 
   // Manufacturing & Processing
   BOM_CREATE: 'BOM:Create',

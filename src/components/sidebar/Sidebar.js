@@ -404,6 +404,19 @@ function Sidebar({ menus }) {
                     }
                 }
 
+                // HR > Employee
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.LOANS_CREATE,
+                    PERMISSIONS.LOANS_READ, PERMISSIONS.LOANS_EDIT, PERMISSIONS.LOANS_DELETE
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.loan_requests
+                        );
+                    }
+                }
+
                 // HR > payrollrun
                 if (!checkOrganizationPermission([
                     PERMISSIONS.PAYROLL_READ,
