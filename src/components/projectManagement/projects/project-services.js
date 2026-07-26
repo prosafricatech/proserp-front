@@ -113,6 +113,11 @@ projectsServices.getCommittedCostItems = async (budgetId, ledgerId) => {
     return data;
 }
 
+projectsServices.getBudgetPosition = async (budgetId) => {
+    const { data } = await axios.get(`/api/projectManagement/project/${budgetId}/budget-position`);
+    return data;
+}
+
 projectsServices.exportBudgetItemsDetailsExcel = async (exportedData) => {
     const res = await axios.post(`/api/exports/excel/budgetDetails/`, exportedData, {
         responseType: 'blob',
