@@ -35,7 +35,12 @@ import {
   Divider,
   Avatar,
   useTheme,
+  Autocomplete,
 } from '@mui/material';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import VisibilityOutlinedIcon from '@mui/icons-material/VisibilityOutlined';
 import AccountTreeOutlinedIcon from '@mui/icons-material/AccountTreeOutlined';
 import HistoryOutlinedIcon from '@mui/icons-material/HistoryOutlined';
@@ -127,18 +132,16 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
   const changes = data.changes || [];
   const hasChanges = changes.length > 0;
 
-  // Determine event type for styling
   const eventType = data.event || '';
   const isCreated = eventType === 'created';
   const isUpdated = eventType === 'updated';
   const isDeleted = eventType === 'deleted';
 
-  // Format currency
   const formatCurrency = (value: any) => {
     if (typeof value !== 'number') return value;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
-      currency: 'Tzs',
+      currency: 'TZS',
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(value);
@@ -157,7 +160,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
 
   return (
     <Stack spacing={3} sx={{ py: 1 }}>
-      {/* Status Banner */}
       {isFailed && (
         <Box
           sx={{
@@ -177,7 +179,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
         </Box>
       )}
 
-      {/* Header: Event & Request ID */}
       <Box
         sx={{
           display: 'flex',
@@ -202,7 +203,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
 
       <Divider />
 
-      {/* Record Info */}
       {record && record.id && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -228,7 +228,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
         </Box>
       )}
 
-      {/* User Info */}
       {user && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -266,7 +265,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
         </Box>
       )}
 
-      {/* Timestamp */}
       <Box>
         <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
           <EventOutlinedIcon fontSize="inherit" />
@@ -279,7 +277,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
         </Paper>
       </Box>
 
-      {/* Changes */}
       {hasChanges && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 1 }}>
@@ -297,7 +294,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
 
               const isCreatedField = isCreated && change.old === null && change.new !== null;
               const isDeletedField = isDeleted && change.old !== null && change.new === null;
-              const isUpdatedField = !isCreated && !isDeleted && change.old !== null && change.new !== null;
 
               return (
                 <Paper
@@ -315,21 +311,18 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
                     </Typography>
 
                     {isCreated && (
-                      // Create: Show only new value
                       <Typography variant="body2" color="success.main" fontWeight="medium">
                         {formatValue(newDisplay, change.field)}
                       </Typography>
                     )}
 
                     {isDeleted && (
-                      // Delete: Show only old value
                       <Typography variant="body2" color="error.main" fontWeight="medium">
                         {formatValue(oldDisplay, change.field)}
                       </Typography>
                     )}
 
                     {isUpdated && change.old !== null && change.new !== null && (
-                      // Update: Show old → new
                       <>
                         <Typography variant="body2" color="text.secondary">
                           {formatValue(oldDisplay, change.field)}
@@ -342,20 +335,17 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
                     )}
 
                     {isUpdated && change.old === null && change.new !== null && (
-                      // Created in update context
                       <Typography variant="body2" color="success.main">
                         {formatValue(newDisplay, change.field)}
                       </Typography>
                     )}
 
                     {isUpdated && change.old !== null && change.new === null && (
-                      // Deleted in update context
                       <Typography variant="body2" color="error.main">
                         {formatValue(oldDisplay, change.field)}
                       </Typography>
                     )}
 
-                    {/* Type indicator for relationship fields */}
                     {(hasOldLabel || hasNewLabel) && (
                       <Chip
                         size="small"
@@ -372,7 +362,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
         </Box>
       )}
 
-      {/* Context */}
       {data.context && Object.keys(data.context).length > 0 && (
         <Box>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mb: 0.5 }}>
@@ -382,7 +371,6 @@ function AuditEntryViewer({ data }: AuditEntryViewerProps) {
           <Paper variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
             <Stack spacing={0.5}>
               {Object.entries(data.context).map(([key, value]) => {
-                // Skip internal fields that are shown elsewhere
                 if (key === 'failed' || key === 'response_status') return null;
                 return (
                   <Box key={key} sx={{ display: 'flex', gap: 2 }}>
@@ -414,11 +402,11 @@ function AuditTrailPage() {
 
   const [filters, setFilters] = React.useState({
     keyword: '',
-    from: '',
-    to: '',
-    resource: '',
-    action: '',
-    actor_id: '',
+    from: null as Dayjs | null,
+    to: null as Dayjs | null,
+    resource: null as string | null,
+    action: null as string | null,
+    actor_id: null as string | null,
     request_id: '',
   });
 
@@ -433,14 +421,30 @@ function AuditTrailPage() {
     setPage(0);
   }, [tab]);
 
-  const listParams = React.useMemo(
-    () => ({
+  // Prepare API params - convert dates to proper format
+  const listParams = React.useMemo(() => {
+    const params: any = {
       page: page + 1,
       limit,
-      ...filters,
-    }),
-    [page, limit, filters]
-  );
+      keyword: filters.keyword || undefined,
+      request_id: filters.request_id || undefined,
+    };
+
+    if (filters.resource) params.resource = filters.resource;
+    if (filters.action) params.event = filters.action;
+    if (filters.actor_id) params.user_id = filters.actor_id;
+    
+    // Convert dates: send end of day for 'to' date
+    if (filters.from) {
+      params.from = filters.from.toISOString();
+    }
+    if (filters.to) {
+      // Send end of day to include the whole day
+      params.to = filters.to.endOf('day').toISOString();
+    }
+
+    return params;
+  }, [page, limit, filters]);
 
   const { data: filterOptionsData } = useQuery({
     queryKey: ['audits-filter-options'],
@@ -488,22 +492,23 @@ function AuditTrailPage() {
 
   const filterOptions = (filterOptionsData || {}) as FilterOptions;
 
-  const actions = React.useMemo(
+  // Prepare options for Autocomplete
+  const actionOptions = React.useMemo(
     () => (filterOptions.actions || []).map(mapOption).filter((x) => !!x.value),
     [filterOptions.actions]
   );
 
-  const resources = React.useMemo(
+  const resourceOptions = React.useMemo(
     () => (filterOptions.resources || []).map(mapOption).filter((x) => !!x.value),
     [filterOptions.resources]
   );
 
-  const actors = React.useMemo(
+  const actorOptions = React.useMemo(
     () => (filterOptions.actors || []).map(mapOption).filter((x) => !!x.value),
     [filterOptions.actors]
   );
 
-  const handleFilterChange = (key: string, value: string) => {
+  const handleFilterChange = (key: keyof typeof filters, value: any) => {
     setFilters((prev) => ({ ...prev, [key]: value }));
     setPage(0);
   };
@@ -511,11 +516,11 @@ function AuditTrailPage() {
   const clearFilters = () => {
     setFilters({
       keyword: '',
-      from: '',
-      to: '',
-      resource: '',
-      action: '',
-      actor_id: '',
+      from: null,
+      to: null,
+      resource: null,
+      action: null,
+      actor_id: null,
       request_id: '',
     });
     setPage(0);
@@ -526,366 +531,354 @@ function AuditTrailPage() {
   }
 
   return (
-    <Box>
-      <Stack
-        direction={{ xs: 'column', md: 'row' }}
-        justifyContent='space-between'
-        alignItems={{ xs: 'flex-start', md: 'center' }}
-        mb={2}
-        gap={2}
-      >
-        <Typography variant='h4'>Audit Trail</Typography>
-        {isFetching && <CircularProgress size={20} />}
-      </Stack>
-
-      <Card sx={{ p: 2, mb: 2 }}>
-        <Tabs
-          value={tab}
-          onChange={(_, value) => setTab(value)}
-          sx={{ mb: 2 }}
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          justifyContent='space-between'
+          alignItems={{ xs: 'flex-start', md: 'center' }}
+          mb={2}
+          gap={2}
         >
-          <Tab value='organization' label='Organization Activity' />
-          <Tab value='auth' label='Auth Trail' />
-        </Tabs>
+          <Typography variant='h4'>Audit Trail</Typography>
+          {isFetching && <CircularProgress size={20} />}
+        </Stack>
 
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              fullWidth
-              size='small'
-              label='Keyword'
-              value={filters.keyword}
-              onChange={(event) =>
-                handleFilterChange('keyword', event.target.value)
-              }
-            />
-          </Grid>
-          <Grid size={{ xs: 6, md: 2 }}>
-            <TextField
-              fullWidth
-              size='small'
-              type='date'
-              label='From'
-              InputLabelProps={{ shrink: true }}
-              value={filters.from}
-              onChange={(event) => handleFilterChange('from', event.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 6, md: 2 }}>
-            <TextField
-              fullWidth
-              size='small'
-              type='date'
-              label='To'
-              InputLabelProps={{ shrink: true }}
-              value={filters.to}
-              onChange={(event) => handleFilterChange('to', event.target.value)}
-            />
-          </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel>Action</InputLabel>
-              <Select
-                label='Action'
-                value={filters.action}
-                onChange={(event) =>
-                  handleFilterChange('action', String(event.target.value))
-                }
-              >
-                <MenuItem value=''>All</MenuItem>
-                {actions.map((option) => (
-                  <MenuItem key={String(option.value)} value={String(option.value)}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 2 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel>Resource</InputLabel>
-              <Select
-                label='Resource'
-                value={filters.resource}
-                onChange={(event) =>
-                  handleFilterChange('resource', String(event.target.value))
-                }
-              >
-                <MenuItem value=''>All</MenuItem>
-                {resources.map((option) => (
-                  <MenuItem key={String(option.value)} value={String(option.value)}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 1 }}>
-            <Button fullWidth variant='outlined' onClick={clearFilters}>
-              Clear
-            </Button>
-          </Grid>
+        <Card sx={{ p: 2, mb: 2 }}>
+          <Tabs
+            value={tab}
+            onChange={(_, value) => setTab(value)}
+            sx={{ mb: 2 }}
+          >
+            <Tab value='organization' label='Organization Activity' />
+            <Tab value='auth' label='Auth Trail' />
+          </Tabs>
 
-          <Grid size={{ xs: 12, md: 3 }}>
-            <FormControl fullWidth size='small'>
-              <InputLabel>Actor</InputLabel>
-              <Select
-                label='Actor'
-                value={filters.actor_id}
+          <Grid container spacing={2}>
+            {/* Keyword Search */}
+            <Grid size={{ xs: 12, md: 3 }}>
+              <TextField
+                fullWidth
+                size='small'
+                label='Keyword'
+                value={filters.keyword}
                 onChange={(event) =>
-                  handleFilterChange('actor_id', String(event.target.value))
+                  handleFilterChange('keyword', event.target.value)
                 }
-              >
-                <MenuItem value=''>All</MenuItem>
-                {actors.map((option) => (
-                  <MenuItem key={String(option.value)} value={String(option.value)}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-          <Grid size={{ xs: 12, md: 3 }}>
-            <TextField
-              fullWidth
-              size='small'
-              label='Request ID'
-              value={filters.request_id}
-              onChange={(event) =>
-                handleFilterChange('request_id', event.target.value)
-              }
-            />
-          </Grid>
-        </Grid>
-      </Card>
+              />
+            </Grid>
 
-      <Card>
-        <TableContainer component={Paper}>
-          <Table size='small'>
-            <TableHead>
-              <TableRow>
-                <TableCell>Date</TableCell>
-                <TableCell>User</TableCell>
-                <TableCell>Action</TableCell>
-                <TableCell align='right'>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {!isLoading && auditRows.length === 0 && (
+            {/* From Date/Time */}
+            <Grid size={{ xs: 6, md: 2 }}>
+              <DateTimePicker
+                label="From"
+                value={filters.from}
+                onChange={(newValue) => handleFilterChange('from', newValue)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* To Date/Time */}
+            <Grid size={{ xs: 6, md: 2 }}>
+              <DateTimePicker
+                label="To"
+                value={filters.to}
+                onChange={(newValue) => handleFilterChange('to', newValue)}
+                slotProps={{
+                  textField: {
+                    fullWidth: true,
+                    size: 'small',
+                  },
+                }}
+              />
+            </Grid>
+
+            {/* Action - Autocomplete */}
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Autocomplete
+                size='small'
+                options={actionOptions}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                value={actionOptions.find(opt => opt.value === filters.action) || null}
+                onChange={(_, newValue) => {
+                  handleFilterChange('action', newValue?.value || null);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Action"
+                    placeholder="Select action..."
+                  />
+                )}
+                clearOnEscape
+              />
+            </Grid>
+
+            {/* Resource - Autocomplete */}
+            <Grid size={{ xs: 12, md: 2 }}>
+              <Autocomplete
+                size='small'
+                options={resourceOptions}
+                getOptionLabel={(option) => option.label}
+                isOptionEqualToValue={(option, value) => option.value === value?.value}
+                value={resourceOptions.find(opt => opt.value === filters.resource) || null}
+                onChange={(_, newValue) => {
+                  handleFilterChange('resource', newValue?.value || null);
+                }}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Resource"
+                    placeholder="Select resource..."
+                  />
+                )}
+                clearOnEscape
+              />
+            </Grid>
+
+            {/* Clear Button */}
+            <Grid size={{ xs: 12, md: 1 }}>
+              <Button fullWidth variant='outlined' onClick={clearFilters}>
+                Clear
+              </Button>
+            </Grid>
+          </Grid>
+        </Card>
+
+        <Card>
+          <TableContainer component={Paper}>
+            <Table size='small'>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={7} align='center'>
-                    No audit records found.
-                  </TableCell>
+                  <TableCell>Date</TableCell>
+                  <TableCell>User</TableCell>
+                  <TableCell>Action</TableCell>
+                  <TableCell align='right'>Actions</TableCell>
                 </TableRow>
-              )}
-
-              {isLoading && (
-                <TableRow>
-                  <TableCell colSpan={7} align='center'>
-                    <CircularProgress size={22} />
-                  </TableCell>
-                </TableRow>
-              )}
-
-              {auditRows.map((row) => {
-                const requestId = row.request_id || row.requestId;
-                const resource = row.resource || row.record?.resource;
-                const resourceId =
-                  row.resource_id || row.record?.resource_id || row.record_id;
-                const actor =
-                  row.user?.name ||
-                  row.actor?.name ||
-                  row.causer?.name ||
-                  row.user_name ||
-                  '-';
-
-                return (
-                  <TableRow key={String(row.id)} hover>
-                    <TableCell>
-                      {formatDateTime(row.created_at || row.createdAt || row.date)}
-                    </TableCell>
-                    <TableCell>{safeText(actor)}</TableCell>
-                    <TableCell>
-                      <Chip
-                        size='small'
-                        label={safeText(row.action || row.event || '-')}
-                        color='primary'
-                        variant='outlined'
-                      />
-                    </TableCell>
-                    <TableCell align='right'>
-                      <Tooltip title='View entry'>
-                        <IconButton
-                          size='small'
-                          onClick={() => setSelectedAuditId(String(row.id))}
-                        >
-                          <VisibilityOutlinedIcon fontSize='inherit' />
-                        </IconButton>
-                      </Tooltip>
-
-                      {requestId && (
-                        <Tooltip title='View request trail'>
-                          <IconButton
-                            size='small'
-                            onClick={() => setSelectedRequestId(String(requestId))}
-                          >
-                            <AccountTreeOutlinedIcon fontSize='inherit' />
-                          </IconButton>
-                        </Tooltip>
-                      )}
-
-                      {resource && resourceId && (
-                        <Tooltip title='View resource history'>
-                          <IconButton
-                            size='small'
-                            onClick={() =>
-                              setSelectedHistory({
-                                resource: String(resource),
-                                id: String(resourceId),
-                              })
-                            }
-                          >
-                            <HistoryOutlinedIcon fontSize='inherit' />
-                          </IconButton>
-                        </Tooltip>
-                      )}
+              </TableHead>
+              <TableBody>
+                {!isLoading && auditRows.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={4} align='center'>
+                      No audit records found.
                     </TableCell>
                   </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                )}
 
-        <TablePagination
-          component='div'
-          page={page}
-          count={totalRows}
-          onPageChange={(_, nextPage) => setPage(nextPage)}
-          rowsPerPage={limit}
-          onRowsPerPageChange={(event) => {
-            setLimit(parseInt(event.target.value, 10));
-            setPage(0);
-          }}
-          rowsPerPageOptions={[10, 20, 50, 100]}
-        />
-      </Card>
+                {isLoading && (
+                  <TableRow>
+                    <TableCell colSpan={4} align='center'>
+                      <CircularProgress size={22} />
+                    </TableCell>
+                  </TableRow>
+                )}
 
-      {/* ==================== DIALOG: View Entry ==================== */}
-      <Dialog
-        open={!!selectedAuditId}
-        onClose={() => setSelectedAuditId(null)}
-        maxWidth='md'
-        fullWidth
-        PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
-      >
-        <DialogTitle sx={{ 
-          borderBottom: 1, 
-          borderColor: 'divider',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Typography variant="h4" textAlign={'center'}>Audit Entry Details</Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
-          {isLoadingAuditOne ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={30} />
-            </Box>
-          ) : (
-            <AuditEntryViewer data={auditOneData} />
-          )}
-        </DialogContent>
-      </Dialog>
+                {auditRows.map((row) => {
+                  const requestId = row.request_id || row.requestId;
+                  const resource = row.resource || row.record?.resource;
+                  const resourceId =
+                    row.resource_id || row.record?.resource_id || row.record_id;
+                  const actor =
+                    row.user?.name ||
+                    row.actor?.name ||
+                    row.causer?.name ||
+                    row.user_name ||
+                    '-';
 
-      {/* ==================== DIALOG: Request Trail ==================== */}
-      <Dialog
-        open={!!selectedRequestId}
-        onClose={() => setSelectedRequestId(null)}
-        maxWidth='md'
-        fullWidth
-        PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
-      >
-        <DialogTitle sx={{ 
-          borderBottom: 1, 
-          borderColor: 'divider',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Typography variant="h6">Request Trail</Typography>
-          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-            {selectedRequestId}
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
-          {isLoadingRequestTrail ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={30} />
-            </Box>
-          ) : requestTrailData?.data?.length > 0 ? (
-            <Stack spacing={2}>
-              {requestTrailData.data.map((entry: any, index: number) => (
-                <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                  <AuditEntryViewer data={entry} />
-                </Paper>
-              ))}
-            </Stack>
-          ) : (
-            <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-              No entries found for this request ID.
-            </Typography>
-          )}
-        </DialogContent>
-      </Dialog>
+                  return (
+                    <TableRow key={String(row.id)} hover>
+                      <TableCell>
+                        {formatDateTime(row.created_at || row.createdAt || row.date)}
+                      </TableCell>
+                      <TableCell>{safeText(actor)}</TableCell>
+                      <TableCell>
+                        <Chip
+                          size='small'
+                          label={safeText(row.action || row.event || '-')}
+                          color='primary'
+                          variant='outlined'
+                        />
+                      </TableCell>
+                      <TableCell align='right'>
+                        <Tooltip title='View entry'>
+                          <IconButton
+                            size='small'
+                            onClick={() => setSelectedAuditId(String(row.id))}
+                          >
+                            <VisibilityOutlinedIcon fontSize='inherit' />
+                          </IconButton>
+                        </Tooltip>
 
-      {/* ==================== DIALOG: Resource History ==================== */}
-      <Dialog
-        open={!!selectedHistory}
-        onClose={() => setSelectedHistory(null)}
-        maxWidth='md'
-        fullWidth
-        PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
-      >
-        <DialogTitle sx={{ 
-          borderBottom: 1, 
-          borderColor: 'divider',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
-          <Typography variant="h6">
-            Resource History: {selectedHistory?.resource} #{selectedHistory?.id}
-          </Typography>
-          <Chip 
-            label={`${selectedHistory?.resource}`} 
-            size="small" 
-            color="primary"
-            variant="outlined" 
+                        {requestId && (
+                          <Tooltip title='View request trail'>
+                            <IconButton
+                              size='small'
+                              onClick={() => setSelectedRequestId(String(requestId))}
+                            >
+                              <AccountTreeOutlinedIcon fontSize='inherit' />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+
+                        {resource && resourceId && (
+                          <Tooltip title='View resource history'>
+                            <IconButton
+                              size='small'
+                              onClick={() =>
+                                setSelectedHistory({
+                                  resource: String(resource),
+                                  id: String(resourceId),
+                                })
+                              }
+                            >
+                              <HistoryOutlinedIcon fontSize='inherit' />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+
+          <TablePagination
+            component='div'
+            page={page}
+            count={totalRows}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            rowsPerPage={limit}
+            onRowsPerPageChange={(event) => {
+              setLimit(parseInt(event.target.value, 10));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[10, 20, 50, 100]}
           />
-        </DialogTitle>
-        <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
-          {isLoadingHistory ? (
-            <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-              <CircularProgress size={30} />
-            </Box>
-          ) : historyData?.data?.length > 0 ? (
-            <Stack spacing={2}>
-              {historyData.data.map((entry: any, index: number) => (
-                <Paper key={index} variant="outlined" sx={{ p: 2 }}>
-                  <AuditEntryViewer data={entry} />
-                </Paper>
-              ))}
-            </Stack>
-          ) : (
-            <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
-              No history found for this resource.
+        </Card>
+
+        {/* ==================== DIALOG: View Entry ==================== */}
+        <Dialog
+          open={!!selectedAuditId}
+          onClose={() => setSelectedAuditId(null)}
+          maxWidth='md'
+          fullWidth
+          PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Typography variant="h4" textAlign={'center'}>Audit Entry Details</Typography>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
+            {isLoadingAuditOne ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : (
+              <AuditEntryViewer data={auditOneData} />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ==================== DIALOG: Request Trail ==================== */}
+        <Dialog
+          open={!!selectedRequestId}
+          onClose={() => setSelectedRequestId(null)}
+          maxWidth='md'
+          fullWidth
+          PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Typography variant="h6">Request Trail</Typography>
+            <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+              {selectedRequestId}
             </Typography>
-          )}
-        </DialogContent>
-      </Dialog>
-    </Box>
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
+            {isLoadingRequestTrail ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : requestTrailData?.data?.length > 0 ? (
+              <Stack spacing={2}>
+                {requestTrailData.data.map((entry: any, index: number) => (
+                  <Paper key={index} variant="outlined" sx={{ p: 2 }}>
+                    <AuditEntryViewer data={entry} />
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
+                No entries found for this request ID.
+              </Typography>
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* ==================== DIALOG: Resource History ==================== */}
+        <Dialog
+          open={!!selectedHistory}
+          onClose={() => setSelectedHistory(null)}
+          maxWidth='md'
+          fullWidth
+          PaperProps={{ sx: { p: 0, maxHeight: '90vh' } }}
+        >
+          <DialogTitle sx={{ 
+            borderBottom: 1, 
+            borderColor: 'divider',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center'
+          }}>
+            <Typography variant="h6">
+              Resource History: {selectedHistory?.resource} #{selectedHistory?.id}
+            </Typography>
+            <Chip 
+              label={`${selectedHistory?.resource}`} 
+              size="small" 
+              color="primary"
+              variant="outlined" 
+            />
+          </DialogTitle>
+          <DialogContent sx={{ pt: 3, overflowY: 'auto' }}>
+            {isLoadingHistory ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress size={30} />
+              </Box>
+            ) : historyData?.data?.length > 0 ? (
+              <Stack spacing={2}>
+                {historyData.data.map((entry: any, index: number) => (
+                  <Paper key={index} variant="outlined" sx={{ p: 2 }}>
+                    <AuditEntryViewer data={entry} />
+                  </Paper>
+                ))}
+              </Stack>
+            ) : (
+              <Typography align="center" color="text.secondary" sx={{ py: 4 }}>
+                No history found for this resource.
+              </Typography>
+            )}
+          </DialogContent>
+        </Dialog>
+      </Box>
+    </LocalizationProvider>
   );
 }
 
