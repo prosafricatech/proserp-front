@@ -85,6 +85,7 @@ const SearchGlobal = ({ wrapperSx, sx }: SearchGlobalProps) => {
     'SMS': { permissions: ['ProsAfricans:Read', 'ProsAfricans:Manage'] },
     'Organizations': {},
     'Invitations': {},
+    'Audit Trail': { orgPermissions: [PERMISSIONS.AUDIT_READ] },
     // Human Resources
     'Employees': { modules: [MODULES.HUMAN_RESOURCES] },
     'Leave Requests': { modules: [MODULES.HUMAN_RESOURCES] },

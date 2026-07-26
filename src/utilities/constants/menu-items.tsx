@@ -524,6 +524,12 @@ export async function getMenus(locale: string) {
           icon: icon('organizations'),
         },
         {
+          uri: `/${locale}/audit-trail`,
+          label: 'Audit Trail',
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
+        {
           uri: `/${locale}/invitations`,
           label: sidebar.menuItem.invitations,
           type: 'nav-item',

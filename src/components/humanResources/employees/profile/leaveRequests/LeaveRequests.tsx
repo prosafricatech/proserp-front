@@ -1,5 +1,7 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
 import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
@@ -14,6 +16,7 @@ import { LeaveRequestType } from './LeaveRequestType';
 import LeaveRequestsListItem from './LeaveRequestsListItem';
 
 const LeaveRequests = ({ employeeId }: { employeeId?: number }) => {
+  const { checkOrganizationPermission } = useJumboAuth();
   const params = useParams<{ employee_id?: string }>();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
@@ -94,7 +97,9 @@ const LeaveRequests = ({ employeeId }: { employeeId?: number }) => {
                   onChange={handleOnChange}
                   value={queryOptions.queryParams.keyword}
                 />
-                <LeaveRequestActionTail employeeId={resolvedEmployeeId} />
+                {checkOrganizationPermission(
+                  PERMISSIONS.LEAVE_REQUESTS_CREATE
+                ) && <LeaveRequestActionTail employeeId={resolvedEmployeeId} />}
               </Stack>
             }
           ></JumboListToolbar>

@@ -404,7 +404,22 @@ function Sidebar({ menus }) {
                     }
                 }
 
-                // HR > Employee
+                // HR > leave requests
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.LEAVE_REQUESTS_CREATE,
+                    PERMISSIONS.LEAVE_REQUESTS_DELETE,
+                    PERMISSIONS.LEAVE_REQUESTS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_EDIT,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.leave_requests
+                        );
+                    }
+                }
+
+                // HR > loan requests
                 if (!checkOrganizationPermission([
                     PERMISSIONS.LOANS_CREATE,
                     PERMISSIONS.LOANS_READ, PERMISSIONS.LOANS_EDIT, PERMISSIONS.LOANS_DELETE
@@ -849,6 +864,19 @@ function Sidebar({ menus }) {
         const orgMenu = menus.find(menu => menu.label === dictionary.sidebar.menu.organizations);
         if (orgMenu) {
             updatedMenus.push(orgMenu);
+        }
+
+        if (!checkOrganizationPermission(PERMISSIONS.AUDIT_READ)) {
+            const organizationsMenuIndex = updatedMenus.findIndex(
+                menu => menu.label === dictionary.sidebar.menu.organizations
+            );
+
+            if (organizationsMenuIndex >= 0) {
+                updatedMenus[organizationsMenuIndex].children =
+                    updatedMenus[organizationsMenuIndex].children.filter(
+                        child => child.label !== 'Audit Trail'
+                    );
+            }
         }
 
         setMenuItems([

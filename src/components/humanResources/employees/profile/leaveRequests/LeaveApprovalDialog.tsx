@@ -1,24 +1,20 @@
 'use client';
 
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
-import humanResourcesServices from '../../../humanResourcesServices';
 import { LoadingButton } from '@mui/lab';
 import {
-  Alert,
   Button,
   Dialog,
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   Stack,
   TextField,
 } from '@mui/material';
-import { DateTimePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import dayjs, { Dayjs } from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
+import humanResourcesServices from '../../../humanResourcesServices';
 import { LeaveRequestType } from './LeaveRequestType';
 
 export type LeaveApprovalDecision = 'approved' | 'rejected' | 'on hold';
@@ -38,7 +34,9 @@ export const getLeaveApprovalDecision = (
   approval: any
 ): LeaveApprovalDecision | 'unknown' => {
   const status = String(approval?.status || '').toLowerCase();
-  const label = String(approval?.label || approval?.status_label || '').toLowerCase();
+  const label = String(
+    approval?.label || approval?.status_label || ''
+  ).toLowerCase();
 
   if (status === 'rejected' || label === 'rejected') return 'rejected';
   if (status === 'on hold' || label === 'on hold') return 'on hold';
@@ -61,7 +59,8 @@ export const getNextPendingLeaveLevel = (
 
   if (!levels.length) return undefined;
 
-  const latestApproval = leaveRequest.approvals?.[leaveRequest.approvals.length - 1];
+  const latestApproval =
+    leaveRequest.approvals?.[leaveRequest.approvals.length - 1];
   if (!latestApproval) return levels[0];
 
   if (getLeaveApprovalDecision(latestApproval) !== 'approved') return undefined;
@@ -84,8 +83,8 @@ export const getNextPendingLeaveLevel = (
 const getEditedApprovalLevelId = (approval: any) => {
   return Number(
     approval?.approval_chain_level?.id ||
-    approval?.chain_level_id ||
-    approval?.approval_chain_level_id
+      approval?.chain_level_id ||
+      approval?.approval_chain_level_id
   );
 };
 
@@ -112,7 +111,9 @@ const LeaveApprovalDialog = ({
   useEffect(() => {
     if (!open) return;
 
-    setDaysApproved(approval?.days_approved || leaveRequest.days_requested || 1);
+    setDaysApproved(
+      approval?.days_approved || leaveRequest.days_requested || 1
+    );
     setRemarks(approval?.remarks || '');
     setApprovalDate(
       approval?.approval_date
@@ -132,7 +133,9 @@ const LeaveApprovalDialog = ({
   const { mutate: addApproval, isPending: isAdding } = useMutation({
     mutationFn: humanResourcesServices.addLeaveRequestApproval,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['showLeaveRequest', leaveRequest.id] });
+      queryClient.invalidateQueries({
+        queryKey: ['showLeaveRequest', leaveRequest.id],
+      });
       queryClient.invalidateQueries({ queryKey: ['leaveRequests'] });
       enqueueSnackbar('Leave approval recorded', { variant: 'success' });
       onClose();
@@ -153,7 +156,10 @@ const LeaveApprovalDialog = ({
       return;
     }
 
-    if (status === 'approved' && (daysApproved === '' || Number(daysApproved) <= 0)) {
+    if (
+      status === 'approved' &&
+      (daysApproved === '' || Number(daysApproved) <= 0)
+    ) {
       setDaysError('Days approved is required');
       return;
     }
@@ -164,8 +170,6 @@ const LeaveApprovalDialog = ({
     const chainLevelId = isEditMode
       ? getEditedApprovalLevelId(approval)
       : Number(pendingLevel?.id);
-
-      console.log('chainLevelId', chainLevelId, 'pendingLevel', pendingLevel, 'approval', approval);
 
     if (!chainLevelId) {
       enqueueSnackbar('Pending approval level not found', { variant: 'error' });
@@ -191,9 +195,7 @@ const LeaveApprovalDialog = ({
       fullScreen={belowLargeScreen}
       scroll={belowLargeScreen ? 'body' : 'paper'}
     >
-      <DialogTitle>
-         {isEditMode ? 'Edit' : ''} Leave Approval
-      </DialogTitle>
+      <DialogTitle>{isEditMode ? 'Edit' : ''} Leave Approval</DialogTitle>
       <DialogContent>
         <Stack spacing={2} sx={{ mt: 1 }}>
           <TextField
