@@ -241,6 +241,7 @@ export const PayrollRunActions = ({
   const { mutate: directApprovePayroll, isPending } = useMutation({
     mutationFn: humanResourcesServices.approvePayrollRun,
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
       queryClient.invalidateQueries({
         queryKey: [
           'payrollRunsForPeriod',
