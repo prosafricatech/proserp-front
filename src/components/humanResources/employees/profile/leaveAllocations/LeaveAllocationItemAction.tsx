@@ -1,5 +1,7 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -53,6 +55,7 @@ const LeaveAllocationItemAction = ({
 }: {
   leaveAllocation: LeaveAllocationType;
 }) => {
+  const { checkOrganizationPermission } = useJumboAuth();
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -86,16 +89,24 @@ const LeaveAllocationItemAction = ({
   });
 
   const menuItems = [
-    {
-      icon: <EditOutlined />,
-      title: 'Edit',
-      action: 'edit',
-    },
-    {
-      icon: <DeleteOutlined color='error' />,
-      title: 'Delete',
-      action: 'delete',
-    },
+    ...(checkOrganizationPermission(PERMISSIONS.LEAVE_ALLOCATIONS_EDIT)
+      ? [
+          {
+            icon: <EditOutlined />,
+            title: 'Edit',
+            action: 'edit',
+          },
+        ]
+      : []),
+    ...(checkOrganizationPermission(PERMISSIONS.LEAVE_ALLOCATIONS_DELETE)
+      ? [
+          {
+            icon: <DeleteOutlined color='error' />,
+            title: 'Delete',
+            action: 'delete',
+          },
+        ]
+      : []),
   ];
 
   const handleItemAction = (menuItem: MenuItemProps) => {

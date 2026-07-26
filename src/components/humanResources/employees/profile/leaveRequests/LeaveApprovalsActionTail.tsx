@@ -1,6 +1,7 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { FactCheckOutlined } from '@mui/icons-material';
 import { ButtonGroup, IconButton, Tooltip, useMediaQuery } from '@mui/material';
@@ -14,9 +15,11 @@ interface LeaveApprovalsActionTailProps {
   leaveRequest: LeaveRequestType;
 }
 
-const LeaveApprovalsActionTail = ({ leaveRequest }: LeaveApprovalsActionTailProps) => {
+const LeaveApprovalsActionTail = ({
+  leaveRequest,
+}: LeaveApprovalsActionTailProps) => {
   const [openDialog, setOpenDialog] = useState(false);
-  const { hasOrganizationRole } = useJumboAuth();
+  const { hasOrganizationRole, checkOrganizationPermission } = useJumboAuth();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
@@ -24,10 +27,15 @@ const LeaveApprovalsActionTail = ({ leaveRequest }: LeaveApprovalsActionTailProp
   const pendingRoleName = pendingLevel?.role?.name || '';
   const normalizedStatus = (leaveRequest.status || '').toLowerCase();
 
+  const canEditRequest = checkOrganizationPermission(
+    PERMISSIONS.LEAVE_REQUESTS_EDIT
+  );
+
   const canApprove =
     !!pendingLevel &&
     (!pendingRoleName || hasOrganizationRole(pendingRoleName)) &&
-    !['approved', 'rejected', 'cancelled'].includes(normalizedStatus);
+    !['approved', 'rejected', 'cancelled'].includes(normalizedStatus) &&
+    canEditRequest;
 
   return (
     <>

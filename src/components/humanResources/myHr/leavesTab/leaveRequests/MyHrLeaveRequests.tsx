@@ -1,10 +1,12 @@
 import { LeaveRequestType } from '@/components/humanResources/employees/profile/leaveRequests/LeaveRequestType';
 import humanResourcesServices from '@/components/humanResources/humanResourcesServices';
 import { getSanitizedSearchKeyword } from '@/utilities/getSanitizedSearchKeyword';
+import JumboListToolbar from '@jumbo/components/JumboList/components/JumboListToolbar';
 import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
-import { Autocomplete, Card, Grid, TextField } from '@mui/material';
+import { Autocomplete, Card, Grid, Stack, TextField } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import MyHrLeaveRequestsActionTail from './MyHrLeaveRequestsActionTail';
 import MyHrLeaveRequestsListItem from './MyHrLeaveRequestsListItem';
 
 const STATUS_OPTIONS = [
@@ -90,6 +92,16 @@ const MyHrLeaveRequests = () => {
           display: 'flex',
           flexDirection: 'column',
         }}
+        toolbar={
+          <JumboListToolbar
+            hideItemsPerPage={true}
+            actionTail={
+              <Stack direction='row' justifyContent={'end'}>
+                <MyHrLeaveRequestsActionTail />
+              </Stack>
+            }
+          ></JumboListToolbar>
+        }
       />
     </>
   );

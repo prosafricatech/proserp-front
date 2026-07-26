@@ -1,14 +1,32 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { Box, Tab, Tabs } from '@mui/material';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import LeaveAllocations from './leaveAllocations/LeaveAllocations';
 import LeaveRequests from './leaveRequests/LeaveRequests';
 
 type LeaveSubTab = 'allocations' | 'requests';
 
-export default function EmployeeLeaveTab({ employeeId }: { employeeId: number }) {
-  const [subTab, setSubTab] = useState<LeaveSubTab>('allocations');
+export default function EmployeeLeaveTab({
+  employeeId,
+}: {
+  employeeId: number;
+}) {
+  const { checkOrganizationPermission } = useJumboAuth();
+  const [subTab, setSubTab] = useState<LeaveSubTab>('requests');
+  const [canViewAllocations, setCanViewAllocations] = useState(false);
+  const [canViewRequests, setCanViewRequests] = useState(false);
+
+  useEffect(() => {
+    setCanViewAllocations(
+      checkOrganizationPermission(PERMISSIONS.LEAVE_ALLOCATIONS_READ)
+    );
+    setCanViewRequests(
+      checkOrganizationPermission(PERMISSIONS.LEAVE_REQUESTS_READ)
+    );
+  }, [checkOrganizationPermission]);
 
   return (
     <Box>
@@ -23,8 +41,12 @@ export default function EmployeeLeaveTab({ employeeId }: { employeeId: number })
         <Tab label='Leave Requests' value='requests' />
       </Tabs>
 
-      {subTab === 'allocations' && <LeaveAllocations employeeId={employeeId} />}
-      {subTab === 'requests' && <LeaveRequests employeeId={employeeId} />}
+      {subTab === 'allocations' && canViewAllocations && (
+        <LeaveAllocations employeeId={employeeId} />
+      )}
+      {subTab === 'requests' && canViewRequests && (
+        <LeaveRequests employeeId={employeeId} />
+      )}
     </Box>
   );
 }

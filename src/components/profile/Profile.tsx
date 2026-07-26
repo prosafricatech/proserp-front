@@ -34,7 +34,7 @@ import {
   Typography,
 } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
-import React, { ReactNode, useMemo, useState } from 'react';
+import React, { ReactNode, useEffect, useMemo, useState } from 'react';
 import MyHr from '../humanResources/myHr/MyHr';
 import organizationServices from '../organizations/organizationServices';
 
@@ -53,6 +53,7 @@ function TabPanel({
     </div>
   );
 }
+
 const Profile = () => {
   const dictionary = useDictionary();
   const lang = useLanguage();
@@ -63,6 +64,8 @@ const Profile = () => {
   const [statusColor, setStatusColor] = useState<
     'success' | 'primary' | 'error'
   >('success');
+  const [hasHrModule, setHasHrModule] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
   const { data: users, isLoading } = useQuery({
     queryKey: ['users', organization?.id],
@@ -84,6 +87,53 @@ const Profile = () => {
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
     setValue(newValue);
   };
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    setHasHrModule(organizationHasSubscribed(MODULES.HUMAN_RESOURCES));
+  }, [organizationHasSubscribed]);
+
+  // If not client yet, show loading state
+  if (!isClient) {
+    return (
+      <Card>
+        <CardContent>
+          <Tabs
+            value={value}
+            onChange={handleChange}
+            indicatorColor='primary'
+            textColor='primary'
+            variant='scrollable'
+            scrollButtons='auto'
+          >
+            <Tab
+              icon={<Person3Outlined />}
+              iconPosition='start'
+              label={'Profile'}
+              aria-controls={`tabpanel-profile`}
+            />
+          </Tabs>
+          <TabPanel value={value} index={0}>
+            <JumboGridItem size={{ xs: 12, lg: 4 }}>
+              <Card variant='outlined' sx={{ p: 2 }}>
+                <Stack direction={'row'} gap={2} alignItems={'center'}>
+                  <Skeleton variant='circular' width={48} height={48} />
+                  <Skeleton sx={{ width: '100%', height: 58 }} />
+                </Stack>
+                {[1, 2, 3, 4].map((itm, idx) => (
+                  <Skeleton key={idx} sx={{ width: '100%', height: 58 }} />
+                ))}
+              </Card>
+            </JumboGridItem>
+          </TabPanel>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardContent>
@@ -101,7 +151,7 @@ const Profile = () => {
             label={'Profile'}
             aria-controls={`tabpanel-profile`}
           />
-          {organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && (
+          {hasHrModule && (
             <Tab
               icon={<AccessibilityNewOutlined />}
               iconPosition='start'

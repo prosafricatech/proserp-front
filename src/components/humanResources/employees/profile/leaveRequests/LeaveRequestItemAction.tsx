@@ -1,10 +1,14 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
+  CheckCircleOutlined,
   DeleteOutlined,
   EditOutlined,
+  HighlightOffOutlined,
   RemoveCircleOutline,
 } from '@mui/icons-material';
 import {
@@ -18,8 +22,11 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../../../humanResourcesServices';
+import LeaveDirectDecisionForm from './LeaveDirectDecisionForm';
 import LeaveRequestForm from './LeaveRequestForm';
 import { LeaveRequestType } from './LeaveRequestType';
+
+type LeaveDirectDecisionMode = 'approve' | 'reject';
 
 const EditLeaveRequest = ({
   leaveRequest,
@@ -58,6 +65,7 @@ const LeaveRequestItemAction = ({
   leaveRequest: LeaveRequestType;
   approvalsCount?: number;
 }) => {
+  const { checkOrganizationPermission } = useJumboAuth();
   const [openEditDialog, setOpenEditDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -65,6 +73,12 @@ const LeaveRequestItemAction = ({
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const hasApprovals = Number(approvalsCount) > 0;
+
+  const isDirectFlow = !leaveRequest.approval_chain_id;
+  const canDirectDecide = isDirectFlow && leaveRequest.status === 'in_review';
+
+  const [decisionMode, setDecisionMode] =
+    useState<LeaveDirectDecisionMode | null>(null);
 
   const { mutate: deleteLeaveRequest } = useMutation({
     mutationFn: humanResourcesServices.deleteLeaveRequest,
@@ -143,6 +157,13 @@ const LeaveRequestItemAction = ({
     });
   };
 
+  const canEditRequest = checkOrganizationPermission(
+    PERMISSIONS.LEAVE_REQUESTS_EDIT
+  );
+  const canDeleteRequest = checkOrganizationPermission(
+    PERMISSIONS.LEAVE_REQUESTS_DELETE
+  );
+
   return (
     <>
       <Dialog
@@ -159,32 +180,68 @@ const LeaveRequestItemAction = ({
         )}
       </Dialog>
 
+      {decisionMode && (
+        <LeaveDirectDecisionForm
+          open={!!decisionMode}
+          mode={decisionMode}
+          leaveRequest={leaveRequest}
+          belowLargeScreen={belowLargeScreen}
+          onClose={() => setDecisionMode(null)}
+        />
+      )}
+
       {!hasApprovals && (
         <>
-          <Tooltip title='Edit'>
-            <IconButton
-              size='small'
-              onClick={() => {
-                setOpenEditDialog(true);
-              }}
-            >
-              <EditOutlined />
-            </IconButton>
-          </Tooltip>
+          {canEditRequest && (
+            <>
+              <Tooltip title='Edit'>
+                <IconButton
+                  size='small'
+                  onClick={() => {
+                    setOpenEditDialog(true);
+                  }}
+                >
+                  <EditOutlined />
+                </IconButton>
+              </Tooltip>
+              {canDirectDecide && (
+                <>
+                  <Tooltip title='Approve'>
+                    <IconButton
+                      size='small'
+                      onClick={() => setDecisionMode('approve')}
+                    >
+                      <CheckCircleOutlined color='success' />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title='Reject'>
+                    <IconButton
+                      size='small'
+                      onClick={() => setDecisionMode('reject')}
+                    >
+                      <HighlightOffOutlined color='error' />
+                    </IconButton>
+                  </Tooltip>
+                </>
+              )}
 
-          {leaveRequest.status !== 'cancelled' && (
-            <Tooltip title='Cancel'>
-              <IconButton size='small' onClick={handleCancel}>
-                <RemoveCircleOutline color='warning' />
+              {leaveRequest.status !== 'cancelled' && canEditRequest && (
+                <Tooltip title='Cancel'>
+                  <IconButton size='small' onClick={handleCancel}>
+                    <RemoveCircleOutline color='warning' />
+                  </IconButton>
+                </Tooltip>
+              )}
+            </>
+          )}
+
+          {canDeleteRequest && (
+            <Tooltip title='Delete'>
+              <IconButton size='small' onClick={handleDelete}>
+                <DeleteOutlined color='error' />
               </IconButton>
             </Tooltip>
           )}
-
-          <Tooltip title='Delete'>
-            <IconButton size='small' onClick={handleDelete}>
-              <DeleteOutlined color='error' />
-            </IconButton>
-          </Tooltip>
         </>
       )}
     </>
