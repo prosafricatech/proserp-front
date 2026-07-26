@@ -74,7 +74,7 @@ const LoanRequestsForm = ({
     error,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      return humanResourcesServices.myHrAddLoanRequests(data);
+      return humanResourcesServices.addLoanRequests(data);
     },
     onSuccess: () => {
       setOpenDialog(false);

@@ -651,6 +651,11 @@ humanResourcesServices.getLoanRequestsList = async (params = {}) => {
     return data;
 };
 
+humanResourcesServices.addLoanRequests = async (loan) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/add`, loan)
+    return data;
+}
+
 humanResourcesServices.showLoanRequest = async (id) => {
     const { data } = await axios.get(`/api/humanResources/loanRequests/${id}`);
     return data;
@@ -1034,6 +1039,12 @@ humanResourcesServices.myHrLeaveRequests = async (params = {}) => {
     });
     return data;
 };
+
+humanResourcesServices.myHrAddLeaveRequests = async (leaveRequest) => {
+    const { data } = await axios.post('/api/humanResources/myHr/leave/leaveRequests/add', leaveRequest);
+    return data;
+}
+
 // ---Leave balances ---
 humanResourcesServices.myHrLeaveBalances = async (params = {}) => {
     const { data } = await axios.get('/api/humanResources/myHr/leave/leaveBalances', {
@@ -1045,14 +1056,14 @@ humanResourcesServices.myHrLeaveBalances = async (params = {}) => {
 //  ===== LOANS TAB ===== //
 // --- laon reuqests --- 
 humanResourcesServices.myHrLoanRequests = async (params = {}) => {
-    const { data } = await axios.get('/api/humanResources/myHr/leaveRequests', {
+    const { data } = await axios.get('/api/humanResources/myHr/loanRequests', {
         params,
     });
     return data;
 };
 // --- add loan request ---
 humanResourcesServices.myHrAddLoanRequests = async (loan) => {
-    const { data } = await axios.post(`/api/humanResources/myHr/leaveRequests/add`, loan)
+    const { data } = await axios.post(`/api/humanResources/myHr/loanRequests/add`, loan)
     return data;
 }
 

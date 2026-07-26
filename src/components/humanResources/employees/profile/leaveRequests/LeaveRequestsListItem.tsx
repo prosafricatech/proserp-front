@@ -40,9 +40,9 @@ const LeaveRequestsListItem = ({
     refetchOnWindowFocus: true,
   });
 
-  const details: LeaveRequestType = (
-    leaveDetails?.data || leaveDetails || leaveRequest
-  ) as LeaveRequestType;
+  const details: LeaveRequestType = (leaveDetails?.data ||
+    leaveDetails ||
+    leaveRequest) as LeaveRequestType;
 
   const approvals = details?.approvals || [];
 
@@ -65,6 +65,8 @@ const LeaveRequestsListItem = ({
           : leaveRequest.status === 'rejected'
             ? 'Rejected'
             : leaveRequest.status || 'Pending';
+
+  const employeeName = `${leaveRequest.employee?.first_name ?? ''} ${leaveRequest.employee?.middle_name ?? ''} ${leaveRequest.employee?.last_name ?? ''}`;
 
   return (
     <Accordion
@@ -110,7 +112,13 @@ const LeaveRequestsListItem = ({
           paddingLeft={1}
           paddingRight={1}
         >
-          <Grid size={{ xs: 12, md: 3.2 }}>
+          <Grid size={{ xs: 12, md: 2 }}>
+            <Tooltip title='Empoyee Name'>
+              <Typography>{employeeName}</Typography>
+            </Tooltip>
+          </Grid>
+
+          <Grid size={{ xs: 12, md: 2.2 }}>
             <Tooltip title='Leave Type'>
               <Typography>
                 {leaveRequest.leave_type?.name ||
@@ -135,7 +143,7 @@ const LeaveRequestsListItem = ({
             </Tooltip>
           </Grid>
 
-          <Grid size={{ xs: 12, md: 2.2 }}>
+          <Grid size={{ xs: 12, md: 1.2 }}>
             <Tooltip title='Days'>
               <Typography>
                 {leaveRequest.days_granted != null
@@ -158,7 +166,7 @@ const LeaveRequestsListItem = ({
       </AccordionSummary>
 
       <AccordionDetails sx={{ backgroundColor: 'background.paper', mb: 3 }}>
-        <Grid container spacing={1}>     
+        <Grid container spacing={1}>
           <Grid size={{ xs: 12 }} textAlign='end'>
             <LeaveRequestItemAction
               leaveRequest={leaveRequest}
@@ -203,7 +211,9 @@ const LeaveRequestsListItem = ({
                     <Grid container spacing={2}>
                       {approvals.length > 0 ? (
                         approvals.map((approval, index) => {
-                          const approvalStatus = (approval.status || '').toLowerCase();
+                          const approvalStatus = (
+                            approval.status || ''
+                          ).toLowerCase();
                           const chipColor =
                             approvalStatus === 'rejected'
                               ? 'error'
@@ -213,14 +223,15 @@ const LeaveRequestsListItem = ({
                                   ? 'success'
                                   : 'info';
 
-                          const chainLevel = details?.approval_chain?.levels?.find(
-                            (level) =>
-                              Number(level.id) ===
-                              Number(
-                                approval.chain_level_id ||
-                                  approval.approval_chain_level_id
-                              )
-                          );
+                          const chainLevel =
+                            details?.approval_chain?.levels?.find(
+                              (level) =>
+                                Number(level.id) ===
+                                Number(
+                                  approval.chain_level_id ||
+                                    approval.approval_chain_level_id
+                                )
+                            );
 
                           return (
                             <Grid
@@ -265,7 +276,10 @@ const LeaveRequestsListItem = ({
                                 />
                               </Grid>
 
-                              <Grid size={{ xs: 12, md: 2, lg: 2 }} textAlign='right'>
+                              <Grid
+                                size={{ xs: 12, md: 2, lg: 2 }}
+                                textAlign='right'
+                              >
                                 <LeaveApprovalItemAction
                                   leaveRequest={details}
                                   approval={approval}

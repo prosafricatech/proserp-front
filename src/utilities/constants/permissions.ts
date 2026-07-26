@@ -174,6 +174,10 @@ export const PERMISSIONS = {
   LEAVE_ALLOCATIONS_CREATE: 'LeaveAllocations:Create',
   LEAVE_ALLOCATIONS_EDIT: 'LeaveAllocations:Edit',
   LEAVE_ALLOCATIONS_DELETE: 'LeaveAllocations:Delete',
+  LEAVE_REQUESTS_READ: 'LeaveRequests:Read',
+  LEAVE_REQUESTS_CREATE: 'LeaveRequests:Create',
+  LEAVE_REQUESTS_EDIT: 'LeaveRequests:Edit',
+  LEAVE_REQUESTS_DELETE: 'LeaveRequests:Delete',
 
   // Manufacturing & Processing
   BOM_CREATE: 'BOM:Create',

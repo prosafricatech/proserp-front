@@ -404,7 +404,22 @@ function Sidebar({ menus }) {
                     }
                 }
 
-                // HR > Employee
+                // HR > leave requests
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.LEAVE_REQUESTS_CREATE,
+                    PERMISSIONS.LEAVE_REQUESTS_DELETE,
+                    PERMISSIONS.LEAVE_REQUESTS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_EDIT,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.leave_requests
+                        );
+                    }
+                }
+
+                // HR > loan requests
                 if (!checkOrganizationPermission([
                     PERMISSIONS.LOANS_CREATE,
                     PERMISSIONS.LOANS_READ, PERMISSIONS.LOANS_EDIT, PERMISSIONS.LOANS_DELETE
