@@ -365,11 +365,6 @@ const SalarySheetPDF = ({
     employerSecWidth -= 2;
   }
 
-  console.log('columnLength: ', columnLength);
-  console.log('columnWidth: ', columnWidth);
-  console.log('employerSecWidth: ', employerSecWidth);
-  console.log('contributionWidth: ', contributionWidth);
-
   // Colors for strict structural mapping
   const borderColor = '#000000';
   const lightBorderColor = '#555555';
