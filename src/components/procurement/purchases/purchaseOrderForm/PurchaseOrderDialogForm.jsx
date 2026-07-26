@@ -250,6 +250,24 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
   const lockedSupplierCurrencyId =
     selectedStakeholderLedger?.currency_id || selectedStakeholderLedger?.currency?.id || null;
 
+  const baseCurrencyId = React.useMemo(() => {
+    const baseByFlag = currencies.find((currency) => Number(currency?.is_base) === 1);
+    if (baseByFlag?.id) return baseByFlag.id;
+
+    const baseCode = authOrganization?.organization?.base_currency?.code;
+    if (baseCode) {
+      const baseByCode = currencies.find(
+        (currency) =>
+          currency?.code === baseCode ||
+          currency?.currency_code === baseCode ||
+          currency?.abbreviation === baseCode
+      );
+      if (baseByCode?.id) return baseByCode.id;
+    }
+
+    return null;
+  }, [currencies, authOrganization]);
+
   const isSupplierCurrencyLocked = !!lockedSupplierCurrencyId;
 
   useEffect(() => {
@@ -296,23 +314,35 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
   ]);
 
   useEffect(() => {
-    if (!lockedSupplierCurrencyId) {
+    const hasActiveSupplierContext = !!stakeholder_id && stakeholderPayableLedgers.length > 0;
+    if (!hasActiveSupplierContext) {
+      return;
+    }
+
+    const targetCurrencyId = lockedSupplierCurrencyId || baseCurrencyId;
+    if (!targetCurrencyId) {
       return;
     }
 
     const currentCurrencyId = getValues('currency_id');
-    if (currentCurrencyId !== lockedSupplierCurrencyId) {
-      setValue('currency_id', lockedSupplierCurrencyId, {
+    if (currentCurrencyId !== targetCurrencyId) {
+      setValue('currency_id', targetCurrencyId, {
         shouldValidate: true,
         shouldDirty: true,
       });
     }
 
-    setValue('exchange_rate', getExchangeRateByCurrencyId(lockedSupplierCurrencyId), {
+    setValue('exchange_rate', getExchangeRateByCurrencyId(targetCurrencyId), {
       shouldValidate: true,
       shouldDirty: true,
     });
-  }, [lockedSupplierCurrencyId, currencies]);
+  }, [
+    lockedSupplierCurrencyId,
+    baseCurrencyId,
+    stakeholder_id,
+    stakeholderPayableLedgers,
+    currencies,
+  ]);
 
   const addPurchaseOrder = useMutation({
     mutationFn: purchaseServices.add,
