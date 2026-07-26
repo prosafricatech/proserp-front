@@ -5,7 +5,11 @@ import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelec
 import PDFContent from '@/components/pdf/PDFContent';
 import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { HighlightOff, VisibilityOutlined } from '@mui/icons-material';
+import {
+  HighlightOff,
+  TableChartOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -37,6 +41,7 @@ import dayjs from 'dayjs';
 import { Fragment, useEffect, useState } from 'react';
 import projectsServices from '../../project-services';
 import { useProjectProfile } from '../ProjectProfileProvider';
+import BudgetPositionDialog from './preview/BudgetPositionDialog';
 import BudgetsOnscreen from './preview/BudgetsOnscreen';
 import BudgetsPDF from './preview/BudgetsPDF';
 
@@ -335,6 +340,7 @@ function BudgetsAccordionDetails({ budget, expanded }) {
 
   // Dialog state for viewing all expenses
   const [openBudgetsDialog, setOpenBudgetsDialog] = useState(false);
+  const [openPositionDialog, setOpenPositionDialog] = useState(false);
 
   const totalBudgetedAmount =
     filteredExpenses?.reduce((total, item) => total + item?.budgeted, 0) || 0;
@@ -561,7 +567,17 @@ function BudgetsAccordionDetails({ budget, expanded }) {
               size={{ xs: 12, md: 1 }}
               display='flex'
               justifyContent='flex-end'
+              gap={0.5}
             >
+              <Tooltip title='View Item-Wise Budget Position'>
+                <IconButton
+                  size='small'
+                  sx={{ mt: 1 }}
+                  onClick={() => setOpenPositionDialog(true)}
+                >
+                  <TableChartOutlined fontSize='small' />
+                </IconButton>
+              </Tooltip>
               <Tooltip title='View Budget Details'>
                 <IconButton
                   size='small'
@@ -580,6 +596,13 @@ function BudgetsAccordionDetails({ budget, expanded }) {
             budgetDetails={budgetItemsDetails}
             baseCurrency={baseCurrency}
             organization={organization}
+          />
+
+          {/* Item-Wise Budget Position Dialog */}
+          <BudgetPositionDialog
+            open={openPositionDialog}
+            onClose={() => setOpenPositionDialog(false)}
+            budget={budget}
           />
 
           {/* Expenses */}

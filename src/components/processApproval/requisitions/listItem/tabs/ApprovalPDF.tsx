@@ -22,6 +22,8 @@ interface Approval {
   amount: number;
   vat_amount: number;
   status?: string;
+  status_label?: string;
+  returned_to_level?: { role?: { name?: string } } | null;
 }
 
 interface ApprovalPDFProps {
@@ -73,6 +75,11 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             <Text style={pdfStyles.watermarkText}>REJECTED</Text>
           </View>
         )}
+        {approval.status?.toLowerCase() === 'returned' && (
+          <View style={pdfStyles.watermark} fixed>
+            <Text style={pdfStyles.watermarkText}>RETURNED</Text>
+          </View>
+        )}
         <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
           <View style={{ flex: 1, maxWidth: (organization?.logo_path ? 130 : 250)}}>
             <PdfLogo organization={organization}/>
@@ -106,7 +113,18 @@ function ApprovalPDF({ approval, organization }: ApprovalPDFProps) {
             </Text>
           </View>
         </View>
-        
+
+        {approval.status?.toLowerCase() === 'returned' && (
+          <View style={{ ...pdfStyles.tableRow, marginBottom: 10 }}>
+            <View style={{ flex: 1, padding: 0.5 }}>
+              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Returned To</Text>
+              <Text style={{ ...pdfStyles.minInfo }}>
+                {approval.returned_to_level?.role?.name || 'Requester'}
+              </Text>
+            </View>
+          </View>
+        )}
+
         <View style={{...pdfStyles.table, minHeight: 150, marginBottom: 50}}>
           <>
               <View style={pdfStyles.tableRow}>

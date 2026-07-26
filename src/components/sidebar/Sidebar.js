@@ -785,6 +785,16 @@ function Sidebar({ menus }) {
                     );
                 }
             }
+
+            // Masters > Audit Trail
+            if (!checkOrganizationPermission(PERMISSIONS.AUDIT_READ)) {
+                const mastersMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menuItem.masters);
+                if (mastersMenuIndex >= 0) {
+                    updatedMenus[mastersMenuIndex].children = updatedMenus[mastersMenuIndex].children.filter(
+                        child => child.label !== 'Audit Trail'
+                    );
+                }
+            }
         }
 
         //Pros Control
@@ -860,23 +870,23 @@ function Sidebar({ menus }) {
             }
         }
 
+        // Pros Control > Audit Trail (platform-wide trail, for ProsAfrica staff only)
+        if (!checkPermission([
+            PROS_CONTROL_PERMISSIONS.AUDIT_READ,
+            PROS_CONTROL_PERMISSIONS.AUDIT_READ_ORGANIZATIONS,
+        ])) {
+            const prosControlMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.prosControl);
+            if (prosControlMenuIndex >= 0) {
+                updatedMenus[prosControlMenuIndex].children = updatedMenus[prosControlMenuIndex].children.filter(
+                    child => child.label !== 'Audit Trail'
+                );
+            }
+        }
+
         //Organizations should always included
         const orgMenu = menus.find(menu => menu.label === dictionary.sidebar.menu.organizations);
         if (orgMenu) {
             updatedMenus.push(orgMenu);
-        }
-
-        if (!checkOrganizationPermission(PERMISSIONS.AUDIT_READ)) {
-            const organizationsMenuIndex = updatedMenus.findIndex(
-                menu => menu.label === dictionary.sidebar.menu.organizations
-            );
-
-            if (organizationsMenuIndex >= 0) {
-                updatedMenus[organizationsMenuIndex].children =
-                    updatedMenus[organizationsMenuIndex].children.filter(
-                        child => child.label !== 'Audit Trail'
-                    );
-            }
         }
 
         setMenuItems([

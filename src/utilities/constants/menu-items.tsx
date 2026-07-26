@@ -469,6 +469,12 @@ export async function getMenus(locale: string) {
           type: 'nav-item',
           icon: icon('banks'),
         },
+        {
+          uri: `/${locale}/audit-trail`,
+          label: 'Audit Trail',
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
       ],
     },
     {
@@ -486,6 +492,12 @@ export async function getMenus(locale: string) {
           label: sidebar.menuItem.subscriptions,
           type: 'nav-item',
           icon: icon('subscriptions'),
+        },
+        {
+          uri: `/${locale}/prosControl/audit-trail`,
+          label: 'Audit Trail',
+          type: 'nav-item',
+          icon: icon('reports'),
         },
         {
           uri: `/${locale}/prosControl/troubleshooting`,
@@ -522,12 +534,6 @@ export async function getMenus(locale: string) {
           label: sidebar.menuItem.organizations,
           type: 'nav-item',
           icon: icon('organizations'),
-        },
-        {
-          uri: `/${locale}/audit-trail`,
-          label: 'Audit Trail',
-          type: 'nav-item',
-          icon: icon('reports'),
         },
         {
           uri: `/${locale}/invitations`,

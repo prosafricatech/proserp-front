@@ -66,8 +66,10 @@ const auditServices = {
     return data;
   },
 
-  getOne: async (id: string | number) => {
-    const { data } = await axios.get(`/api/audits/${id}`);
+  getOne: async (id: string | number, options: { core?: boolean } = {}) => {
+    const { data } = await axios.get(`/api/audits/${id}`, {
+      params: options.core ? { core: 1 } : undefined,
+    });
     return data;
   },
 

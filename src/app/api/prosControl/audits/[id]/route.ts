@@ -11,12 +11,7 @@ export async function GET(
   const { headers, response } = await getAuthHeaders(request);
   if (response) return response;
 
-  const queryString = new URL(request.url).searchParams.toString();
-  const endpoint = queryString
-    ? `${API_BASE}/audits/${id}?${queryString}`
-    : `${API_BASE}/audits/${id}`;
-
-  const res = await fetch(endpoint, {
+  const res = await fetch(`${API_BASE}/pros-audits/${id}`, {
     headers,
     credentials: 'include',
   });

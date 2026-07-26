@@ -39,6 +39,12 @@ export interface Approval {
   amount: number;
   has_orders?: boolean;
   approval_chain_level: ApprovalChainLevel;
+  // Set only when status is 'returned': the earlier level this was sent back
+  // to, or null/absent when it was sent all the way back to the requester.
+  returned_to_level?: ApprovalChainLevel | null;
+  // True once a return-to-requester has been resubmitted — the chain restarted,
+  // so this row is historical only (no Approve/Edit/Delete should act on it).
+  is_superseded?: boolean;
   creator: User;
   has_payments: boolean;
   is_final: number;
@@ -168,6 +174,9 @@ export interface BaseRequisition {
   remarks: string | null;
   status: string;
   status_label: string;
+  // True once the latest action is a return-to-requester: the requester may
+  // edit and resubmit, which restarts the chain at level one.
+  is_returned_to_requester?: boolean;
   leave_items?: LeaveRequisitionItem[];
   imprest_ledger_id?: number;
   imprest_ledger?: Ledger;

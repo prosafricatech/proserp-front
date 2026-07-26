@@ -12,5 +12,7 @@ export const PROS_CONTROL_PERMISSIONS = {
     DATABASE_REFRESH: 'Database:Refresh',
     PERMISSIONS_MANAGE:'Permissions:Manage',
     USERS_READ: 'SystemUsers:Read',
-    USERS_MANAGE: 'SystemUsers:Manage'
+    USERS_MANAGE: 'SystemUsers:Manage',
+    AUDIT_READ: 'ProsERP:Audit:Read',
+    AUDIT_READ_ORGANIZATIONS: 'ProsERP:Audit:ReadOrganizations',
 };
