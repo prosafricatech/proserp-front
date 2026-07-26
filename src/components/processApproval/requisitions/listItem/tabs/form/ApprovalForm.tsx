@@ -1129,7 +1129,7 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
         sx={{
           flexWrap: 'wrap',
           gap: 1,
-          justifyContent: returnMode ? 'flex-start' : 'flex-end',
+          justifyContent: 'flex-end',
         }}
       >
         {returnMode ? (
@@ -1161,22 +1161,27 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
                 )}
               />
             </Div>
-            <Button size='small' onClick={() => setReturnMode(false)}>
-              Cancel
-            </Button>
-            <LoadingButton
-              loading={
-                approveRequisition.isPending ||
-                editApprovalRequisition.isPending
-              }
-              size='small'
-              variant='contained'
-              color='warning'
-              disabled={!canConfirmReturn}
-              onClick={handleReturnSubmit}
-            >
-              Confirm Return
-            </LoadingButton>
+            {/* DialogActions' justifyContent: flex-end keeps this pinned to
+                the right even when it wraps onto its own line under the
+                Autocomplete on narrow/mobile screens */}
+            <Box sx={{ display: 'flex', gap: 1 }}>
+              <Button size='small' onClick={() => setReturnMode(false)}>
+                Cancel
+              </Button>
+              <LoadingButton
+                loading={
+                  approveRequisition.isPending ||
+                  editApprovalRequisition.isPending
+                }
+                size='small'
+                variant='contained'
+                color='warning'
+                disabled={!canConfirmReturn}
+                onClick={handleReturnSubmit}
+              >
+                Confirm Return
+              </LoadingButton>
+            </Box>
           </>
         ) : (
           <>

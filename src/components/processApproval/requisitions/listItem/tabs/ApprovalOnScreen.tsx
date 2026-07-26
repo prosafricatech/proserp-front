@@ -6,6 +6,7 @@ import projectsServices from '@/components/projectManagement/projects/project-se
 import { Organization } from '@/types/auth-types';
 import { VisibilityOutlined } from '@mui/icons-material';
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -193,6 +194,22 @@ function ApprovalOnScreen({
               </Typography>
             </Box>
           </Grid>
+
+          {approval.status?.toLowerCase() === 'rejected' && (
+            <Grid size={12}>
+              <Alert severity='error' variant='filled'>
+                {approval.status_label || 'Rejected'}
+              </Alert>
+            </Grid>
+          )}
+
+          {approval.status?.toLowerCase() === 'returned' && (
+            <Grid size={12}>
+              <Alert severity='warning' variant='filled'>
+                {approval.status_label || 'Returned'}
+              </Alert>
+            </Grid>
+          )}
 
           {/* Approval Information */}
           <Grid container spacing={2} sx={{ mb: 3 }} width={'100%'}>

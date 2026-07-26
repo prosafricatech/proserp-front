@@ -8,7 +8,6 @@ import {
   Badge,
   Chip,
   Grid,
-  ListItemText,
   Stack,
   Tooltip,
   Typography,
@@ -141,20 +140,28 @@ const ApprovedRequisitionsListItem: React.FC<ApprovedRequisitionsListItemProps> 
               <Typography variant="body2">{processConfig.label}</Typography>
             </Tooltip>
             <Tooltip title="Cost Center">
-              <Chip size="small" label={approvedRequisition.requisition.cost_center?.name} />
+              <Typography
+                variant="caption"
+                color="text.secondary"
+                sx={{ display: 'block', mt: 0.5 }}
+              >
+                {approvedRequisition.requisition.cost_center?.name || '-'}
+              </Typography>
             </Tooltip>
           </Grid>
 
           <Grid size={{ xs: 12, md: 4, lg: 4.8 }}>
-            <ListItemText
-              secondary={
-                <Tooltip title="Remarks">
-                  <Typography component="span" fontSize={14}>
-                    {approvedRequisition.remarks}
-                  </Typography>
-                </Tooltip>
-              }
-            />
+            <Tooltip title="Remarks">
+              <Typography
+                component="span"
+                variant="body2"
+                fontSize={14}
+                mb={0}
+                sx={{ flexWrap: 'wrap' }}
+              >
+                {approvedRequisition.remarks}
+              </Typography>
+            </Tooltip>
           </Grid>
 
           <Grid size={{ xs: 8, md: 2.5, lg: 1.7 }}>
