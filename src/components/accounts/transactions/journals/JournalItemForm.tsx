@@ -74,6 +74,7 @@ interface JournalItemFormProps {
     items: JournalItem[] | ((prevItems: JournalItem[]) => JournalItem[])
   ) => void;
   selectedCurrencyId?: number;
+  onLedgerCurrencyDetected?: (currencyId?: number) => void;
 }
 
 interface FormValues {
@@ -99,6 +100,7 @@ function JournalItemForm({
   items = [],
   setItems,
   selectedCurrencyId,
+  onLedgerCurrencyDetected,
 }: JournalItemFormProps) {
   const [isAdding, setIsAdding] = useState(false);
   const { ungroupedLedgerOptions } = useLedgerSelect();
@@ -191,7 +193,7 @@ function JournalItemForm({
         const currencyCode = getCurrencyName(watchedDebitCurrencyId);
         setError('debit_ledger_id', {
           type: 'manual',
-          message: `Debit ledger currency (${currencyCode}) does not match selected currency (TSh).`,
+          message: `Debit ledger currency (${currencyCode}) does not match the selected transaction currency.`,
         });
       } else {
         clearErrors('debit_ledger_id');
@@ -206,7 +208,7 @@ function JournalItemForm({
         const currencyCode = getCurrencyName(watchedCreditCurrencyId);
         setError('credit_ledger_id', {
           type: 'manual',
-          message: `Credit ledger currency (${currencyCode}) does not match selected currency (TSh).`,
+          message: `Credit ledger currency (${currencyCode}) does not match the selected transaction currency.`,
         });
       } else {
         clearErrors('credit_ledger_id');
@@ -370,6 +372,7 @@ function JournalItemForm({
                   shouldDirty: true,
                 });
                 setValue('debit_ledger_currency_id', newValue?.currency?.id || null);
+                onLedgerCurrencyDetected?.(newValue?.currency?.id);
                 // Clear error when user changes selection
                 if (newValue?.currency?.id === selectedCurrencyId) {
                   clearErrors('debit_ledger_id');
@@ -426,6 +429,7 @@ function JournalItemForm({
                   shouldDirty: true,
                 });
                 setValue('credit_ledger_currency_id', newValue?.currency?.id || null);
+                onLedgerCurrencyDetected?.(newValue?.currency?.id);
                 // Clear error when user changes selection
                 if (newValue?.currency?.id === selectedCurrencyId) {
                   clearErrors('credit_ledger_id');

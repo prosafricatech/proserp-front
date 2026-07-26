@@ -1,4 +1,5 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { HighlightOff } from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
@@ -48,6 +49,13 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
   const [isDirty, setIsDirty] = useState(false);
   const [clearFormKey, setClearFormKey] = useState(0);
   const [submitItemForm, setSubmitItemForm] = useState(false);
+  const { currencies = [] } = useCurrencySelect();
+
+  const getExchangeRateByCurrencyId = (currencyId) => {
+    if (!currencyId) return 1;
+    const foundCurrency = currencies.find((currency) => currency.id === currencyId);
+    return foundCurrency?.exchangeRate || 1;
+  };
 
   const validationSchema = yup.object({
     order_date: yup.string().required('Order date is required'),
@@ -232,6 +240,17 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
 
   const watchInstantPay = watch('instant_pay');
   const watchInstantReceive = watch('instant_receive');
+  const currentStakeholderLedgerId = watch('stakeholder_ledger_id');
+
+  const selectedStakeholderLedger =
+    stakeholderPayableLedgers.find((ledger) => ledger.id === currentStakeholderLedgerId) ||
+    stakeholderPayableLedgers[0] ||
+    null;
+
+  const lockedSupplierCurrencyId =
+    selectedStakeholderLedger?.currency_id || selectedStakeholderLedger?.currency?.id || null;
+
+  const isSupplierCurrencyLocked = !!lockedSupplierCurrencyId;
 
   useEffect(() => {
     // 1. No stakeholder → no ledger
@@ -276,6 +295,25 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
     stakeholderPayableLedgers,
   ]);
 
+  useEffect(() => {
+    if (!lockedSupplierCurrencyId) {
+      return;
+    }
+
+    const currentCurrencyId = getValues('currency_id');
+    if (currentCurrencyId !== lockedSupplierCurrencyId) {
+      setValue('currency_id', lockedSupplierCurrencyId, {
+        shouldValidate: true,
+        shouldDirty: true,
+      });
+    }
+
+    setValue('exchange_rate', getExchangeRateByCurrencyId(lockedSupplierCurrencyId), {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+  }, [lockedSupplierCurrencyId, currencies]);
+
   const addPurchaseOrder = useMutation({
     mutationFn: purchaseServices.add,
     onSuccess: (data) => {
@@ -284,6 +322,13 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrders'] });
     },
     onError: (error) => {
+      const currencyError = error?.response?.data?.validation_errors?.currency_id?.[0];
+      if (currencyError) {
+        setError('currency_id', {
+          type: 'manual',
+          message: currencyError,
+        });
+      }
       enqueueSnackbar(error?.response?.data?.message, { variant: 'error' });
     },
   });
@@ -297,6 +342,13 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
       queryClient.invalidateQueries({ queryKey: ['purchaseOrderGrns'] });
     },
     onError: (error) => {
+      const currencyError = error?.response?.data?.validation_errors?.currency_id?.[0];
+      if (currencyError) {
+        setError('currency_id', {
+          type: 'manual',
+          message: currencyError,
+        });
+      }
       enqueueSnackbar(error?.response?.data?.message, { variant: 'error' });
     },
   });
@@ -378,6 +430,8 @@ function PurchaseOrderDialogForm({ toggleOpen, order = null }) {
                 addedStakeholder={addedStakeholder}
                 order_date={order_date}
                 costCenters={costCenters}
+                lockedCurrencyId={lockedSupplierCurrencyId}
+                isCurrencyLocked={isSupplierCurrencyLocked}
               />
             </form>
           </Grid>

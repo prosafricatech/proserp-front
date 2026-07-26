@@ -29,6 +29,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import dayjs, { Dayjs } from 'dayjs';
 import { Currency } from '@/components/masters/Currencies/CurrencyType';
+import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import { CostCenter } from '@/components/masters/costCenters/CostCenterType';
 import CurrencySelector from '@/components/masters/Currencies/CurrencySelector';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
@@ -102,6 +103,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const { ungroupedLedgerOptions } = useLedgerSelect();
     const { enqueueSnackbar } = useSnackbar();
     const [serverError, setServerError] = useState<Record<string, string> | null>(null);
+    const { currencies = [] } = useCurrencySelect();
 
     const haveAllCostCenters = checkOrganizationPermission(PERMISSIONS.COST_CENTERS_ALL);
 
@@ -109,6 +111,34 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     const [isDirty, setIsDirty] = useState(false);
     const [clearFormKey, setClearFormKey] = useState(0);
     const [submitItemForm, setSubmitItemForm] = useState(false);
+
+    const getExchangeRateByCurrencyId = (currencyId?: number) => {
+        if (!currencyId) return 1;
+        const foundCurrency = currencies.find((currency) => currency.id === currencyId);
+        return foundCurrency?.exchangeRate || 1;
+    };
+
+    const applyCurrencyLock = (currencyId?: number) => {
+        if (!currencyId) {
+            setValue('form_ledger_currency_id', undefined, {
+                shouldValidate: true,
+            });
+            return;
+        }
+
+        setValue('form_ledger_currency_id', currencyId, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+        setValue('currency_id', currencyId, {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+        setValue('exchange_rate', getExchangeRateByCurrencyId(currencyId), {
+            shouldValidate: true,
+            shouldDirty: true,
+        });
+    };
 
     // Helper function to find currency ID for a ledger
     const findLedgerCurrencyId = (ledgerId?: number): number | undefined => {
@@ -139,8 +169,15 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
         },
         onError: (error: Error & { response?: any }) => {
             if (error.response) {
-                if (error.response.status === 400) {
-                    setServerError(error.response?.data?.validation_errors);
+                const validationErrors = error.response?.data?.validation_errors;
+                if (validationErrors?.currency_id?.[0]) {
+                    setError('currency_id', {
+                        type: 'manual',
+                        message: validationErrors.currency_id[0],
+                    });
+                }
+                if (error.response.status === 400 || error.response.status === 422) {
+                    setServerError(validationErrors);
                 } else {
                     enqueueSnackbar(error.response?.data?.message, { variant: 'error' });
                 }
@@ -157,8 +194,15 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
         },
         onError: (error: Error & { response?: any }) => {
             if (error.response) {
-                if (error.response.status === 400) {
-                    setServerError(error.response?.data?.validation_errors);
+                const validationErrors = error.response?.data?.validation_errors;
+                if (validationErrors?.currency_id?.[0]) {
+                    setError('currency_id', {
+                        type: 'manual',
+                        message: validationErrors.currency_id[0],
+                    });
+                }
+                if (error.response.status === 400 || error.response.status === 422) {
+                    setServerError(validationErrors);
                 } else {
                     enqueueSnackbar(error.response?.data?.message, { variant: 'error' });
                 }
@@ -262,6 +306,21 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
     };
       
     const handleSubmitForm = async (data: TransferFormValues) => {
+        const sourceCurrencyId = findLedgerCurrencyId(data.credit_ledger_id);
+        const hasDifferentForeignCurrencies = (data.items || []).some((entry) => {
+            const targetCurrencyId = findLedgerCurrencyId(entry.debit_ledger_id);
+            return !!sourceCurrencyId && !!targetCurrencyId && sourceCurrencyId !== targetCurrencyId;
+        });
+
+        if (hasDifferentForeignCurrencies) {
+            setError('currency_id', {
+                type: 'manual',
+                message:
+                    "Transfers between two different foreign currencies are not supported directly. Post through a base-currency clearing entry instead.",
+            });
+            return;
+        }
+
         const updatedData = { 
             ...data, 
             items: items.map(item => ({
@@ -321,9 +380,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                                     allowedGroups={['Cash and cash equivalents']}
                                     onChange={(newValue: any) => {
                                         if (Array.isArray(newValue)) return;
-                                        setValue('form_ledger_currency_id', newValue?.currency?.id);
-                                        setValue('currency_id', newValue?.currency?.id);
-                                        setValue('exchange_rate', newValue?.currency?.exchangeRate);
+                                        applyCurrencyLock(newValue?.currency?.id);
                                         setValue('credit_ledger_id', newValue ? newValue.id : 0, {
                                             shouldValidate: true,
                                             shouldDirty: true
@@ -426,6 +483,7 @@ function TransferFormDialogContent({ setOpen, transfer = null }: TransferFormDia
                         setItems={setItems}
                         isTransfer={true}
                         selectedCurrencyId={watch('currency_id') as any}
+                        onLedgerCurrencyDetected={(currencyId) => applyCurrencyLock(currencyId)}
                     />
 
                     {errors?.items?.message && items.length < 1 && (

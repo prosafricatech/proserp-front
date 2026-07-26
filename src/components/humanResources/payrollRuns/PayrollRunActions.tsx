@@ -4,7 +4,9 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { MODULES } from '@/utilities/constants/modules';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
 import {
+  CheckCircleOutlined,
   DeleteOutlined,
   DoneAllOutlined,
   MonetizationOnOutlined,
@@ -26,6 +28,7 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -108,9 +111,11 @@ export const PayrollRunActions = ({
 }: PayrollRunActionsProps) => {
   const { enqueueSnackbar } = useSnackbar();
   const { organizationHasSubscribed } = useJumboAuth();
+  const { showDialog, hideDialog } = useJumboDialog();
   const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
     MODULES.ACCOUNTS_AND_FINANCE
   );
+  const queryClient = useQueryClient();
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
   const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
@@ -233,6 +238,28 @@ export const PayrollRunActions = ({
     }
   };
 
+  const { mutate: directApprovePayroll, isPending } = useMutation({
+    mutationFn: humanResourcesServices.approvePayrollRun,
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: [
+          'payrollRunsForPeriod',
+          String(payrollRun.payroll_period_id),
+        ],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ['showPayrollRun', payrollRun.id],
+      });
+      queryClient.invalidateQueries({ queryKey: ['payrollRunDetails'] });
+      enqueueSnackbar('Payroll Run APproved', { variant: 'success' });
+    },
+    onError: (error: any) => {
+      enqueueSnackbar(getErrorMessage(error) || 'Something went wrong', {
+        variant: 'error',
+      });
+    },
+  });
+
   const handleActionClick = (action: string) => {
     switch (action) {
       case 'preview':
@@ -273,6 +300,18 @@ export const PayrollRunActions = ({
       default:
         break;
     }
+  };
+  const handleDirectApprove = () => {
+    showDialog({
+      title: 'Approve Payroll Run',
+      content: 'Once approved, this action cannot be undone',
+      onYes: () => {
+        hideDialog();
+        directApprovePayroll(payrollRun.id || payrollRunId);
+      },
+      onNo: () => hideDialog(),
+      variant: 'confirm',
+    });
   };
 
   const handleConfirmAction = () => {
@@ -315,6 +354,9 @@ export const PayrollRunActions = ({
   const isPayFormValid = payForm.credit_ledger_id > 0;
 
   const canViewBankTransferList = isApproved || isPosted || isPaid;
+
+  const isDirectFlow = !payrollRun.approval_chain_id;
+  const canDirectDecide = isDirectFlow && payrollRun.status === 'submitted';
 
   return (
     <>
@@ -376,6 +418,17 @@ export const PayrollRunActions = ({
               )}
             </IconButton>
           </Tooltip>
+        )}
+
+        {/* DIRECT APPROVE PAYROLL */}
+        {canDirectDecide && (
+          <>
+            <Tooltip title='Approve'>
+              <IconButton size='small' onClick={handleDirectApprove}>
+                <CheckCircleOutlined color='success' />
+              </IconButton>
+            </Tooltip>
+          </>
         )}
 
         {/* 4. POST PAYROLL TRANSACTIONS - For approved runs */}
