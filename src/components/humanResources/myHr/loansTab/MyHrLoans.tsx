@@ -7,7 +7,8 @@ import JumboRqList from '@jumbo/components/JumboReactQuery/JumboRqList';
 import { Autocomplete, Card, Grid, Stack, TextField } from '@mui/material';
 import { useSearchParams } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { LoanRequest } from './LoanRequestType';
+// import { LoanRequest } from './LoanRequestType';
+import { MyHrLoanRequestType } from './LoanRequestType';
 import MyHrLoanRequestsListItem from './MyHrLoanRequestsListItem';
 import MyHrLoansActionTail from './MyHrLoansActionTail';
 
@@ -45,7 +46,7 @@ const MyHrLoans = () => {
     }));
   }, []);
 
-  const renderLoanRequests = useCallback((loanRequest: LoanRequest) => {
+  const renderLoanRequests = useCallback((loanRequest: MyHrLoanRequestType) => {
     return <MyHrLoanRequestsListItem loanRequest={loanRequest} />;
   }, []);
 

@@ -204,9 +204,6 @@ export const PayrollRunActions = ({
 
       setSalarySheetData({
         rows: salaryRows,
-        // allowanceTypes: allowanceTypes || [],
-        // deductionTypes: deductionTypes || [],
-        // contributionTypes: contributionTypes || [],
         periodLabel: periodLabel,
       });
 
