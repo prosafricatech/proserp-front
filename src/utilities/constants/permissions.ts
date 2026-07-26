@@ -215,6 +215,7 @@ export const PERMISSIONS = {
   PROJECT_CLAIMS_DELETE: 'ProjectClaims:Delete',
 
   // Shared / Organization / Platform
+  AUDIT_READ: 'Audit:Read',
   FILES_SHELF_BROWSE: 'FilesShelf:Browse',
   MEASUREMENT_UNITS_CREATE: 'MeasurementUnits:Create',
   MEASUREMENT_UNITS_DELETE: 'MeasurementUnits:Delete',

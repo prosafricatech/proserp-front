@@ -851,6 +851,19 @@ function Sidebar({ menus }) {
             updatedMenus.push(orgMenu);
         }
 
+        if (!checkOrganizationPermission(PERMISSIONS.AUDIT_READ)) {
+            const organizationsMenuIndex = updatedMenus.findIndex(
+                menu => menu.label === dictionary.sidebar.menu.organizations
+            );
+
+            if (organizationsMenuIndex >= 0) {
+                updatedMenus[organizationsMenuIndex].children =
+                    updatedMenus[organizationsMenuIndex].children.filter(
+                        child => child.label !== 'Audit Trail'
+                    );
+            }
+        }
+
         setMenuItems([
             ...updatedMenus,
         ]);

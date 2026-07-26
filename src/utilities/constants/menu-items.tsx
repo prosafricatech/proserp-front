@@ -529,6 +529,12 @@ export async function getMenus(locale: string) {
           type: 'nav-item',
           icon: icon('invitations'),
         },
+        {
+          uri: `/${locale}/audit-trail`,
+          label: 'Audit Trail',
+          type: 'nav-item',
+          icon: icon('reports'),
+        },
       ],
     },
   ];
