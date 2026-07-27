@@ -74,7 +74,6 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       .nullable(),
     create_receivable: yup.boolean(),
     create_payable: yup.boolean(),
-    currency_id: yup.number().nullable()
   }).test('at-least-one-button', 'Select one ledger type', function (value) {
     const { create_receivable, create_payable } = value;
     if (!create_receivable && !create_payable && !stakeholder) {
@@ -89,7 +88,6 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
     trigger, 
     setError, 
     setValue, 
-    watch,
     formState: { errors } 
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -105,7 +103,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
       vrn: stakeholder?.vrn || null,
       create_receivable: stakeholder?.create_receivable || false,
       create_payable: stakeholder?.create_payable || false,
-      currency_id: stakeholder?.currency_id ?? stakeholder?.currency?.id ?? null,
+      currency_id: stakeholder?.currency_id ?? stakeholder?.currency?.id,
     }
   });
 
@@ -204,7 +202,7 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
+    <form onSubmit={handleSubmit(onSubmit)} autoComplete='off' noValidate>
       <DialogTitle textAlign={'center'}>
         {!stakeholder?.id ? dictionary.stakeholders.form.title : dictionary.stakeholders.form.pageTitle.replace('{name}', stakeholder.name)}
       </DialogTitle>
@@ -276,15 +274,13 @@ const StakeholderDialogForm: React.FC<StakeholderDialogFormProps> = ({ stakehold
                     ? { message: errors.currency_id.message }
                     : null
                 }
-                defaultValue={stakeholder?.currency_id ?? stakeholder?.currency?.id ?? null as any}
+                defaultValue={stakeholder?.currency_id ?? stakeholder?.currency?.id}
                 onChange={(newValue) => {
-                  setValue('currency_id', newValue ? newValue.id : null, {
+                  setValue('currency_id', newValue?.id, {
                     shouldDirty: true,
                     shouldValidate: true,
                   });
                 }}
-                // Optional: You can add disabled prop when stakeholder has transactions
-                // disabled={stakeholder?.has_transactions}
               />
             </Div>
           </Grid>

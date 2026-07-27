@@ -3,14 +3,13 @@ import { NextRequest } from 'next/server';
 
 const API_BASE = process.env.API_BASE_URL;
 
-export async function POST(
-  req: NextRequest
-) {
-  const { headers, response } = await getAuthHeaders(req);
+export async function POST(req: NextRequest) {
+  const { headers, response } = await getAuthHeaders(req, false);
   if (response) return response;
 
-  const body = await req.json().catch(() => ({}));
-  const res = await fetch(`${API_BASE}/loan-request-approvals`, {
+  const body = await req.json();
+
+  const res = await fetch(`${API_BASE}/recover-password`, {
     method: 'POST',
     headers,
     credentials: 'include',

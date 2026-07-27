@@ -4,8 +4,7 @@ import { NextRequest } from 'next/server';
 const API_BASE = process.env.API_BASE_URL!;
 
 export async function GET(
-  req: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  req: NextRequest
 ) {
   const { headers, response } = await getAuthHeaders(req);
   if (response) return response;

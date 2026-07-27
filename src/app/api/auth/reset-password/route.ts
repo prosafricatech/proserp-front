@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json();
 
-  const res = await fetch(`${API_BASE}/recover-password`, {
+  const res = await fetch(`${API_BASE}/reset-password`, {
     method: 'POST',
     headers,
     credentials: 'include',
