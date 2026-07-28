@@ -2,6 +2,21 @@ import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import axios from '@/lib/services/config';
 
+const getHeaderValue = (headers, name) => {
+  if (!headers) return null;
+
+  if (typeof headers.get === 'function') {
+    return headers.get(name);
+  }
+
+  const value =
+    headers[name] ??
+    headers[name.toLowerCase()] ??
+    headers[name.toUpperCase()];
+
+  return Array.isArray(value) ? value[0] : value ?? null;
+};
+
 const authOptions = {
   providers: [
     CredentialsProvider({
@@ -10,13 +25,23 @@ const authOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         try {
+          const forwardedFor = getHeaderValue(req?.headers, 'x-forwarded-for');
+          const realIp = getHeaderValue(req?.headers, 'x-real-ip');
+          const userAgent = getHeaderValue(req?.headers, 'user-agent') || 'unknown';
+          const ipAddress = forwardedFor?.split(',')[0]?.trim() || realIp || 'unknown';
+
           const axiosInstance = axios.create({
             withCredentials: true,
             headers: {
               'Content-Type': 'application/json',
               Accept: 'application/json',
+              'User-Agent': userAgent,
+              'X-User-Agent': userAgent,
+              'X-Forwarded-For': forwardedFor || ipAddress,
+              'X-Real-IP': realIp || ipAddress,
+              'X-Device-IP': ipAddress,
             },
           });
 
