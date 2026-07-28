@@ -124,9 +124,15 @@ function InventoryConsumptionItemAction({inventoryConsumption, consumptionTab = 
       },
     });
   
+    // Consumptions raised by another process (a requisition issue, a project
+    // update) must keep their originating link intact — no inline editing,
+    // matching the backend's own block. Delete-and-reissue from that process
+    // is still the way to correct one.
+    const isEditable = inventoryConsumption?.is_editable !== false;
+
     const menuItems = [
       {icon: <VisibilityOutlined/> , title : "View" , action : "open"},
-      !consumptionTab && (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) || inventoryConsumption.consumption_date >= dayjs().startOf('date').toISOString()) && {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
+      !consumptionTab && isEditable && (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) || inventoryConsumption.consumption_date >= dayjs().startOf('date').toISOString()) && {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
       (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) || inventoryConsumption.consumption_date >= dayjs().startOf('date').toISOString()) && {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
     ];
   

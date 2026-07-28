@@ -1,17 +1,14 @@
 import React from 'react';
-import { Alert, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
+import { Alert, Box, Chip, Grid, LinearProgress, Tooltip, Typography } from '@mui/material';
 import { useQuery } from '@tanstack/react-query';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import requisitionsServices from '../../requisitionsServices';
 import { MaterialApprovalRequisition } from '../ApprovalRequisitionType';
+import ApprovedIssueItemAction from './ApprovedIssueItemAction';
 
 interface ApprovedIssueListItemProps {
   approvedRequisition: MaterialApprovalRequisition;
   isExpanded: boolean;
-}
-
-function getIssueDate(issue: any): string {
-  return issue?.consumption_date;
 }
 
 function getIssueAmount(issue: any): number {
@@ -58,13 +55,16 @@ function ApprovedIssueListItem({
   return (
     <>
       {approvedIssues.map((issue: any) => {
-        const storeName = issue?.store?.name || 'N/A';
-        const issueNo = issue?.consumptionNo || '';
+        const isTransfer = issue?.issue_type === 'transfer';
+        const storeName = isTransfer
+          ? `${issue?.source_store?.name || 'N/A'} → ${issue?.destination_store?.name || 'N/A'}`
+          : issue?.store?.name || 'N/A';
+        const issueNo = isTransfer ? issue?.transferNo : issue?.consumptionNo;
         const narration = issue?.narration || '';
 
         return (
           <Grid
-            key={issue.id}
+            key={`${issue.issue_type}-${issue.id}`}
             container
             sx={{
               paddingLeft: 1,
@@ -86,25 +86,41 @@ function ApprovedIssueListItem({
               </Tooltip>
               <Tooltip title='Issue Date'>
                 <Typography variant='caption' color='text.secondary' display='block'>
-                  {readableDate(getIssueDate(issue))}
+                  {readableDate(issue?.date)}
                 </Typography>
               </Tooltip>
             </Grid>
 
             <Grid size={{ xs: 6, md: 3 }}>
-              <Tooltip title='Store'>
+              <Tooltip title={isTransfer ? 'Source → Destination Store' : 'Store'}>
                 <Typography variant='body2'>
                   {storeName}
                 </Typography>
               </Tooltip>
+              {isTransfer && (
+                <Tooltip title='Receipt Status'>
+                  <Chip
+                    size='small'
+                    label={issue.status}
+                    color={issue.status === 'Fully Received' ? 'success' : 'warning'}
+                    sx={{ mt: 0.5 }}
+                  />
+                </Tooltip>
+              )}
             </Grid>
 
-            <Grid size={{ xs: 12, md: 5 }}>
+            <Grid size={{ xs: 10, md: 4 }}>
               <Tooltip title='Narration'>
                 <Typography variant='body2'>
                   {narration}
                 </Typography>
               </Tooltip>
+            </Grid>
+
+            <Grid size={{ xs: 2, md: 1 }} sx={{ textAlign: 'end' }}>
+              <Box display='flex' flexDirection='row' justifyContent='flex-end'>
+                <ApprovedIssueItemAction issue={issue} />
+              </Box>
             </Grid>
           </Grid>
         );

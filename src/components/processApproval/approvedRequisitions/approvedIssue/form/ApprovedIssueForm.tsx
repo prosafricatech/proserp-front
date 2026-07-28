@@ -1,4 +1,5 @@
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
+import StoreSelector from '@/components/procurement/stores/StoreSelector';
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { LoadingButton } from '@mui/lab';
 import {
@@ -9,6 +10,7 @@ import {
   DialogTitle,
   Divider,
   Grid,
+  MenuItem,
   TextField,
   Typography,
 } from '@mui/material';
@@ -54,6 +56,11 @@ function ApprovedIssueForm({
         ...item,
         product: item?.product,
         issue_quantity: Number(item?.unissued_quantity || 0),
+        // 'consume' expenses the stock to the requesting cost center (today's
+        // only option); 'transfer' sends it to another store instead — for a
+        // requester who runs their own store, so it lands there as stock.
+        issue_type: 'consume' as 'consume' | 'transfer',
+        destination_store: null as { id: number; name: string } | null,
       }));
   }, [approvedDetails]);
 
@@ -89,14 +96,11 @@ function ApprovedIssueForm({
   });
 
   const handleSubmit = () => {
-    const payloadItems = items
-      .filter((item) => Number(item?.issue_quantity || 0) > 0)
-      .map((item) => ({
-        requisition_approval_product_item_id: Number(item.id),
-        quantity: Number(item.issue_quantity || 0),
-      }));
+    const itemsToIssue = items.filter(
+      (item) => Number(item?.issue_quantity || 0) > 0
+    );
 
-    if (payloadItems.length === 0) {
+    if (itemsToIssue.length === 0) {
       enqueueSnackbar('Enter at least one issue quantity greater than 0', {
         variant: 'warning',
       });
@@ -115,6 +119,26 @@ function ApprovedIssueForm({
       );
       return;
     }
+
+    const missingDestination = itemsToIssue.find(
+      (item) => item.issue_type === 'transfer' && !item.destination_store?.id
+    );
+
+    if (missingDestination) {
+      enqueueSnackbar(
+        `Select a destination store for ${missingDestination?.product?.name || 'the selected item'}`,
+        { variant: 'error' }
+      );
+      return;
+    }
+
+    const payloadItems = itemsToIssue.map((item) => ({
+      requisition_approval_product_item_id: Number(item.id),
+      quantity: Number(item.issue_quantity || 0),
+      issue_type: item.issue_type,
+      destination_store_id:
+        item.issue_type === 'transfer' ? item.destination_store?.id : undefined,
+    }));
 
     issueMutation.mutate({
       issue_date: issueDate ? issueDate.toISOString() : dayjs().toISOString(),
@@ -206,6 +230,59 @@ function ApprovedIssueForm({
                     }}
                   />
                 </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <TextField
+                    select
+                    label='Issue As'
+                    fullWidth
+                    size='small'
+                    value={item.issue_type}
+                    onChange={(e) => {
+                      const nextType = e.target.value as 'consume' | 'transfer';
+                      setItems((prev) => {
+                        const next = [...prev];
+                        next[index] = {
+                          ...next[index],
+                          issue_type: nextType,
+                          destination_store:
+                            nextType === 'consume'
+                              ? null
+                              : next[index].destination_store,
+                        };
+                        return next;
+                      });
+                    }}
+                  >
+                    <MenuItem value='consume'>
+                      Consume (expense to requester)
+                    </MenuItem>
+                    <MenuItem value='transfer'>
+                      Transfer to another store
+                    </MenuItem>
+                  </TextField>
+                </Grid>
+                {item.issue_type === 'transfer' && (
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <StoreSelector
+                      label='Destination Store'
+                      multiple={false}
+                      defaultValue={item.destination_store}
+                      excludeStores={
+                        (item?.store?.id ? [item.store.id] : null) as any
+                      }
+                      onChange={(store: any) => {
+                        setItems((prev) => {
+                          const next = [...prev];
+                          next[index] = {
+                            ...next[index],
+                            destination_store: store,
+                          };
+                          return next;
+                        });
+                      }}
+                    />
+                  </Grid>
+                )}
               </React.Fragment>
             ))}
           </Grid>

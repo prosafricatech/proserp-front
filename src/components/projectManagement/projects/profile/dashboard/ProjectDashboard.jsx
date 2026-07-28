@@ -4,6 +4,9 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import financialReportsServices from '@/components/accounts/reports/financial-reports-services';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
 import PDFContent from '@/components/pdf/PDFContent';
+import purchaseServices from '@/components/procurement/purchases/purchase-services';
+import PurchaseGrnsReportOnScreen from '@/components/procurement/purchases/listItem/purchaseGrnsReport/PurchaseGrnsReportOnScreen';
+import PurchaseGrnsReportPDF from '@/components/procurement/purchases/listItem/purchaseGrnsReport/PurchaseGrnsReportPDF';
 import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div } from '@jumbo/shared';
@@ -25,9 +28,11 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
+  DialogTitle,
   Divider,
   FormControl,
   Grid,
@@ -64,6 +69,70 @@ import ProjectLiabilityDocumentDialog from './ProjectLiabilityDocumentDialog';
 
 const EditProject = ({ project, setOpenEditDialog }) => {
   return <ProjectForm project={project} setOpenDialog={setOpenEditDialog} />;
+};
+
+const PurchaseGrnsReportDialogContent = ({
+  orderId,
+  organization,
+  onClose,
+}) => {
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const [activeTab, setActiveTab] = useState(0);
+
+  const { data: purchaseGrnsReport, isFetching } = useQuery({
+    queryKey: ['PurchaseGrnsReport', { orderId }],
+    queryFn: () => purchaseServices.PurchaseGrnsReport(orderId),
+    enabled: !!orderId,
+  });
+
+  if (isFetching) {
+    return (
+      <DialogContent>
+        <Skeleton variant='text' width={180} height={32} />
+        <Skeleton variant='rectangular' width='100%' height={48} />
+        <Skeleton variant='rectangular' width='100%' height={32} />
+      </DialogContent>
+    );
+  }
+
+  return (
+    <>
+      <DialogTitle>
+        {belowLargeScreen && (
+          <Tabs
+            value={activeTab}
+            onChange={(e, value) => setActiveTab(value)}
+            aria-label='purchase order grns report tabs'
+          >
+            <Tab label='ONSCREEN' />
+            <Tab label='PDF' />
+          </Tabs>
+        )}
+      </DialogTitle>
+      <DialogContent>
+        {belowLargeScreen && activeTab === 0 ? (
+          <PurchaseGrnsReportOnScreen
+            organization={organization}
+            purchaseGrnsReport={purchaseGrnsReport}
+          />
+        ) : (
+          <PDFContent
+            fileName={`${purchaseGrnsReport.orderNo} GRNs Report`}
+            document={
+              <PurchaseGrnsReportPDF
+                organization={organization}
+                purchaseGrnsReport={purchaseGrnsReport}
+              />
+            }
+          />
+        )}
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Close</Button>
+      </DialogActions>
+    </>
+  );
 };
 
 const StatItem = ({ label, value, valueColor, onClick }) => (
@@ -359,6 +428,7 @@ function ProjectDashboard() {
   const user = authUser?.user;
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const belowSmallScreen = useMediaQuery(theme.breakpoints.down('sm'));
   const baseCurrency = currencies?.find((c) => c.is_base === 1);
   const currencyCode = baseCurrency?.code;
   const hasClient = !!(project?.client_id || project?.client?.id);
@@ -367,6 +437,7 @@ function ProjectDashboard() {
   const [openDialog, setOpenDialog] = useState(false);
   const [activeTab, setActiveTab] = useState(0);
   const [openCommitmentsDialog, setOpenCommitmentsDialog] = useState(false);
+  const [grnsReportOrderId, setGrnsReportOrderId] = useState(null);
 
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
@@ -876,7 +947,7 @@ function ProjectDashboard() {
                   </Grid>
                   <Grid size={{ xs: 12, md: 6, lg: 6 }}>
                     <StatItem
-                      label='Cost to Date'
+                      label='Spent to Date'
                       value={formatCurrency(dashboardFigures?.cost_to_date)}
                     />
                   </Grid>
@@ -1278,87 +1349,261 @@ function ProjectDashboard() {
                 Ordered Material — Open Purchase Orders (
                 {formatCurrency(commitments?.committed_purchase_orders)})
               </Typography>
-              <TableContainer sx={{ mb: 3 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>P.O No</TableCell>
-                      <TableCell>Supplier</TableCell>
-                      <TableCell>Order Date</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell align='right'>Ordered</TableCell>
-                      <TableCell align='right'>Received</TableCell>
-                      <TableCell align='right'>Paid in Advance</TableCell>
-                      <TableCell align='right'>Outstanding</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(commitments?.purchase_orders || []).length === 0 && (
+              {belowSmallScreen ? (
+                <Box mb={3}>
+                  {(commitments?.purchase_orders || []).length === 0 && (
+                    <Alert severity='info'>No open purchase orders</Alert>
+                  )}
+                  {(commitments?.purchase_orders || []).map((po) => (
+                    <Card key={po.id} variant='outlined' sx={{ mb: 1.5 }}>
+                      <CardContent sx={{ pb: '12px !important' }}>
+                        <Box
+                          display='flex'
+                          justifyContent='space-between'
+                          alignItems='flex-start'
+                          gap={1}
+                        >
+                          <Tooltip title={`View ${po.order_no} GRNs Report`}>
+                            <Box
+                              display='flex'
+                              alignItems='center'
+                              gap={0.5}
+                              onClick={() => setGrnsReportOrderId(po.id)}
+                              sx={{
+                                cursor: 'pointer',
+                                '&:hover .MuiTypography-root': {
+                                  color: 'primary.main',
+                                },
+                                '&:hover .MuiSvgIcon-root': {
+                                  color: 'primary.main',
+                                },
+                              }}
+                            >
+                              <VisibilityOutlined
+                                fontSize='small'
+                                color='action'
+                              />
+                              <Typography variant='subtitle2'>
+                                {po.order_no}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                          <Chip label={po.status} size='small' />
+                        </Box>
+                        <Typography variant='body2' color='text.secondary'>
+                          {po.stakeholder}
+                          {po.order_date &&
+                            ` · ${dayjs(po.order_date).format('DD-MM-YYYY')}`}
+                        </Typography>
+
+                        <Divider sx={{ my: 1 }} />
+
+                        <Grid container spacing={1}>
+                          <Grid size={6}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Ordered
+                            </Typography>
+                            <Typography variant='body2'>
+                              {formatCurrencyIn(
+                                po.inventory_amount,
+                                po.currency
+                              )}
+                            </Typography>
+                          </Grid>
+                          <Grid size={6}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Received
+                            </Typography>
+                            <Typography variant='body2'>
+                              {formatCurrencyIn(
+                                po.received_amount,
+                                po.currency
+                              )}
+                            </Typography>
+                          </Grid>
+                          <Grid size={6}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Paid in Advance
+                            </Typography>
+                            <Typography variant='body2'>
+                              {formatCurrencyIn(po.paid_amount, po.currency)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={6}>
+                            <Typography
+                              variant='caption'
+                              color='text.secondary'
+                            >
+                              Outstanding
+                            </Typography>
+                            <Typography variant='body2'>
+                              {formatCurrencyIn(
+                                po.outstanding_amount,
+                                po.currency
+                              )}
+                            </Typography>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <TableContainer sx={{ mb: 3 }}>
+                  <Table size='small'>
+                    <TableHead>
                       <TableRow>
-                        <TableCell colSpan={8} align='center'>
-                          No open purchase orders
-                        </TableCell>
+                        <TableCell>P.O No</TableCell>
+                        <TableCell>Supplier</TableCell>
+                        <TableCell>Order Date</TableCell>
+                        <TableCell>Status</TableCell>
+                        <TableCell align='right'>Ordered</TableCell>
+                        <TableCell align='right'>Received</TableCell>
+                        <TableCell align='right'>Paid in Advance</TableCell>
+                        <TableCell align='right'>Outstanding</TableCell>
                       </TableRow>
-                    )}
-                    {(commitments?.purchase_orders || []).map((po) => (
-                      <TableRow key={po.id}>
-                        <TableCell>{po.order_no}</TableCell>
-                        <TableCell>{po.stakeholder}</TableCell>
-                        <TableCell>
-                          {po.order_date
-                            ? dayjs(po.order_date).format('DD-MM-YYYY')
-                            : '-'}
-                        </TableCell>
-                        <TableCell>{po.status}</TableCell>
-                        <TableCell align='right'>
-                          {formatCurrencyIn(po.inventory_amount, po.currency)}
-                        </TableCell>
-                        <TableCell align='right'>
-                          {formatCurrencyIn(po.received_amount, po.currency)}
-                        </TableCell>
-                        <TableCell align='right'>
-                          {formatCurrencyIn(po.paid_amount, po.currency)}
-                        </TableCell>
-                        <TableCell align='right'>
-                          {formatCurrencyIn(po.outstanding_amount, po.currency)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {(commitments?.purchase_orders || []).length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={8} align='center'>
+                            No open purchase orders
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {(commitments?.purchase_orders || []).map((po) => (
+                        <TableRow key={po.id}>
+                          <TableCell>
+                            <Tooltip title={`View ${po.order_no} GRNs Report`}>
+                              <Box
+                                display='flex'
+                                alignItems='center'
+                                gap={0.5}
+                                onClick={() => setGrnsReportOrderId(po.id)}
+                                sx={{
+                                  cursor: 'pointer',
+                                  width: 'fit-content',
+                                  '&:hover .MuiTypography-root': {
+                                    color: 'primary.main',
+                                  },
+                                  '&:hover .MuiSvgIcon-root': {
+                                    color: 'primary.main',
+                                  },
+                                }}
+                              >
+                                <VisibilityOutlined
+                                  fontSize='small'
+                                  color='action'
+                                />
+                                <Typography variant='body2'>
+                                  {po.order_no}
+                                </Typography>
+                              </Box>
+                            </Tooltip>
+                          </TableCell>
+                          <TableCell>{po.stakeholder}</TableCell>
+                          <TableCell>
+                            {po.order_date
+                              ? dayjs(po.order_date).format('DD-MM-YYYY')
+                              : '-'}
+                          </TableCell>
+                          <TableCell>{po.status}</TableCell>
+                          <TableCell align='right'>
+                            {formatCurrencyIn(
+                              po.inventory_amount,
+                              po.currency
+                            )}
+                          </TableCell>
+                          <TableCell align='right'>
+                            {formatCurrencyIn(po.received_amount, po.currency)}
+                          </TableCell>
+                          <TableCell align='right'>
+                            {formatCurrencyIn(po.paid_amount, po.currency)}
+                          </TableCell>
+                          <TableCell align='right'>
+                            {formatCurrencyIn(
+                              po.outstanding_amount,
+                              po.currency
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
 
               <Typography variant='subtitle2' color='text.secondary' mb={1}>
                 Stock On Hand — Received, Not Yet Consumed (
                 {formatCurrency(commitments?.committed_stock_on_hand)})
               </Typography>
-              <TableContainer sx={{ mb: 3 }}>
-                <Table size='small'>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Category</TableCell>
-                      <TableCell align='right'>Value</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {(commitments?.stock_on_hand || []).length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={2} align='center'>
-                          No stock currently on hand
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {(commitments?.stock_on_hand || []).map((stock) => (
-                      <TableRow key={stock.category_id ?? 'uncategorized'}>
-                        <TableCell>{stock.category}</TableCell>
-                        <TableCell align='right'>
+              {belowSmallScreen ? (
+                <Box mb={3}>
+                  {(commitments?.stock_on_hand || []).length === 0 && (
+                    <Alert severity='info'>No stock currently on hand</Alert>
+                  )}
+                  {(commitments?.stock_on_hand || []).map((stock) => (
+                    <Card
+                      key={stock.category_id ?? 'uncategorized'}
+                      variant='outlined'
+                      sx={{ mb: 1 }}
+                    >
+                      <CardContent
+                        sx={{
+                          py: '10px !important',
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Typography variant='body2'>
+                          {stock.category}
+                        </Typography>
+                        <Typography variant='body2'>
                           {formatCurrency(stock.value)}
-                        </TableCell>
+                        </Typography>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Box>
+              ) : (
+                <TableContainer sx={{ mb: 3 }}>
+                  <Table size='small'>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>Category</TableCell>
+                        <TableCell align='right'>Value</TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {(commitments?.stock_on_hand || []).length === 0 && (
+                        <TableRow>
+                          <TableCell colSpan={2} align='center'>
+                            No stock currently on hand
+                          </TableCell>
+                        </TableRow>
+                      )}
+                      {(commitments?.stock_on_hand || []).map((stock) => (
+                        <TableRow key={stock.category_id ?? 'uncategorized'}>
+                          <TableCell>{stock.category}</TableCell>
+                          <TableCell align='right'>
+                            {formatCurrency(stock.value)}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
 
               {commitments?.process_approval_active !== false && (
                 <>
@@ -1370,62 +1615,146 @@ function ProjectDashboard() {
                     Payments to Suppliers — Approved, Not Yet Paid (
                     {formatCurrency(commitments?.committed_payments)})
                   </Typography>
-                  <TableContainer>
-                    <Table size='small'>
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Requisition No</TableCell>
-                          <TableCell>Ledger</TableCell>
-                          <TableCell>Requester</TableCell>
-                          <TableCell>Date Required</TableCell>
-                          <TableCell align='right'>Approved</TableCell>
-                          <TableCell align='right'>Paid</TableCell>
-                          <TableCell align='right'>Unpaid</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {(commitments?.payments || []).length === 0 && (
+                  {belowSmallScreen ? (
+                    <Box>
+                      {(commitments?.payments || []).length === 0 && (
+                        <Alert severity='info'>
+                          No pending supplier payments
+                        </Alert>
+                      )}
+                      {(commitments?.payments || []).map((payment) => (
+                        <Card
+                          key={payment.id}
+                          variant='outlined'
+                          sx={{ mb: 1.5 }}
+                        >
+                          <CardContent sx={{ pb: '12px !important' }}>
+                            <Typography variant='subtitle2'>
+                              {payment.requisition_no}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {payment.ledger}
+                            </Typography>
+                            <Typography
+                              variant='body2'
+                              color='text.secondary'
+                            >
+                              {payment.requester}
+                              {payment.date_required &&
+                                ` · ${dayjs(payment.date_required).format('DD-MM-YYYY')}`}
+                            </Typography>
+
+                            <Divider sx={{ my: 1 }} />
+
+                            <Grid container spacing={1}>
+                              <Grid size={4}>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  Approved
+                                </Typography>
+                                <Typography variant='body2'>
+                                  {formatCurrencyIn(
+                                    payment.amount,
+                                    payment.currency
+                                  )}
+                                </Typography>
+                              </Grid>
+                              <Grid size={4}>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  Paid
+                                </Typography>
+                                <Typography variant='body2'>
+                                  {formatCurrencyIn(
+                                    payment.paid_amount,
+                                    payment.currency
+                                  )}
+                                </Typography>
+                              </Grid>
+                              <Grid size={4}>
+                                <Typography
+                                  variant='caption'
+                                  color='text.secondary'
+                                >
+                                  Unpaid
+                                </Typography>
+                                <Typography variant='body2'>
+                                  {formatCurrencyIn(
+                                    payment.unpaid_amount,
+                                    payment.currency
+                                  )}
+                                </Typography>
+                              </Grid>
+                            </Grid>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </Box>
+                  ) : (
+                    <TableContainer>
+                      <Table size='small'>
+                        <TableHead>
                           <TableRow>
-                            <TableCell colSpan={7} align='center'>
-                              No pending supplier payments
-                            </TableCell>
+                            <TableCell>Requisition No</TableCell>
+                            <TableCell>Ledger</TableCell>
+                            <TableCell>Requester</TableCell>
+                            <TableCell>Date Required</TableCell>
+                            <TableCell align='right'>Approved</TableCell>
+                            <TableCell align='right'>Paid</TableCell>
+                            <TableCell align='right'>Unpaid</TableCell>
                           </TableRow>
-                        )}
-                        {(commitments?.payments || []).map((payment) => (
-                          <TableRow key={payment.id}>
-                            <TableCell>{payment.requisition_no}</TableCell>
-                            <TableCell>{payment.ledger}</TableCell>
-                            <TableCell>{payment.requester}</TableCell>
-                            <TableCell>
-                              {payment.date_required
-                                ? dayjs(payment.date_required).format(
-                                    'DD-MM-YYYY'
-                                  )
-                                : '-'}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrencyIn(
-                                payment.amount,
-                                payment.currency
-                              )}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrencyIn(
-                                payment.paid_amount,
-                                payment.currency
-                              )}
-                            </TableCell>
-                            <TableCell align='right'>
-                              {formatCurrencyIn(
-                                payment.unpaid_amount,
-                                payment.currency
-                              )}
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
+                        </TableHead>
+                        <TableBody>
+                          {(commitments?.payments || []).length === 0 && (
+                            <TableRow>
+                              <TableCell colSpan={7} align='center'>
+                                No pending supplier payments
+                              </TableCell>
+                            </TableRow>
+                          )}
+                          {(commitments?.payments || []).map((payment) => (
+                            <TableRow key={payment.id}>
+                              <TableCell>{payment.requisition_no}</TableCell>
+                              <TableCell>{payment.ledger}</TableCell>
+                              <TableCell>{payment.requester}</TableCell>
+                              <TableCell>
+                                {payment.date_required
+                                  ? dayjs(payment.date_required).format(
+                                      'DD-MM-YYYY'
+                                    )
+                                  : '-'}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {formatCurrencyIn(
+                                  payment.amount,
+                                  payment.currency
+                                )}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {formatCurrencyIn(
+                                  payment.paid_amount,
+                                  payment.currency
+                                )}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {formatCurrencyIn(
+                                  payment.unpaid_amount,
+                                  payment.currency
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ))}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  )}
                 </>
               )}
             </>
@@ -1436,6 +1765,23 @@ function ProjectDashboard() {
             Close
           </Button>
         </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={!!grnsReportOrderId}
+        onClose={() => setGrnsReportOrderId(null)}
+        maxWidth='md'
+        fullWidth
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
+      >
+        {grnsReportOrderId && (
+          <PurchaseGrnsReportDialogContent
+            orderId={grnsReportOrderId}
+            organization={organization}
+            onClose={() => setGrnsReportOrderId(null)}
+          />
+        )}
       </Dialog>
     </>
   );
