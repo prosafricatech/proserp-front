@@ -456,6 +456,7 @@ function Sidebar({ menus }) {
                         PERMISSIONS.ACCOUNTS_MASTERS_READ,
                         PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
                         PERMISSIONS.ACCOUNTS_REPORTS,
+                        PERMISSIONS.BUDGETS_READ,
                     ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance)];
                 }
