@@ -14,7 +14,7 @@ function PurchaseOrderPDF({
   organization = null,
   checkOrganizationPermission,
 }) {
-  const currencyCode = order.currency.code;
+  const currencyCode = order.currency?.code || order.currency?.name || 'N/A';
   const mainColor = organization.settings?.main_color || '#2113AD';
   const lightColor = organization.settings?.light_color || '#bec5da';
   const contrastText = organization.settings?.contrast_text || '#FFFFFF';
@@ -117,6 +117,18 @@ function PurchaseOrderPDF({
               </Text>
             </View>
           )}
+          <View style={{ flex: 1, padding: 2 }}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                color: mainColor,
+                fontFamily: 'Helvetica-Bold',
+              }}
+            >
+              Currency
+            </Text>
+            <Text style={{ ...pdfStyles.minInfo }}>{currencyCode}</Text>
+          </View>
           {order?.currency_id > 1 && (
             <View style={{ flex: 1, padding: 2 }}>
               <Text

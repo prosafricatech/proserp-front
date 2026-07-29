@@ -19,7 +19,7 @@ import React from 'react';
 
 function PurchaseOrderOnScreenPreview({ order }) {
   const theme = useTheme();
-  const currencyCode = order.currency.code;
+  const currencyCode = order.currency?.code || order.currency?.name || 'N/A';
   const {
     checkOrganizationPermission,
     authOrganization: { organization },
@@ -168,6 +168,18 @@ function PurchaseOrderOnScreenPreview({ order }) {
             </Box>
           </Grid>
         )}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Box>
+            <Typography
+              variant='subtitle2'
+              sx={{ color: headerColor }}
+              gutterBottom
+            >
+              Currency
+            </Typography>
+            <Typography variant='body1'>{currencyCode}</Typography>
+          </Box>
+        </Grid>
         {order?.currency_id > 1 && (
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box>

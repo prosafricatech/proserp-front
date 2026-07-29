@@ -10,6 +10,41 @@ type GeoData = {
   longitude?: string;
 };
 
+type HeaderCarrier = {
+  headers: Headers;
+  geo?: GeoData;
+};
+
+export function getForwardedRequestHeaders(req: HeaderCarrier) {
+  const forwardedFor = req.headers.get('x-forwarded-for');
+  const realIp = req.headers.get('x-real-ip');
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  const reqTimezone = req.headers.get('x-timezone') || '';
+
+  const ipAddress = forwardedFor?.split(',')[0]?.trim() || realIp || 'unknown';
+
+  const geo: GeoData =
+    req.geo && typeof req.geo === 'object'
+      ? req.geo
+      : {};
+
+  return {
+    'Content-Type': 'application/json',
+    Accept: 'application/json',
+    'X-Timezone': reqTimezone,
+    'User-Agent': userAgent,
+    'X-User-Agent': userAgent,
+    'X-Forwarded-For': forwardedFor || ipAddress,
+    'X-Real-IP': realIp || ipAddress,
+    'X-Device-IP': ipAddress,
+    'X-Country': geo.country ?? '',
+    'X-Region': geo.region ?? '',
+    'X-City': geo.city ?? '',
+    'X-Latitude': geo.latitude ?? '',
+    'X-Longitude': geo.longitude ?? '',
+  };
+}
+
 export async function getAuthHeaders(
   req: NextRequest,
   requireAuth = true
@@ -29,45 +64,10 @@ export async function getAuthHeaders(
     };
   }
   
-  /** -------------------------------
-   * IP Address (proxy aware)
-   * ------------------------------- */
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  const realIp = req.headers.get('x-real-ip');
-
-  const ipAddress =
-    forwardedFor?.split(',')[0]?.trim() ||
-    realIp ||
-    'unknown';
-
-  /** -------------------------------
-   * Device & Location (type-safe)
-   * ------------------------------- */
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-
-  // 👇 Type-safe access
-  const geo: GeoData =
-    'geo' in req && typeof (req as any).geo === 'object'
-      ? (req as any).geo
-      : {};
-
-  /** -------------------------------
-   * Headers
-   * ------------------------------- */
-  
-  const reqTimezone = req.headers.get('x-timezone') || '';
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-    Accept: 'application/json',
-    'X-Timezone': reqTimezone,
-    'X-User-Agent': userAgent,
-    'X-Device-IP': ipAddress,
-    'X-Country': geo.country ?? '',
-    'X-Region': geo.region ?? '',
-    'X-City': geo.city ?? '',
-    'X-Latitude': geo.latitude ?? '',
-    'X-Longitude': geo.longitude ?? '',
-  };
+  const headers: Record<string, string> = getForwardedRequestHeaders({
+    headers: req.headers,
+    geo: 'geo' in req && typeof (req as any).geo === 'object' ? (req as any).geo : undefined,
+  });
 
   if (token?.accessToken) {
     headers.Authorization = `Bearer ${token.accessToken}`;

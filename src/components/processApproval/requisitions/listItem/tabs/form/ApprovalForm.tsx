@@ -17,6 +17,7 @@ import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
+  Alert,
   Autocomplete,
   Box,
   Button,
@@ -26,6 +27,7 @@ import {
   DialogTitle,
   Divider,
   Grid,
+  IconButton,
   ListItemIcon,
   ListItemText,
   Menu,
@@ -33,10 +35,12 @@ import {
   Tab,
   Tabs,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import ArrowDropDownIcon from '@mui/icons-material/ArrowDropDown';
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
+import ContentCopyOutlined from '@mui/icons-material/ContentCopyOutlined';
 import PauseCircleOutlineIcon from '@mui/icons-material/PauseCircleOutline';
 import HighlightOffIcon from '@mui/icons-material/HighlightOff';
 import UndoIcon from '@mui/icons-material/Undo';
@@ -358,6 +362,18 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
     requisition?.approval_chain?.process_type?.toLowerCase() ===
     'leave_request';
 
+  // Whoever wrote the last remarks (the previous approver's return reason, or
+  // the requester's own notes if this is the very first action) — shown as
+  // read-only context rather than pre-filled into the new Remarks box below,
+  // so each person's comment stays their own instead of silently overwriting
+  // (or having to hand-preserve) whatever came before it.
+  const previousRemarks = approval?.remarks || requisition?.remarks || '';
+  const previousRemarksLabel = approval
+    ? approval.status_label || 'Previous remarks'
+    : requisition?.creator?.name
+      ? `Requester's remarks (${requisition.creator.name})`
+      : "Requester's remarks";
+
   // "Send back" — an approver can return the requisition to an earlier level
   // (or to the requester) instead of only approving/holding/rejecting forward.
   // Not offered for leave requests, which use a separate approval mechanism.
@@ -541,7 +557,10 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
       approval_date: approvalDate.toISOString(),
       date_required: dateRequired?.toISOString() || '',
       process_type: requisition?.approval_chain?.process_type,
-      remarks: approval?.remarks || requisition?.remarks || '',
+      // Only carry the remarks forward when editing your own already-submitted
+      // approval (isEdit) — a brand-new action starts with a blank comment,
+      // with the previous one shown separately as read-only context.
+      remarks: isEdit ? approval?.remarks || '' : '',
       product_items:
         isPurchaseType || isMaterialType
           ? approval?.items || requisitionItems
@@ -941,12 +960,43 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
               />
             </Div>
           </Grid>
+          {!isEdit && previousRemarks && (
+            <Grid size={{ xs: 12 }}>
+              <Alert
+                severity='info'
+                variant='outlined'
+                sx={{ mt: 0.5 }}
+                action={
+                  <Tooltip title='Copy into my remarks'>
+                    <IconButton
+                      size='small'
+                      onClick={() => {
+                        setValue('remarks', previousRemarks, {
+                          shouldValidate: true,
+                          shouldDirty: true,
+                        });
+                      }}
+                    >
+                      <ContentCopyOutlined fontSize='small' />
+                    </IconButton>
+                  </Tooltip>
+                }
+              >
+                <Typography variant='caption' sx={{ fontWeight: 'medium' }}>
+                  {previousRemarksLabel}
+                </Typography>
+                <Typography variant='body2' sx={{ whiteSpace: 'pre-wrap' }}>
+                  {previousRemarks}
+                </Typography>
+              </Alert>
+            </Grid>
+          )}
           <Grid size={{ xs: 12, md: 6 }}>
             <Div sx={{ mt: 0.5 }}>
               <TextField
                 label='Remarks'
                 fullWidth
-                defaultValue={approval?.remarks}
+                defaultValue={isEdit ? approval?.remarks : ''}
                 multiline={true}
                 minRows={2}
                 error={!!errors?.remarks}

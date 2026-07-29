@@ -159,7 +159,7 @@ const RequisitionsListItem = ({ requisition }: RequisitionsListItemProps) => {
                     : requisition.status?.toLowerCase() === 'on hold'
                     ? 'warning'
                     : requisition.status?.toLowerCase() === 'returned'
-                    ? 'warning'
+                    ? 'secondary'
                     : (requisition.status?.toLowerCase() === 'submitted' && requisition.status_label?.toLowerCase() === 'completed')
                     ? 'success'
                     : 'info'

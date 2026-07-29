@@ -62,7 +62,7 @@ function ApprovalsListItem({ requisition, approvals }: ApprovalsListItemProps) {
                       : approval?.status?.toLowerCase() === 'on hold'
                       ? 'warning'
                       : approval?.status?.toLowerCase() === 'returned'
-                      ? 'warning'
+                      ? 'secondary'
                       : (approval?.status?.toLowerCase() === 'submitted' && approval?.status_label?.toLowerCase() === 'completed')
                       ? 'success'
                       : 'info'
