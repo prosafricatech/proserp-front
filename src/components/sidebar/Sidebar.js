@@ -385,8 +385,19 @@ function Sidebar({ menus }) {
             }
 
             if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
-                // Human Resources
-                updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.EMPLOYEES_DELETE,
+                    PERMISSIONS.PAYROLLRUNS_CREATE,
+                    PERMISSIONS.PAYROLL_READ,
+                    PERMISSIONS.LEAVE_ALLOCATIONS_READ,
+                    PERMISSIONS.LOANS_READ
+                ])) {
+                    // Human Resources
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+                }
 
 
                 // HR > Employee
