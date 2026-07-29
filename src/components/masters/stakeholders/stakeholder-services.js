@@ -18,6 +18,11 @@ stakeholderServices.getSelectOptions = async (type = "all") => {
   return data;
 };
 
+stakeholderServices.show = async (id) => {
+  const { data } = await axios.get(`/api/masters/stakeholders/${id}`);
+  return data;
+};
+
 // Use your own Next.js API route for fetching ledgers
 stakeholderServices.getLedgers = async (params) => {
   const { data } = await axios.get(`/api/masters/stakeholders/${params.stakeholder_id}/ledgers`, {

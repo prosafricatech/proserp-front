@@ -29,7 +29,7 @@ const menuBefore = {
   backgroundColor: 'transparent'
 };
 
-const JumboNavCollapsible = ({ item, translate }) => {
+const JumboNavCollapsible = ({ item, translate, isNested = false }) => {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openPopover = Boolean(anchorEl);
@@ -67,6 +67,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
   if (!item) return null;
 
   const subMenus = item.children?.length ? item.children : null;
+  const nestedIndent = isNested ? 2 : 0;
 
   return (
     <>
@@ -77,6 +78,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
         onMouseLeave={handlePopoverClose}
         sx={{
           p: theme => !isMiniAndClosed ? theme.spacing(1, 3.75) : 0,
+          pl: theme => !isMiniAndClosed ? theme.spacing(3.75 + nestedIndent) : 0,
           borderRadius: isMiniAndClosed ? '50%' : '0 24px 24px 0',
           margin: isMiniAndClosed ? '0 auto' : '0',
           ...(isMiniAndClosed ? { width: 40, height: 40, justifyContent: 'center' } : {}),
@@ -95,7 +97,7 @@ const JumboNavCollapsible = ({ item, translate }) => {
         }}
       >
         {!isMiniAndClosed && (
-          <ArrowWrapper>
+          <ArrowWrapper style={{ left: isNested ? 18 : 5 }}>
             {open ? <ArrowDropDownIcon /> : <ArrowRightIcon />}
           </ArrowWrapper>
         )}

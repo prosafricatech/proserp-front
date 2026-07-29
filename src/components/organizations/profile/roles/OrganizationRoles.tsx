@@ -133,9 +133,9 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
       'ProductCategories',
       'Products',
       'Purchases',
-      'RFQs',
       'StockAdjustments',
       'Stores',
+      'RFQs'
     ],
   },
   {
@@ -151,7 +151,7 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
   {
     key: 'human_resources',
     displayName: MODULES.HUMAN_RESOURCES,
-    prefixes: ['Employees', 'Payroll', 'PayrollRuns'],
+    prefixes: ['Employees', 'Payroll', 'PayrollRuns','LeaveAllocations', 'LeaveRequests', 'LoanRequests','Loans'],
   },
   {
     key: 'shared',
@@ -163,6 +163,7 @@ const PERMISSION_MODULES: PermissionModuleConfig[] = [
       'Roles',
       'Subscriptions',
       'Users',
+      'Audit',
       'Stakeholders'
     ],
   },

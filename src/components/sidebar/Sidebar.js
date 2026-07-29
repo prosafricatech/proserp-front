@@ -12,6 +12,34 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboVerticalNavbar from '@jumbo/components/JumboVerticalNavbar/JumboVerticalNavbar';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
+const collapseMenusByModule = (items, dictionary) => {
+    const homeLabel = dictionary.sidebar.menu.home;
+
+    return items.flatMap((item) => {
+        if (item?.type !== 'section') {
+            return item ? [item] : [];
+        }
+
+        const children = Array.isArray(item.children) ? item.children : [];
+
+        if (children.length === 0) {
+            return [];
+        }
+
+        if (item.label === homeLabel) {
+            return children;
+        }
+
+        return [
+            {
+                ...item,
+                type: 'collapsible',
+                children,
+            },
+        ];
+    });
+};
+
 function Sidebar({ menus }) {
     const dictionary = useDictionary();
     const [menuItems, setMenuItems] = React.useState(menus);
@@ -393,7 +421,8 @@ function Sidebar({ menus }) {
                     PERMISSIONS.PAYROLLRUNS_CREATE,
                     PERMISSIONS.PAYROLL_READ,
                     PERMISSIONS.LEAVE_ALLOCATIONS_READ,
-                    PERMISSIONS.LOANS_READ
+                    PERMISSIONS.LOANS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_READ
                 ])) {
                     // Human Resources
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
@@ -467,6 +496,7 @@ function Sidebar({ menus }) {
                         PERMISSIONS.ACCOUNTS_MASTERS_READ,
                         PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
                         PERMISSIONS.ACCOUNTS_REPORTS,
+                        PERMISSIONS.BUDGETS_READ,
                     ])) {
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance)];
                 }
@@ -900,10 +930,8 @@ function Sidebar({ menus }) {
             updatedMenus.push(orgMenu);
         }
 
-        setMenuItems([
-            ...updatedMenus,
-        ]);
-    }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, organizationHasSubscribed]);
+        setMenuItems(collapseMenusByModule(updatedMenus, dictionary));
+    }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, dictionary, menus, organizationHasSubscribed]);
 
     return (
         <React.Fragment>

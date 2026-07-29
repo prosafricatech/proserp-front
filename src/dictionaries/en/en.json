@@ -45,7 +45,7 @@
       "projects": "Projects",
       "projectCategories": "Project Categories",
       "approvedPayments": "Approved Payments",
-      "approvedPayrollRuns": "Approved Payroll",
+      "approvedPayrollRuns": "Approved Payroll Runs",
       "transactions": "Transactions",
       "ledgerGroups": "Ledger Groups",
       "ledgers": "Ledgers",
@@ -85,7 +85,7 @@
       "leave_allocations": "Leave Allocations",
       "leave_requests": "Leave Requests",
       "loan_requests": "Loan Requests",
-      "employeesAttendance": "Employees Attendance",
+      "employeesAttendance": "Attendance",
       "paye_tax_bands": "PAYE Tax Bands",
       "payroll_periods": "Payroll Periods",
       "payroll_runs": "Payroll Runs"

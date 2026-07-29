@@ -1,6 +1,6 @@
 'use client'
 import { DeleteOutlined, EditOutlined, MoreHorizOutlined } from '@mui/icons-material';
-import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, Tooltip, useMediaQuery } from '@mui/material';
+import { Button, Dialog, DialogActions, DialogContent, DialogContentText, DialogTitle, LinearProgress, Tooltip, useMediaQuery } from '@mui/material';
 import { useSnackbar } from 'notistack';
 import React, { useState } from 'react';
 import stakeholderServices from './stakeholder-services';
@@ -10,7 +10,7 @@ import { MenuItemProps } from '@jumbo/types';
 import { Stakeholder } from './StakeholderType';
 import { JumboDdMenu } from '@jumbo/components';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 interface StakeholderItemActionProps {
@@ -19,6 +19,17 @@ interface StakeholderItemActionProps {
 
 interface DeleteResponse {
   message: string;
+}
+
+interface StakeholderDetailsResponse {
+  id: number;
+  currency_id?: number | null;
+  currency?: { id: number } | null;
+  ledgers?: Array<{
+    currency_id?: number | null;
+    currency?: { id?: number | null } | null;
+  }>;
+  [key: string]: any;
 }
 
 const StakeholderItemAction: React.FC<StakeholderItemActionProps> = ({ stakeholder }) => {
@@ -32,6 +43,31 @@ const StakeholderItemAction: React.FC<StakeholderItemActionProps> = ({ stakehold
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const queryClient = useQueryClient();
+
+  const { data: stakeholderDetails, isFetching: isFetchingStakeholder } = useQuery({
+    queryKey: ['stakeholder', stakeholder.id],
+    queryFn: async () => {
+      const response = await stakeholderServices.show(stakeholder.id);
+      return (response?.data || response) as StakeholderDetailsResponse;
+    },
+    enabled: openEditDialog,
+  });
+
+  const normalizedStakeholder = React.useMemo(() => {
+    const details = stakeholderDetails;
+    if (!details) return stakeholder;
+
+    const firstLedger = details.ledgers?.[0] || null;
+    const firstLedgerCurrencyId =
+      firstLedger?.currency_id || firstLedger?.currency?.id || null;
+
+    return {
+      ...stakeholder,
+      ...details,
+      currency_id:
+        firstLedgerCurrencyId ?? details.currency_id ?? details.currency?.id ?? null,
+    } as Stakeholder;
+  }, [stakeholderDetails, stakeholder]);
 
   const { mutate: deleteStakeholder, isPending } = useMutation<DeleteResponse, Error, number>({
     mutationFn: (id: number) => stakeholderServices.delete(id),
@@ -68,6 +104,19 @@ const StakeholderItemAction: React.FC<StakeholderItemActionProps> = ({ stakehold
     }
   };
 
+  const EditStakeholderDialog = () => {
+    if (isFetchingStakeholder) {
+      return <DialogContentText sx={{ p: 3 }}><LinearProgress/></DialogContentText>;
+    }
+
+    return (
+      <StakeholderDialogForm
+        stakeholder={normalizedStakeholder}
+        toggleOpen={setOpenEditDialog}
+      />
+    );
+  };
+
   return (
     <>
       {/* Dialog for Edit */}
@@ -78,7 +127,7 @@ const StakeholderItemAction: React.FC<StakeholderItemActionProps> = ({ stakehold
         fullScreen={belowLargeScreen}
         maxWidth='md'
       >
-        <StakeholderDialogForm stakeholder={stakeholder} toggleOpen={setOpenEditDialog} />
+        <EditStakeholderDialog />
       </Dialog>
 
       <JumboDdMenu

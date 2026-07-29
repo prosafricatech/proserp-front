@@ -29,7 +29,7 @@ const StoreItemAction = ({store}) => {
       queryClient.invalidateQueries({ queryKey: ['stores'] });
     },
     onError: (error) => {
-      enqueueSnackbar(dictionary.stores.form.errors.messages.deleteSuccess, { variant: 'error' });
+      enqueueSnackbar(dictionary.stores.form.errors.messages.deleteResponse, { variant: 'error' });
     },
   });
 
@@ -49,7 +49,7 @@ const StoreItemAction = ({store}) => {
           content: dictionary.stores.list.dialog.showDialog.content,
           onYes: () =>{ 
             hideDialog();
-            deleteStore(store.id)
+            deleteStore.mutate(store.id)
           },
           onNo: () => hideDialog(),
           variant:'confirm'

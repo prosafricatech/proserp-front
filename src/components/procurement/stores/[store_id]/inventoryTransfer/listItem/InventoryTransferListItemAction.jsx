@@ -195,7 +195,8 @@ const InventoryTransferListItemAction = ({ transfer }) => {
         </IconButton>
       </Tooltip>
 
-      {(checkOrganizationPermission(PERMISSIONS.INVENTORY_TRANSFERS_BACKDATE) ||
+      {transfer.is_editable !== false &&
+        (checkOrganizationPermission(PERMISSIONS.INVENTORY_TRANSFERS_BACKDATE) ||
         transfer.transfer_date >= dayjs().startOf('date').toISOString()) &&
         transfer.external_transfer === null &&
         activeStore?.id === transfer.source_store_id &&

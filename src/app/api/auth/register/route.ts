@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { encode, JWT } from 'next-auth/jwt';
-import { handleJsonResponse } from '@/lib/utils/apiUtils';
+import { getForwardedRequestHeaders, handleJsonResponse } from '@/lib/utils/apiUtils';
 
 const API_BASE = process.env.API_BASE_URL;
 
@@ -20,12 +20,14 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
+  const headers = getForwardedRequestHeaders({
+    headers: req.headers,
+    geo: 'geo' in req && typeof (req as any).geo === 'object' ? (req as any).geo : undefined,
+  });
 
   const res = await fetch(`${API_BASE}/register`, {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
+    headers,
     body: JSON.stringify(body),
   });
 

@@ -1,6 +1,7 @@
 import NextAuth from 'next-auth';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import axios from '@/lib/services/config';
+import { getForwardedRequestHeadersFromHeaders } from '@/lib/utils/apiUtils';
 
 const authOptions = {
   providers: [
@@ -10,14 +11,15 @@ const authOptions = {
         email: { label: 'Email', type: 'email' },
         password: { label: 'Password', type: 'password' },
       },
-      async authorize(credentials) {
+      async authorize(credentials, req) {
         try {
+          const forwardedHeaders = getForwardedRequestHeadersFromHeaders(
+            req?.headers || {}
+          );
+
           const axiosInstance = axios.create({
             withCredentials: true,
-            headers: {
-              'Content-Type': 'application/json',
-              Accept: 'application/json',
-            },
+            headers: forwardedHeaders,
           });
 
           const { data } = await axiosInstance.post('/login', credentials, {

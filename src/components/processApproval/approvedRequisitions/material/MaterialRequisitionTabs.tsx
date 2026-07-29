@@ -41,11 +41,20 @@ function MaterialRequisitionTabs({
   const isFullyPaid = approvedRequisition?.is_fully_paid === true;
   const isFullyIssued = approvedRequisition?.is_fully_issued === true;
   const isFullyFulfilled = approvedRequisition?.is_fully_fulfilled === true;
+  const purchaseOrdersCount = approvedRequisition?.purchase_orders_count || 0;
+  const paymentsCount = approvedRequisition?.payments_count || 0;
+  const issuesCount = approvedRequisition?.issues_count || 0;
+  const imprestAmount = approvedRequisition?.imprest_amount || 0;
 
-  const showPurchaseOrdersTab = !isFullyOrdered;
-  const showPaymentsTab = true;
+  // "Done" (fully ordered/paid/issued) should only hide the action to raise a
+  // new one — a tab with existing history stays visible so it can be reviewed,
+  // same as the Purchase Orders / Payments tabs behave for other requisition
+  // types. Payments is further gated on there being an imprest portion at all —
+  // no point showing an empty Payments tab when nothing was ever routed there.
+  const showPurchaseOrdersTab = !isFullyOrdered || purchaseOrdersCount > 0;
+  const showPaymentsTab = imprestAmount > 0 || paymentsCount > 0;
   const showRetirementsTab = canRetire && !isFullyFulfilled;
-  const showStoreIssuesTab = !isFullyIssued;
+  const showStoreIssuesTab = !isFullyIssued || issuesCount > 0;
 
   React.useEffect(() => {
     const availableTabs = [];
@@ -82,10 +91,18 @@ function MaterialRequisitionTabs({
           scrollButtons='auto'
           allowScrollButtonsMobile
         >
-          {showPurchaseOrdersTab && <Tab label='Purchase Orders' />}
-          {showPaymentsTab && <Tab label='Payments' />}
-          {showRetirementsTab && <Tab label='Retirements' />}
-          {showStoreIssuesTab && <Tab label='Store Issues' />}
+          {showPurchaseOrdersTab && (
+            <Tab value={MATERIAL_TAB.PURCHASE_ORDERS} label='Purchase Orders' />
+          )}
+          {showPaymentsTab && (
+            <Tab value={MATERIAL_TAB.PAYMENTS} label='Payments' />
+          )}
+          {showRetirementsTab && (
+            <Tab value={MATERIAL_TAB.RETIREMENTS} label='Retirements' />
+          )}
+          {showStoreIssuesTab && (
+            <Tab value={MATERIAL_TAB.STORE_ISSUES} label='Store Issues' />
+          )}
         </Tabs>
       </Grid>
       <Grid size={{ xs: 12 }}>
