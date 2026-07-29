@@ -63,7 +63,6 @@ function Sidebar({ menus }) {
                         );
                     }
                 }
-
                 if (!checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY, PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE, PERMISSIONS.IMPREST_RETIREMENTS_READ, PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE, PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.PURCHASES_CREATE])) {
                     if (processApprovalMenuIndex >= 0) {
                         updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
@@ -71,7 +70,6 @@ function Sidebar({ menus }) {
                         );
                     }
                 }
-
                 if (!checkOrganizationPermission(PERMISSIONS.IMPREST_RETIREMENTS_READ)) {
                     if (processApprovalMenuIndex >= 0) {
                         updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
