@@ -581,11 +581,7 @@ function Sidebar({ menus }) {
                 }
 
                 //Accounts > Approved Payroll Runs
-<<<<<<< HEAD
-                if (!organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE], false)) {
-=======
                 if (!organizationHasSubscribed([MODULES.HUMAN_RESOURCES, MODULES.ACCOUNTS_AND_FINANCE]) && !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE])) {
->>>>>>> 931cdd3ec7a286c9774e8645736f46a0722bfdde
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
 
                     if (accountsMenuIndex >= 0) {
