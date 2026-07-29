@@ -1,21 +1,13 @@
-'use client'
-import React, { lazy, useState } from 'react';
-import {
-  Tooltip,
-  IconButton,
-  LinearProgress,
-  Dialog,
-  DialogContent,
-  Box,
-  Tab,
-  Tabs,
-  DialogActions,
-  Button,
-  useMediaQuery,
-  DialogTitle,
-  Grid,
-  Skeleton,
-} from '@mui/material';
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { faListCheck } from '@fortawesome/free-solid-svg-icons';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   AssignmentTurnedInOutlined,
   AttachmentOutlined,
@@ -26,45 +18,101 @@ import {
   RestoreOutlined,
   VisibilityOutlined,
 } from '@mui/icons-material';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useSnackbar } from 'notistack';
-import purchaseServices from '../purchase-services';
-import PurchaseOrderPDF from '../PurchaseOrderPDF';
-import PDFContent from '../../../pdf/PDFContent';
-import PurchaseOrderOnScreenPreview from '../PurchaseOrderOnScreenPreview';
-import CloseOrReopenForm from './CloseOrReopenForm';
-import PurchaseGrnsReportPDF from './purchaseGrnsReport/PurchaseGrnsReportPDF';
-import PurchaseGrnsReportOnScreen from './purchaseGrnsReport/PurchaseGrnsReportOnScreen';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faListCheck } from '@fortawesome/free-solid-svg-icons';
-import dayjs from 'dayjs';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  LinearProgress,
+  Skeleton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-const PurchaseOrderReceiveForm = lazy(() => import('./receive/PurchaseOrderReceiveForm'));
-const PurchaseOrderDialogForm = lazy(() => import('../purchaseOrderForm/PurchaseOrderDialogForm'));
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { lazy, useState } from 'react';
+import PDFContent from '../../../pdf/PDFContent';
+import purchaseServices from '../purchase-services';
+import PurchaseOrderOnScreenPreview from '../PurchaseOrderOnScreenPreview';
+import PurchaseOrderPDF from '../PurchaseOrderPDF';
+import CloseOrReopenForm from './CloseOrReopenForm';
+import PurchaseGrnsReportOnScreen from './purchaseGrnsReport/PurchaseGrnsReportOnScreen';
+import PurchaseGrnsReportPDF from './purchaseGrnsReport/PurchaseGrnsReportPDF';
+const PurchaseOrderReceiveForm = lazy(
+  () => import('./receive/PurchaseOrderReceiveForm')
+);
+const PurchaseOrderDialogForm = lazy(
+  () => import('../purchaseOrderForm/PurchaseOrderDialogForm')
+);
 
-const PurchaseGrnsReport = ({ organization, order, setOpenPurchasesGrnsReport }) => {
+const PurchaseGrnsReport = ({
+  organization,
+  user,
+  order,
+  setOpenPurchasesGrnsReport,
+}) => {
   const { data: purchaseGrnsReport, isFetching } = useQuery({
     queryKey: ['PurchaseGrnsReport', { orderId: order.id }],
     queryFn: () => purchaseServices.PurchaseGrnsReport(order.id),
   });
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
 
   //Screen handling constants
-  const {theme} = useJumboTheme();
+  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
+  const exportedData = {
+    organization: organization,
+    user: user,
+    purchaseGrnsReport: purchaseGrnsReport,
+  };
+
+  const handlExcelExport = async (exportedData) => {
+    setIsExporting(true);
+    try {
+      const blob =
+        await purchaseServices.exportPurchaseGrnsReportToExcel(exportedData);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Purchase-Grn-${purchaseGrnsReport?.orderNo}}.xlsx`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.log('error exporting: ', e);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   if (isFetching) {
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
+      </div>
+    );
   }
 
   const handleChange = (event, newValue) => {
@@ -74,62 +122,98 @@ const PurchaseGrnsReport = ({ organization, order, setOpenPurchasesGrnsReport })
   return (
     <>
       <DialogTitle>
-        { belowLargeScreen &&
-          <Tabs value={activeTab} onChange={handleChange} aria-label="purchase order tabs">
-            <Tab label="ONSCREEN"/>
-            <Tab label="PDF"/>
-          </Tabs>
-        }
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportExcel
+              handlExcelExport={() => handlExcelExport(exportedData)}
+              exportingExcel={isExporting}
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpenPurchasesGrnsReport(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
       </DialogTitle>
       <DialogContent>
-        { 
-          belowLargeScreen && activeTab === 0 ?
-          <PurchaseGrnsReportOnScreen order={order} organization={organization} purchaseGrnsReport={purchaseGrnsReport}/>
-          :
-          <PDFContent fileName={`${purchaseGrnsReport.orderNo} GRNs Report`} document={<PurchaseGrnsReportPDF organization={organization} purchaseGrnsReport={purchaseGrnsReport} />} />
-        }
+        {showOnScreen ? (
+          <PurchaseGrnsReportOnScreen
+            order={order}
+            organization={organization}
+            purchaseGrnsReport={purchaseGrnsReport}
+          />
+        ) : (
+          <PDFContent
+            fileName={`${purchaseGrnsReport.orderNo} GRNs Report`}
+            document={
+              <PurchaseGrnsReportPDF
+                organization={organization}
+                purchaseGrnsReport={purchaseGrnsReport}
+              />
+            }
+          />
+        )}
       </DialogContent>
-      {belowLargeScreen &&
+      {belowLargeScreen && (
         <DialogActions>
-          <Box textAlign="right" marginTop={5}>
-            <Button variant="outlined" size='small' color="primary" onClick={() => setOpenPurchasesGrnsReport(false)}>
+          <Box textAlign='right' marginTop={5}>
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
+              onClick={() => setOpenPurchasesGrnsReport(false)}
+            >
               Cancel
             </Button>
           </Box>
         </DialogActions>
-      }
+      )}
     </>
   );
 };
 
-const EditPurchaseOrdeDialog = ({order,toggleOpen}) => {
+const EditPurchaseOrdeDialog = ({ order, toggleOpen }) => {
   const { data: editOrder, isFetching } = useQuery({
     queryKey: ['editPurchaseOrder', { id: order.id }],
     queryFn: () => purchaseServices.getEditComplements(order.id),
   });
 
-  if(isFetching){
-    return <LinearProgress/>;
+  if (isFetching) {
+    return <LinearProgress />;
   }
 
-  return (
-    <PurchaseOrderDialogForm toggleOpen={toggleOpen} order={editOrder} />
-  )
-}
+  return <PurchaseOrderDialogForm toggleOpen={toggleOpen} order={editOrder} />;
+};
 
-const DocumentDialog = ({ order_id, organization,checkOrganizationPermission, setOpenDocumentDialog }) => {
+const DocumentDialog = ({
+  order_id,
+  organization,
+  checkOrganizationPermission,
+  setOpenDocumentDialog,
+}) => {
   const { data: order, isFetching } = useQuery({
     queryKey: ['purchaseOrder', { id: order_id }],
     queryFn: () => purchaseServices.orderDetails(order_id),
   });
   const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   //Screen handling constants
-  const {theme} = useJumboTheme();
+  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   if (isFetching) {
-    return <LinearProgress/>;
+    return <LinearProgress />;
   }
 
   const handleChange = (event, newValue) => {
@@ -139,52 +223,74 @@ const DocumentDialog = ({ order_id, organization,checkOrganizationPermission, se
   return (
     <>
       <DialogTitle>
-        {belowLargeScreen && (
-          <Grid container alignItems="center" justifyContent="space-between" margin={1}>
-            <Grid size={11}>
-              <Tabs value={activeTab} onChange={handleChange} aria-label="purchase order tabs">
-                <Tab label="ONSCREEN" />
-                <Tab label="PDF" />
-              </Tabs>
-            </Grid>
-            <Grid size={1} textAlign="right">
-              <Tooltip title="Close">
-                <IconButton
-                  size="small"
-                  onClick={() => setOpenDocumentDialog(false)}
-                >
-                  <HighlightOff color="primary" />
-                </IconButton>
-              </Tooltip>
-            </Grid>
-          </Grid>
-        )}
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
       </DialogTitle>
       <DialogContent>
-        { belowLargeScreen && activeTab === 0 ?
-            <PurchaseOrderOnScreenPreview order={order} organization={organization} />
-          :
-            <PDFContent fileName={order.orderNo} document={<PurchaseOrderPDF order={order} organization={organization} checkOrganizationPermission={checkOrganizationPermission} />} />
-          }
+        {showOnScreen ? (
+          <PurchaseOrderOnScreenPreview
+            order={order}
+            organization={organization}
+          />
+        ) : (
+          <PDFContent
+            fileName={order.orderNo}
+            document={
+              <PurchaseOrderPDF
+                order={order}
+                organization={organization}
+                checkOrganizationPermission={checkOrganizationPermission}
+              />
+            }
+          />
+        )}
       </DialogContent>
-      {belowLargeScreen &&
+      {belowLargeScreen && (
         <DialogActions>
-          <Box textAlign="right" marginTop={5}>
-            <Button variant="outlined" size='small' color="primary" onClick={() => setOpenDocumentDialog(false)}>
-            Close
+          <Box textAlign='right' marginTop={5}>
+            <Button
+              variant='outlined'
+              size='small'
+              color='primary'
+              onClick={() => setOpenDocumentDialog(false)}
+            >
+              Close
             </Button>
           </Box>
         </DialogActions>
-      }
+      )}
     </>
   );
 };
 
-const AttachDialog= ({order, setAttachDialog}) => {
+const AttachDialog = ({ order, setAttachDialog }) => {
   return (
-    <AttachmentForm setAttachDialog={setAttachDialog} attachment_sourceNo={order.orderNo} attachmentable_type={'purchase_order'} attachment_name={'Purchase Order'} attachmentable_id={order.id}/>
-  )
-}
+    <AttachmentForm
+      setAttachDialog={setAttachDialog}
+      attachment_sourceNo={order.orderNo}
+      attachmentable_type={'purchase_order'}
+      attachment_name={'Purchase Order'}
+      attachmentable_id={order.id}
+    />
+  );
+};
 
 function PurchaseOrderListItemAction({ order }) {
   const { showDialog, hideDialog } = useJumboDialog();
@@ -197,8 +303,12 @@ function PurchaseOrderListItemAction({ order }) {
   const [openClose, setOpenClose] = useState(false);
   const [openReopen, setOpenReopen] = useState(false);
   const queryClient = useQueryClient();
-  const {checkOrganizationPermission, authOrganization:{organization}} = useJumboAuth()
-  const {theme} = useJumboTheme();
+  const {
+    checkOrganizationPermission,
+    authOrganization: { organization },
+    authUser: { user },
+  } = useJumboAuth();
+  const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const deleteSale = useMutation({
@@ -220,16 +330,35 @@ function PurchaseOrderListItemAction({ order }) {
       queryFn: () => purchaseServices.orderDetails(order.id),
     });
 
-    if (isLoading)     return (
-      <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-      </div>
-    );
+    if (isLoading)
+      return (
+        <div style={{ width: '100%', padding: '16px' }}>
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
+        </div>
+      );
 
     return (
-      <PurchaseOrderReceiveForm order={orderDetails} toggleOpen={setOpenReceiveDialog} />
+      <PurchaseOrderReceiveForm
+        order={orderDetails}
+        toggleOpen={setOpenReceiveDialog}
+      />
     );
   };
 
@@ -249,86 +378,148 @@ function PurchaseOrderListItemAction({ order }) {
   return (
     <React.Fragment>
       <Dialog
-        open={openPurchasesGrnsReport || openEditDialog || openDocumentDialog || openReceiveDialog || attachDialog || openClose || openReopen}
-        fullWidth   
+        open={
+          openPurchasesGrnsReport ||
+          openEditDialog ||
+          openDocumentDialog ||
+          openReceiveDialog ||
+          attachDialog ||
+          openClose ||
+          openReopen
+        }
+        fullWidth
         fullScreen={belowLargeScreen}
-        maxWidth={ (openDocumentDialog || openPurchasesGrnsReport || attachDialog || openClose || openReopen) ? 'md' : 'xl'}
+        maxWidth={
+          openDocumentDialog ||
+          openPurchasesGrnsReport ||
+          attachDialog ||
+          openClose ||
+          openReopen
+            ? 'md'
+            : 'xl'
+        }
         onClose={() => {
           setOpenDocumentDialog(false);
           setOpenPurchasesGrnsReport(false);
         }}
-        scroll={belowLargeScreen  ? 'body' : 'paper'}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
-        {openEditDialog && <EditPurchaseOrdeDialog order={order} toggleOpen={setOpenEditDialog} />}
-        {openPurchasesGrnsReport && <PurchaseGrnsReport order={order} organization={organization} setOpenPurchasesGrnsReport={setOpenPurchasesGrnsReport}/>}
-        {openDocumentDialog && <DocumentDialog order_id={order.id} organization={organization} checkOrganizationPermission={checkOrganizationPermission} setOpenDocumentDialog={setOpenDocumentDialog}/>}
-        {openReceiveDialog && <ReceiveDialog/>}
-        {attachDialog && <AttachDialog order={order} setAttachDialog={setAttachDialog}/>}
-        {openClose && <CloseOrReopenForm order={order} setOpenDialog={setOpenClose}/>}
-        {openReopen && <CloseOrReopenForm order={order} setOpenDialog={setOpenReopen} isReOpen={true}/>}
+        {openEditDialog && (
+          <EditPurchaseOrdeDialog
+            order={order}
+            toggleOpen={setOpenEditDialog}
+          />
+        )}
+        {openPurchasesGrnsReport && (
+          <PurchaseGrnsReport
+            order={order}
+            organization={organization}
+            user={user}
+            setOpenPurchasesGrnsReport={setOpenPurchasesGrnsReport}
+          />
+        )}
+        {openDocumentDialog && (
+          <DocumentDialog
+            order_id={order.id}
+            organization={organization}
+            checkOrganizationPermission={checkOrganizationPermission}
+            setOpenDocumentDialog={setOpenDocumentDialog}
+          />
+        )}
+        {openReceiveDialog && <ReceiveDialog />}
+        {attachDialog && (
+          <AttachDialog order={order} setAttachDialog={setAttachDialog} />
+        )}
+        {openClose && (
+          <CloseOrReopenForm order={order} setOpenDialog={setOpenClose} />
+        )}
+        {openReopen && (
+          <CloseOrReopenForm
+            order={order}
+            setOpenDialog={setOpenReopen}
+            isReOpen={true}
+          />
+        )}
       </Dialog>
 
-      {!order.has_payment_requisition && (checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) || order.order_date >= dayjs().startOf('date').toISOString()) && (!order.requisition_approval_id && checkOrganizationPermission(PERMISSIONS.PURCHASES_DELETE) && (order?.status === 'Pending' || order?.status === 'Instantly Received' || order?.status === 'Completed')) && (
-        <Tooltip  title={`Delete ${order.orderNo}`}>
-          <IconButton onClick={handleDelete}>
-            <DeleteOutlined color="error" />
-          </IconButton>
-        </Tooltip>
-      )}
+      {!order.has_payment_requisition &&
+        (checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ||
+          order.order_date >= dayjs().startOf('date').toISOString()) &&
+        !order.requisition_approval_id &&
+        checkOrganizationPermission(PERMISSIONS.PURCHASES_DELETE) &&
+        (order?.status === 'Pending' ||
+          order?.status === 'Instantly Received' ||
+          order?.status === 'Completed') && (
+          <Tooltip title={`Delete ${order.orderNo}`}>
+            <IconButton onClick={handleDelete}>
+              <DeleteOutlined color='error' />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {(checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) && (order?.status === 'Closed')) && (
-        <Tooltip  title={`Re-Open ${order.orderNo}`}>
-          <IconButton onClick={() => setOpenReopen(true)}>
-            <RestoreOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      {checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) &&
+        order?.status === 'Closed' && (
+          <Tooltip title={`Re-Open ${order.orderNo}`}>
+            <IconButton onClick={() => setOpenReopen(true)}>
+              <RestoreOutlined />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {(checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) && (order?.status !== 'Closed')) && (
-        <Tooltip  title={`Close ${order.orderNo}`}>
-          <IconButton onClick={() => setOpenClose(true)} color={'info'}>
-            <CancelOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      {checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) &&
+        order?.status !== 'Closed' && (
+          <Tooltip title={`Close ${order.orderNo}`}>
+            <IconButton onClick={() => setOpenClose(true)} color={'info'}>
+              <CancelOutlined />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {(
+      {
         <Tooltip title={`${order.orderNo} GRNs Report`}>
           <IconButton onClick={() => setOpenPurchasesGrnsReport(true)}>
-           <FontAwesomeIcon size='xs' icon={faListCheck} />
+            <FontAwesomeIcon size='xs' icon={faListCheck} />
           </IconButton>
         </Tooltip>
-      )}
+      }
 
       <Tooltip title={`${order.orderNo} Attachments`}>
         <IconButton onClick={() => setAttachDialog(true)}>
-          <AttachmentOutlined/>
+          <AttachmentOutlined />
         </IconButton>
       </Tooltip>
 
-      {(checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) || order.order_date >= dayjs().startOf('date').toISOString()) && (!order.requisition_approval_id && checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) && (order?.status === 'Pending' || order?.status === 'Instantly Received' || order?.status === 'Completed')) && (
-        <Tooltip title={`Edit ${order.orderNo}`}>
-          <IconButton onClick={() => setOpenEditDialog(true)}>
-            <EditOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      {(checkOrganizationPermission(PERMISSIONS.PURCHASES_BACKDATE) ||
+        order.order_date >= dayjs().startOf('date').toISOString()) &&
+        !order.requisition_approval_id &&
+        checkOrganizationPermission(PERMISSIONS.PURCHASES_EDIT) &&
+        (order?.status === 'Pending' ||
+          order?.status === 'Instantly Received' ||
+          order?.status === 'Completed') && (
+          <Tooltip title={`Edit ${order.orderNo}`}>
+            <IconButton onClick={() => setOpenEditDialog(true)}>
+              <EditOutlined />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {(order?.status === 'Pending' || order?.status === 'Partially Received') && checkOrganizationPermission(PERMISSIONS.PURCHASES_RECEIVE)  && (
-        <Tooltip title={`Receive ${order.orderNo}`}>
-          <IconButton onClick={() => setOpenReceiveDialog(true)}>
-            <AssignmentTurnedInOutlined />
-          </IconButton>
-        </Tooltip>
-      )}
+      {(order?.status === 'Pending' ||
+        order?.status === 'Partially Received') &&
+        checkOrganizationPermission(PERMISSIONS.PURCHASES_RECEIVE) && (
+          <Tooltip title={`Receive ${order.orderNo}`}>
+            <IconButton onClick={() => setOpenReceiveDialog(true)}>
+              <AssignmentTurnedInOutlined />
+            </IconButton>
+          </Tooltip>
+        )}
 
-      {(
+      {
         <Tooltip title={`View ${order.orderNo}`}>
           <IconButton onClick={() => setOpenDocumentDialog(true)}>
             <VisibilityOutlined />
           </IconButton>
         </Tooltip>
-      )}
+      }
     </React.Fragment>
   );
 }
