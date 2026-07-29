@@ -19,6 +19,13 @@ purchaseServices.PurchaseGrnsReport = async (id) => {
     return data;
 }
 
+purchaseServices.exportPurchaseGrnsReportToExcel = async (params) => {
+    const { data } = await axios.post(`/api/exports/excel/purchaseGrnsReport`, params, {
+        responseType: 'blob',
+    })
+    return data;
+}
+
 purchaseServices.add = async (order) => {
     const { data } = await axios.post(`/api/purchaseOrders/add`, order)
     return data;

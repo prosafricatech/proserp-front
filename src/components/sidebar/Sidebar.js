@@ -12,6 +12,34 @@ import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboVerticalNavbar from '@jumbo/components/JumboVerticalNavbar/JumboVerticalNavbar';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
+const collapseMenusByModule = (items, dictionary) => {
+    const homeLabel = dictionary.sidebar.menu.home;
+
+    return items.flatMap((item) => {
+        if (item?.type !== 'section') {
+            return item ? [item] : [];
+        }
+
+        const children = Array.isArray(item.children) ? item.children : [];
+
+        if (children.length === 0) {
+            return [];
+        }
+
+        if (item.label === homeLabel) {
+            return children;
+        }
+
+        return [
+            {
+                ...item,
+                type: 'collapsible',
+                children,
+            },
+        ];
+    });
+};
+
 function Sidebar({ menus }) {
     const dictionary = useDictionary();
     const [menuItems, setMenuItems] = React.useState(menus);
@@ -35,7 +63,13 @@ function Sidebar({ menus }) {
                         );
                     }
                 }
-
+                if (!checkOrganizationPermission([PERMISSIONS.APPROVED_REQUISITIONS_PAY, PERMISSIONS.APPROVED_REQUISITIONS_PURCHASE, PERMISSIONS.IMPREST_RETIREMENTS_READ, PERMISSIONS.INVENTORY_CONSUMPTIONS_CREATE, PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.PURCHASES_CREATE])) {
+                    if (processApprovalMenuIndex >= 0) {
+                        updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.approvals
+                        );
+                    }
+                }
                 if (!checkOrganizationPermission(PERMISSIONS.IMPREST_RETIREMENTS_READ)) {
                     if (processApprovalMenuIndex >= 0) {
                         updatedMenus[processApprovalMenuIndex].children = updatedMenus[processApprovalMenuIndex].children.filter(
@@ -393,7 +427,8 @@ function Sidebar({ menus }) {
                     PERMISSIONS.PAYROLLRUNS_CREATE,
                     PERMISSIONS.PAYROLL_READ,
                     PERMISSIONS.LEAVE_ALLOCATIONS_READ,
-                    PERMISSIONS.LOANS_READ
+                    PERMISSIONS.LOANS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_READ
                 ])) {
                     // Human Resources
                     updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
@@ -546,7 +581,11 @@ function Sidebar({ menus }) {
                 }
 
                 //Accounts > Approved Payroll Runs
+<<<<<<< HEAD
                 if (!organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE], false)) {
+=======
+                if (!organizationHasSubscribed([MODULES.HUMAN_RESOURCES, MODULES.ACCOUNTS_AND_FINANCE]) && !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE])) {
+>>>>>>> 931cdd3ec7a286c9774e8645736f46a0722bfdde
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
 
                     if (accountsMenuIndex >= 0) {
@@ -901,10 +940,8 @@ function Sidebar({ menus }) {
             updatedMenus.push(orgMenu);
         }
 
-        setMenuItems([
-            ...updatedMenus,
-        ]);
-    }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, organizationHasSubscribed]);
+        setMenuItems(collapseMenusByModule(updatedMenus, dictionary));
+    }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, dictionary, menus, organizationHasSubscribed]);
 
     return (
         <React.Fragment>

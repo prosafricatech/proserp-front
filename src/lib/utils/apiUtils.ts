@@ -15,18 +15,80 @@ type HeaderCarrier = {
   geo?: GeoData;
 };
 
-export function getForwardedRequestHeaders(req: HeaderCarrier) {
-  const forwardedFor = req.headers.get('x-forwarded-for');
-  const realIp = req.headers.get('x-real-ip');
-  const userAgent = req.headers.get('user-agent') || 'unknown';
-  const reqTimezone = req.headers.get('x-timezone') || '';
+type HeaderValue = string | string[] | undefined | null;
 
-  const ipAddress = forwardedFor?.split(',')[0]?.trim() || realIp || 'unknown';
+type HeadersInput =
+  | Headers
+  | {
+      [key: string]: HeaderValue;
+    };
 
-  const geo: GeoData =
-    req.geo && typeof req.geo === 'object'
-      ? req.geo
-      : {};
+const getHeaderValue = (headers: HeadersInput, name: string) => {
+  if (!headers) return null;
+
+  if (typeof (headers as Headers).get === 'function') {
+    return (headers as Headers).get(name);
+  }
+
+  const headerRecord = headers as Record<string, HeaderValue>;
+  const value =
+    headerRecord[name] ??
+    headerRecord[name.toLowerCase()] ??
+    headerRecord[name.toUpperCase()];
+
+  if (Array.isArray(value)) {
+    return value[0] ?? null;
+  }
+
+  return value ?? null;
+};
+
+const getClientIpAddress = (headers: HeadersInput) => {
+  const forwardedFor =
+    getHeaderValue(headers, 'x-forwarded-for') ||
+    getHeaderValue(headers, 'x-vercel-forwarded-for') ||
+    getHeaderValue(headers, 'cf-connecting-ip') ||
+    getHeaderValue(headers, 'true-client-ip') ||
+    getHeaderValue(headers, 'x-client-ip');
+
+  const realIp = getHeaderValue(headers, 'x-real-ip');
+  const forwarded = getHeaderValue(headers, 'forwarded');
+
+  const forwardedToken = forwarded
+    ?.split(';')
+    .map((part) => part.trim())
+    .find((part) => part.toLowerCase().startsWith('for='));
+
+  const forwardedIp = forwardedToken
+    ? forwardedToken
+        .replace(/^for=/i, '')
+        .replace(/\"/g, '')
+        .split(',')[0]
+        .trim()
+    : null;
+
+  const firstForwardedFor = forwardedFor?.split(',')[0]?.trim();
+  const ipAddress = firstForwardedFor || realIp || forwardedIp || 'unknown';
+
+  return {
+    forwardedFor,
+    realIp,
+    ipAddress,
+  };
+};
+
+export function getForwardedRequestHeadersFromHeaders(
+  headers: HeadersInput,
+  geo?: GeoData
+) {
+  const { forwardedFor, realIp, ipAddress } = getClientIpAddress(headers);
+  const userAgent =
+    getHeaderValue(headers, 'user-agent') ||
+    getHeaderValue(headers, 'x-user-agent') ||
+    'unknown';
+  const reqTimezone = getHeaderValue(headers, 'x-timezone') || '';
+
+  const safeGeo: GeoData = geo && typeof geo === 'object' ? geo : {};
 
   return {
     'Content-Type': 'application/json',
@@ -37,12 +99,16 @@ export function getForwardedRequestHeaders(req: HeaderCarrier) {
     'X-Forwarded-For': forwardedFor || ipAddress,
     'X-Real-IP': realIp || ipAddress,
     'X-Device-IP': ipAddress,
-    'X-Country': geo.country ?? '',
-    'X-Region': geo.region ?? '',
-    'X-City': geo.city ?? '',
-    'X-Latitude': geo.latitude ?? '',
-    'X-Longitude': geo.longitude ?? '',
+    'X-Country': safeGeo.country ?? '',
+    'X-Region': safeGeo.region ?? '',
+    'X-City': safeGeo.city ?? '',
+    'X-Latitude': safeGeo.latitude ?? '',
+    'X-Longitude': safeGeo.longitude ?? '',
   };
+}
+
+export function getForwardedRequestHeaders(req: HeaderCarrier) {
+  return getForwardedRequestHeadersFromHeaders(req.headers, req.geo);
 }
 
 export async function getAuthHeaders(
