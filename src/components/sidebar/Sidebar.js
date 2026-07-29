@@ -581,7 +581,7 @@ function Sidebar({ menus }) {
                 }
 
                 //Accounts > Approved Payroll Runs
-                if (!organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE], false)) {
+                if (!organizationHasSubscribed([MODULES.HUMAN_RESOURCES, MODULES.ACCOUNTS_AND_FINANCE]) && !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE])) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
 
                     if (accountsMenuIndex >= 0) {
