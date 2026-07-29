@@ -3,6 +3,8 @@
 
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import {
   CloseOutlined,
   SearchOutlined,
@@ -545,23 +547,6 @@ export const EmployeesTab = ({
                   </TableRow>
                 );
               })}
-              {/* {filteredRows.length > 10 && (
-                <TableRow>
-                  <TableCell
-                    colSpan={
-                      8 +
-                      unique_allowances_types.length +
-                      unique_deductions_types.length +
-                      unique_contributions_types.length
-                    }
-                    align='center'
-                  >
-                    <Typography variant='caption' color='text.secondary'>
-                      Showing 10 of {filteredRows.length} employees
-                    </Typography>
-                  </TableCell>
-                </TableRow>
-              )} */}
               {/* Totals Row */}
               {filteredRows.length > 1 && (
                 <TableRow sx={{ fontWeight: 500, bgcolor: 'action.hover' }}>
@@ -745,6 +730,9 @@ export const PayslipsTab = ({
   isPaid,
   isPosted,
 }: PayslipsTabProps) => {
+  const router = useRouter();
+  const lang = useLanguage();
+  const { checkOrganizationPermission } = useJumboAuth();
   const filteredPayslips = payslips.filter((payslip: any) => {
     if (!search.trim()) return true;
     const term = search.toLowerCase().trim();
@@ -753,6 +741,10 @@ export const PayslipsTab = ({
     const number = (employee?.employee_number || '').toLowerCase();
     return name.includes(term) || number.includes(term);
   });
+
+  const hasEmployeeRead = checkOrganizationPermission(
+    PERMISSIONS.EMPLOYEES_READ
+  );
 
   return (
     <>
@@ -842,7 +834,24 @@ export const PayslipsTab = ({
                   return (
                     <TableRow key={index}>
                       <TableCell>
-                        <Typography variant='body2'>
+                        <Typography
+                          variant='body2'
+                          onClick={() => {
+                            hasEmployeeRead &&
+                              router.push(
+                                `/${lang}/humanResources/employees/${employee.id}`
+                              );
+                          }}
+                          sx={{
+                            ...(hasEmployeeRead && {
+                              cursor: 'pointer',
+                              '&:hover': {
+                                color: 'primary.main',
+                                textDecoration: 'underline',
+                              },
+                            }),
+                          }}
+                        >
                           {getEmployeeName(employee)}
                         </Typography>
                         <Typography variant='caption' color='text.secondary'>
