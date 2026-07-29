@@ -385,7 +385,7 @@ function Sidebar({ menus }) {
             }
 
             if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
-                if (!checkOrganizationPermission([
+                if (checkOrganizationPermission([
                     PERMISSIONS.EMPLOYEES_READ,
                     PERMISSIONS.EMPLOYEES_CREATE,
                     PERMISSIONS.EMPLOYEES_UPDATE,
@@ -545,7 +545,7 @@ function Sidebar({ menus }) {
                 }
 
                 //Accounts > Approved Payroll Runs
-                if (!organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE], false)) {
+                if (!organizationHasSubscribed(MODULES.HUMAN_RESOURCES) && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && checkOrganizationPermission([PERMISSIONS.PAYROLL_READ, PERMISSIONS.PAYROLLRUNS_CREATE], false)) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
 
                     if (accountsMenuIndex >= 0) {
