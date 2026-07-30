@@ -984,6 +984,7 @@ function Sidebar({ menus }) {
                 <JumboSearch
                     value={searchTerm}
                     onChange={(value) => setSearchTerm(value)}
+                    placeholder="Search Menu"
                     sx={{ width: '100%' }}
                 />
             </Box>

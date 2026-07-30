@@ -6,17 +6,16 @@ import IconButton from "@mui/material/IconButton";
 import { SxProps, Theme } from "@mui/material/styles";
 import { Div } from '@jumbo/shared';
 import { useDebouncedCallback } from 'use-debounce';
-import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 
 interface JumboSearchProps {
   onChange: (value: string) => void;
   value?: string;
   sx?: SxProps<Theme>;
+  placeholder?: string;
 }
 
 const JumboSearch: React.FC<JumboSearchProps> = React.memo(
-  ({ onChange, value = '', sx }) => {
-    const dictionary = useDictionary();
+  ({ onChange, value = '', sx, placeholder = 'Search' }) => {
     const [searchKeywords, setSearchKeywords] = React.useState<string>(value);
     const [inputValue, setInputValue] = React.useState<string>(value);
 
@@ -76,7 +75,7 @@ const JumboSearch: React.FC<JumboSearchProps> = React.memo(
         <InputBase
           value={inputValue}
           onChange={handleInputChange}
-          placeholder={dictionary.rqList.jumboSearch}
+          placeholder={placeholder}
           inputProps={{ 'aria-label': 'search' }}
           autoFocus
           sx={{
