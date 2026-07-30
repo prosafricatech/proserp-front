@@ -4,10 +4,10 @@
 import { useLanguage } from '@/app/[lang]/contexts/LanguageContext';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import PDFContent from '@/components/pdf/PDFContent';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { LoadingButton } from '@mui/lab';
+import { HighlightOff } from '@mui/icons-material';
 import {
   Alert,
   Box,
@@ -17,6 +17,7 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  IconButton,
   Stack,
   Table,
   TableBody,
@@ -41,10 +42,7 @@ type SalaryTypeItem = {
   category?: string;
   is_pre_tax?: boolean;
   computation_method?:
-    | 'fixed'
-    | 'percentage_of_basic'
-    | 'percentage_of_gross'
-    | string;
+    'fixed' | 'percentage_of_basic' | 'percentage_of_gross' | string;
   default_value?: number;
 };
 
@@ -113,6 +111,7 @@ const SalarySheetDialog = ({
   const { theme: jumboTheme } = useJumboTheme();
   const smallScreen = useMediaQuery(jumboTheme.breakpoints.down('md'));
 
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
 
   const organization = authObject?.authOrganization?.organization;
@@ -284,414 +283,409 @@ const SalarySheetDialog = ({
         }}
       >
         <DialogTitle>
-          <Stack
-            direction='row'
-            justifyContent='space-between'
-            alignItems='center'
-          >
-            <Box>
-              <Typography variant='h6'>
-                {organization?.name || 'Company'}
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Salary Payroll - {periodLabel}
-              </Typography>
-            </Box>
-          </Stack>
+          <PreviewTopBar
+            fileExportGrid={
+              <FileExportGrid
+                exportExcel
+                handlExcelExport={() => handleExcelExport(exportedData)}
+                exportingExcel={isExporting}
+                exportPdf
+                handlePdf={() => {
+                  setShowOnScreen((prev) => !prev);
+                }}
+              />
+            }
+            closeButton={
+              <IconButton size='small' color='primary' onClick={onClose}>
+                <HighlightOff color='primary' />
+              </IconButton>
+            }
+          />
         </DialogTitle>
-        <DialogContent>
-          {isLoading ? (
-            <Box
-              display='flex'
-              justifyContent='center'
-              alignItems='center'
-              py={8}
-            >
-              <CircularProgress />
-              <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
-                Generating salary sheet...
-              </Typography>
-            </Box>
-          ) : rows.length === 0 ? (
-            <Alert severity='info'>
-              No employees found for this payroll run.
-            </Alert>
-          ) : (
-            <TableContainer>
-              <Table size='small'>
-                <TableHead>
-                  {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      sx={{
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      RECRUITMENT
-                    </TableCell>
-                    <TableCell
-                      colSpan={
-                        3 +
-                        (hasAllowances ? unique_allowances_types.length : 0) +
-                        (hasDeductions ? unique_deductions_types.length : 0)
-                      }
-                      sx={{
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      EMPLOYEE
-                    </TableCell>
-                    <TableCell
-                      colSpan={
-                        1 +
-                        (hasContributions
-                          ? unique_contributions_types.length
-                          : 0)
-                      }
-                      sx={{
-                        textAlign: 'center',
-                        fontWeight: 700,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        fontSize: '0.9rem',
-                      }}
-                    >
-                      EMPLOYER
-                    </TableCell>
-                  </TableRow>
+        {showOnScreen ? (
+          <>
+            <DialogContent>
+              <Stack
+                direction='row'
+                justifyContent='space-between'
+                alignItems='center'
+                mb={2}
+              >
+                <Box>
+                  <Typography variant='h6'>
+                    {organization?.name || 'Company'}
+                  </Typography>
+                  <Typography variant='body2' color='text.secondary'>
+                    Salary Payroll - {periodLabel}
+                  </Typography>
+                </Box>
+              </Stack>
+              {isLoading ? (
+                <Box
+                  display='flex'
+                  justifyContent='center'
+                  alignItems='center'
+                  py={8}
+                >
+                  <CircularProgress />
+                  <Typography
+                    variant='body2'
+                    color='text.secondary'
+                    sx={{ ml: 2 }}
+                  >
+                    Generating salary sheet...
+                  </Typography>
+                </Box>
+              ) : rows.length === 0 ? (
+                <Alert severity='info'>
+                  No employees found for this payroll run.
+                </Alert>
+              ) : (
+                <TableContainer>
+                  <Table size='small'>
+                    <TableHead>
+                      {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          sx={{
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          RECRUITMENT
+                        </TableCell>
+                        <TableCell
+                          colSpan={
+                            3 +
+                            (hasAllowances
+                              ? unique_allowances_types.length
+                              : 0) +
+                            (hasDeductions ? unique_deductions_types.length : 0)
+                          }
+                          sx={{
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          EMPLOYEE
+                        </TableCell>
+                        <TableCell
+                          colSpan={
+                            1 +
+                            (hasContributions
+                              ? unique_contributions_types.length
+                              : 0)
+                          }
+                          sx={{
+                            textAlign: 'center',
+                            fontWeight: 700,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          EMPLOYER
+                        </TableCell>
+                      </TableRow>
 
-                  {/* Sub-headers - Allowances, Deductions, Contributions */}
-                  <TableRow>
-                    <TableCell
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      S/N
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Employee
-                    </TableCell>
-                    <TableCell
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Designation
-                    </TableCell>
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Basic
-                    </TableCell>
+                      {/* Sub-headers - Allowances, Deductions, Contributions */}
+                      <TableRow>
+                        <TableCell
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          S/N
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Employee
+                        </TableCell>
+                        <TableCell
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Designation
+                        </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Basic
+                        </TableCell>
 
-                    {hasAllowances && (
-                      <TableCell
-                        colSpan={unique_allowances_types.length}
-                        align='center'
-                        sx={{
-                          fontWeight: 500,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        Allowances
-                      </TableCell>
-                    )}
-
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Gross
-                    </TableCell>
-
-                    {hasDeductions && (
-                      <TableCell
-                        colSpan={unique_deductions_types.length}
-                        align='center'
-                        sx={{
-                          fontWeight: 500,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        Deductions
-                      </TableCell>
-                    )}
-
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 500,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Net Payable
-                    </TableCell>
-
-                    {hasContributions ? (
-                      <TableCell
-                        colSpan={unique_contributions_types.length + 1}
-                        align='center'
-                        sx={{
-                          fontWeight: 500,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        Employer Contributions
-                      </TableCell>
-                    ) : (
-                      <TableCell
-                        align='center'
-                        sx={{
-                          fontWeight: 500,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      />
-                    )}
-                  </TableRow>
-
-                  {/* Column Headers */}
-                  <TableRow>
-                    <TableCell
-                      sx={{ border: '1px solid', borderColor: 'divider' }}
-                    />
-                    <TableCell
-                      sx={{ border: '1px solid', borderColor: 'divider' }}
-                    />
-                    <TableCell
-                      sx={{ border: '1px solid', borderColor: 'divider' }}
-                    />
-                    <TableCell
-                      align='right'
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    />
-
-                    {unique_allowances_types.map((type, idx) => (
-                      <TableCell
-                        key={`allowance-header-${type.allowance_type_id || type.label}-${idx}`}
-                        sx={{
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          fontWeight: 450,
-                        }}
-                      >
-                        {type?.label || 'Allowance'}
-                      </TableCell>
-                    ))}
-
-                    <TableCell
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    />
-
-                    {unique_deductions_types.map((type, idx) => {
-                      if (type.deduction_type_id !== null) {
-                        return (
+                        {hasAllowances && (
                           <TableCell
-                            key={`deduction-header-${type.deduction_type_id || type.label}-${idx}`}
+                            colSpan={unique_allowances_types.length}
+                            align='center'
+                            sx={{
+                              fontWeight: 500,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            Allowances
+                          </TableCell>
+                        )}
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Gross
+                        </TableCell>
+
+                        {hasDeductions && (
+                          <TableCell
+                            colSpan={unique_deductions_types.length}
+                            align='center'
+                            sx={{
+                              fontWeight: 500,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            Deductions
+                          </TableCell>
+                        )}
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Net Payable
+                        </TableCell>
+
+                        {hasContributions ? (
+                          <TableCell
+                            colSpan={unique_contributions_types.length + 1}
+                            align='center'
+                            sx={{
+                              fontWeight: 500,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            Employer Contributions
+                          </TableCell>
+                        ) : (
+                          <TableCell
+                            align='center'
+                            sx={{
+                              fontWeight: 500,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          />
+                        )}
+                      </TableRow>
+
+                      {/* Column Headers */}
+                      <TableRow>
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        />
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        />
+                        <TableCell
+                          sx={{ border: '1px solid', borderColor: 'divider' }}
+                        />
+                        <TableCell
+                          align='right'
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        />
+
+                        {unique_allowances_types.map((type, idx) => (
+                          <TableCell
+                            key={`allowance-header-${type.allowance_type_id || type.label}-${idx}`}
                             sx={{
                               border: '1px solid',
                               borderColor: 'divider',
                               fontWeight: 450,
                             }}
                           >
-                            {type?.label || 'Deduction'}
-                          </TableCell>
-                        );
-                      }
-                    })}
-
-                    <TableCell
-                      sx={{
-                        border: '1px solid',
-                        borderColor: 'divider',
-                        fontWeight: 450,
-                      }}
-                    >
-                      PAYE
-                    </TableCell>
-
-                    <TableCell
-                      sx={{
-                        fontWeight: 400,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    />
-
-                    {unique_contributions_types.map((type, idx) => (
-                      <TableCell
-                        key={`contribution-header-${type.employer_contribution_type_id || type.label}-${idx}`}
-                        sx={{
-                          fontWeight: 450,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                        }}
-                      >
-                        {type?.label || 'Contribution'}
-                      </TableCell>
-                    ))}
-
-                    <TableCell
-                      sx={{
-                        fontWeight: 450,
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      Total Empr. Cost
-                    </TableCell>
-                  </TableRow>
-                </TableHead>
-
-                <TableBody>
-                  {rows.map((entry, index) => {
-                    const run = entry.run;
-                    const computed = entry.computed;
-                    const name = getEmployeeName(run);
-                    const employeeNumber = getEmployeeNumber(run);
-                    const designation = getDesignation(run);
-                    const isEven = index % 2 === 0;
-
-                    return (
-                      <TableRow
-                        key={`salary-row-${run.id || index}-${index}`}
-                        sx={{
-                          backgroundColor: isEven
-                            ? theme.palette.background.paper
-                            : theme.palette.action.hover,
-                          '&:hover': {
-                            backgroundColor: theme.palette.action.selected,
-                          },
-                        }}
-                      >
-                        <TableCell
-                          sx={{ border: '1px solid', borderColor: 'divider' }}
-                        >
-                          {index + 1}
-                        </TableCell>
-                        <TableCell
-                          sx={{
-                            border: '1px solid',
-                            borderColor: 'divider',
-                            textWrap: 'nowrap',
-                            cursor: 'pointer',
-                            '&:hover': {
-                              color: 'primary.main',
-                              textDecoration: 'underline',
-                            },
-                          }}
-                          onClick={() =>
-                            router.push(
-                              `/${lang}/humanResources/employees/${entry.run.employee?.id}`
-                            )
-                          }
-                        >
-                          {name}
-                          <Typography
-                            variant='body2'
-                            fontSize={10}
-                            color='textSecondary'
-                          >
-                            {employeeNumber && `(${employeeNumber})`}
-                          </Typography>
-                        </TableCell>
-
-                        <TableCell
-                          sx={{
-                            color: 'text.secondary',
-                            border: '1px solid',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          {designation}
-                        </TableCell>
-                        <TableCell
-                          align='right'
-                          sx={{
-                            border: '1px solid',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          {fmt(computed.basicSalary)}
-                        </TableCell>
-
-                        {unique_allowances_types.map((type, typeIdx) => (
-                          <TableCell
-                            key={`allowance-value-${run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
-                            align='right'
-                            sx={{
-                              border: '1px solid',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            {fmt(
-                              employeeAllowance.find(
-                                (itm) =>
-                                  itm.employee_contract_id ===
-                                    entry.run.employee?.id &&
-                                  (itm.label === type.label ||
-                                    itm.allowance_type_id ===
-                                      type.allowance_type_id)
-                              )?.amount ?? 0
-                            )}
+                            {type?.label || 'Allowance'}
                           </TableCell>
                         ))}
 
                         <TableCell
-                          align='right'
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        />
+
+                        {unique_deductions_types.map((type, idx) => {
+                          if (type.deduction_type_id !== null) {
+                            return (
+                              <TableCell
+                                key={`deduction-header-${type.deduction_type_id || type.label}-${idx}`}
+                                sx={{
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                  fontWeight: 450,
+                                }}
+                              >
+                                {type?.label || 'Deduction'}
+                              </TableCell>
+                            );
+                          }
+                        })}
+
+                        <TableCell
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            fontWeight: 450,
+                          }}
+                        >
+                          PAYE
+                        </TableCell>
+
+                        <TableCell
                           sx={{
                             fontWeight: 400,
                             border: '1px solid',
                             borderColor: 'divider',
                           }}
-                        >
-                          {fmt(computed.grossSalary)}
-                        </TableCell>
+                        />
 
-                        {unique_deductions_types.map((type, typeIdx) => {
-                          if (type.deduction_type_id !== null) {
-                            return (
+                        {unique_contributions_types.map((type, idx) => (
+                          <TableCell
+                            key={`contribution-header-${type.employer_contribution_type_id || type.label}-${idx}`}
+                            sx={{
+                              fontWeight: 450,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                            }}
+                          >
+                            {type?.label || 'Contribution'}
+                          </TableCell>
+                        ))}
+
+                        <TableCell
+                          sx={{
+                            fontWeight: 450,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          Total Empr. Cost
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+
+                    <TableBody>
+                      {rows.map((entry, index) => {
+                        const run = entry.run;
+                        const computed = entry.computed;
+                        const name = getEmployeeName(run);
+                        const employeeNumber = getEmployeeNumber(run);
+                        const designation = getDesignation(run);
+                        const isEven = index % 2 === 0;
+
+                        return (
+                          <TableRow
+                            key={`salary-row-${run.id || index}-${index}`}
+                            sx={{
+                              backgroundColor: isEven
+                                ? theme.palette.background.paper
+                                : theme.palette.action.hover,
+                              '&:hover': {
+                                backgroundColor: theme.palette.action.selected,
+                              },
+                            }}
+                          >
+                            <TableCell
+                              sx={{
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {index + 1}
+                            </TableCell>
+                            <TableCell
+                              sx={{
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                textWrap: 'nowrap',
+                                cursor: 'pointer',
+                                '&:hover': {
+                                  color: 'primary.main',
+                                  textDecoration: 'underline',
+                                },
+                              }}
+                              onClick={() =>
+                                router.push(
+                                  `/${lang}/humanResources/employees/${entry.run.employee?.id}`
+                                )
+                              }
+                            >
+                              {name}
+                              <Typography
+                                variant='body2'
+                                fontSize={10}
+                                color='textSecondary'
+                              >
+                                {employeeNumber && `(${employeeNumber})`}
+                              </Typography>
+                            </TableCell>
+
+                            <TableCell
+                              sx={{
+                                color: 'text.secondary',
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {designation}
+                            </TableCell>
+                            <TableCell
+                              align='right'
+                              sx={{
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {fmt(computed.basicSalary)}
+                            </TableCell>
+
+                            {unique_allowances_types.map((type, typeIdx) => (
                               <TableCell
-                                key={`deduction-value-${run.id || index}-${type.deduction_type_id || type.label}-${typeIdx}`}
+                                key={`allowance-value-${run.id || index}-${type.allowance_type_id || type.label}-${typeIdx}`}
                                 align='right'
                                 sx={{
                                   border: '1px solid',
@@ -699,143 +693,143 @@ const SalarySheetDialog = ({
                                 }}
                               >
                                 {fmt(
-                                  employeeDeductions.find(
+                                  employeeAllowance.find(
                                     (itm) =>
                                       itm.employee_contract_id ===
                                         entry.run.employee?.id &&
                                       (itm.label === type.label ||
-                                        itm.deduction_type_id ===
-                                          type.deduction_type_id)
+                                        itm.allowance_type_id ===
+                                          type.allowance_type_id)
                                   )?.amount ?? 0
                                 )}
                               </TableCell>
-                            );
-                          }
-                        })}
+                            ))}
 
+                            <TableCell
+                              align='right'
+                              sx={{
+                                fontWeight: 400,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {fmt(computed.grossSalary)}
+                            </TableCell>
+
+                            {unique_deductions_types.map((type, typeIdx) => {
+                              if (type.deduction_type_id !== null) {
+                                return (
+                                  <TableCell
+                                    key={`deduction-value-${run.id || index}-${type.deduction_type_id || type.label}-${typeIdx}`}
+                                    align='right'
+                                    sx={{
+                                      border: '1px solid',
+                                      borderColor: 'divider',
+                                    }}
+                                  >
+                                    {fmt(
+                                      employeeDeductions.find(
+                                        (itm) =>
+                                          itm.employee_contract_id ===
+                                            entry.run.employee?.id &&
+                                          (itm.label === type.label ||
+                                            itm.deduction_type_id ===
+                                              type.deduction_type_id)
+                                      )?.amount ?? 0
+                                    )}
+                                  </TableCell>
+                                );
+                              }
+                            })}
+
+                            <TableCell
+                              align='right'
+                              sx={{
+                                border: '1px solid',
+                                borderColor: 'divider',
+                                fontWeight: 400,
+                              }}
+                            >
+                              {fmt(computed.paye)}
+                            </TableCell>
+
+                            <TableCell
+                              align='right'
+                              sx={{
+                                fontWeight: 400,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {fmt(computed.netSalary)}
+                            </TableCell>
+
+                            {unique_contributions_types.map((type, typeIdx) => (
+                              <TableCell
+                                key={`contribution-value-${run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
+                                align='right'
+                                sx={{
+                                  border: '1px solid',
+                                  borderColor: 'divider',
+                                }}
+                              >
+                                {fmt(
+                                  employeecontributions.find(
+                                    (itm) =>
+                                      itm.employee_contract_id ===
+                                        entry.run.employee?.id &&
+                                      (itm.label === type.label ||
+                                        itm.employer_contribution_type_id ===
+                                          type.employer_contribution_type_id)
+                                  )?.amount ?? 0
+                                )}
+                              </TableCell>
+                            ))}
+
+                            <TableCell
+                              align='right'
+                              sx={{
+                                fontWeight: 400,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
+                              {fmt(computed.totalEmployerCost)}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+
+                      {/* Totals Row */}
+                      <TableRow>
+                        <TableCell
+                          colSpan={3}
+                          sx={{
+                            fontWeight: 700,
+                            textAlign: 'center',
+                            borderTop: '2px solid',
+                            borderLeft: '2px solid',
+                            borderRight: '2px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
+                          TOTALS
+                        </TableCell>
                         <TableCell
                           align='right'
                           sx={{
-                            border: '1px solid',
+                            fontWeight: 700,
+                            borderTop: '2px solid',
                             borderColor: 'divider',
-                            fontWeight: 400,
+                            borderRight: '0.001px solid white',
                           }}
                         >
-                          {fmt(computed.paye)}
+                          {fmt(totals.basicSalary)}
                         </TableCell>
 
-                        <TableCell
-                          align='right'
-                          sx={{
-                            fontWeight: 400,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          {fmt(computed.netSalary)}
-                        </TableCell>
-
-                        {unique_contributions_types.map((type, typeIdx) => (
+                        {unique_allowances_types.map((type: any) => (
                           <TableCell
-                            key={`contribution-value-${run.id || index}-${type.employer_contribution_type_id || type.label}-${typeIdx}`}
-                            align='right'
-                            sx={{
-                              border: '1px solid',
-                              borderColor: 'divider',
-                            }}
-                          >
-                            {fmt(
-                              employeecontributions.find(
-                                (itm) =>
-                                  itm.employee_contract_id ===
-                                    entry.run.employee?.id &&
-                                  (itm.label === type.label ||
-                                    itm.employer_contribution_type_id ===
-                                      type.employer_contribution_type_id)
-                              )?.amount ?? 0
-                            )}
-                          </TableCell>
-                        ))}
-
-                        <TableCell
-                          align='right'
-                          sx={{
-                            fontWeight: 400,
-                            border: '1px solid',
-                            borderColor: 'divider',
-                          }}
-                        >
-                          {fmt(computed.totalEmployerCost)}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-
-                  {/* Totals Row */}
-                  <TableRow>
-                    <TableCell
-                      colSpan={3}
-                      sx={{
-                        fontWeight: 700,
-                        textAlign: 'center',
-                        borderTop: '2px solid',
-                        borderLeft: '2px solid',
-                        borderRight: '2px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      TOTALS
-                    </TableCell>
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                        borderRight: '0.001px solid white',
-                      }}
-                    >
-                      {fmt(totals.basicSalary)}
-                    </TableCell>
-
-                    {unique_allowances_types.map((type: any) => (
-                      <TableCell
-                        key={`allowance-total-${type.allowance_type_id}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 700,
-                          borderTop: '2px solid',
-                          borderColor: 'divider',
-                          borderRight: '0.001px solid white',
-                        }}
-                      >
-                        {fmt(
-                          calculateTotalAmtByType(
-                            type,
-                            type.allowance_type_id,
-                            'allowance'
-                          )
-                        )}
-                      </TableCell>
-                    ))}
-
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                        borderRight: '0.001px solid white',
-                      }}
-                    >
-                      {fmt(totals.grossSalary)}
-                    </TableCell>
-
-                    {unique_deductions_types.map((type: any) => {
-                      if (type.deduction_type_id !== null) {
-                        return (
-                          <TableCell
-                            key={`deduction-total-${type.deduction_type_id}`}
+                            key={`allowance-total-${type.allowance_type_id}`}
                             align='right'
                             sx={{
                               fontWeight: 700,
@@ -847,135 +841,134 @@ const SalarySheetDialog = ({
                             {fmt(
                               calculateTotalAmtByType(
                                 type,
-                                type.deduction_type_id,
-                                'deduction'
+                                type.allowance_type_id,
+                                'allowance'
                               )
                             )}
                           </TableCell>
-                        );
-                      }
-                    })}
+                        ))}
 
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                        borderRight: '0.001px solid white',
-                      }}
-                    >
-                      {fmt(totals.paye)}
-                    </TableCell>
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 700,
+                            borderTop: '2px solid',
+                            borderColor: 'divider',
+                            borderRight: '0.001px solid white',
+                          }}
+                        >
+                          {fmt(totals.grossSalary)}
+                        </TableCell>
 
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                        borderRight: '0.001px solid white',
-                      }}
-                    >
-                      {fmt(totals.netSalary)}
-                    </TableCell>
+                        {unique_deductions_types.map((type: any) => {
+                          if (type.deduction_type_id !== null) {
+                            return (
+                              <TableCell
+                                key={`deduction-total-${type.deduction_type_id}`}
+                                align='right'
+                                sx={{
+                                  fontWeight: 700,
+                                  borderTop: '2px solid',
+                                  borderColor: 'divider',
+                                  borderRight: '0.001px solid white',
+                                }}
+                              >
+                                {fmt(
+                                  calculateTotalAmtByType(
+                                    type,
+                                    type.deduction_type_id,
+                                    'deduction'
+                                  )
+                                )}
+                              </TableCell>
+                            );
+                          }
+                        })}
 
-                    {unique_contributions_types.map((type: any) => (
-                      <TableCell
-                        key={`contribution-total-${type.employer_contribution_type_id}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 700,
-                          borderTop: '2px solid',
-                          borderColor: 'divider',
-                          borderRight: '0.001px solid white',
-                        }}
-                      >
-                        {fmt(
-                          calculateTotalAmtByType(
-                            type,
-                            type.employer_contribution_type_id,
-                            'contribution'
-                          )
-                        )}
-                      </TableCell>
-                    ))}
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 700,
+                            borderTop: '2px solid',
+                            borderColor: 'divider',
+                            borderRight: '0.001px solid white',
+                          }}
+                        >
+                          {fmt(totals.paye)}
+                        </TableCell>
 
-                    <TableCell
-                      align='right'
-                      sx={{
-                        fontWeight: 700,
-                        borderTop: '2px solid',
-                        borderColor: 'divider',
-                        borderRight: '0.001px solid white',
-                      }}
-                    >
-                      {fmt(totals.totalEmployerCost)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </TableContainer>
-          )}
-        </DialogContent>
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 700,
+                            borderTop: '2px solid',
+                            borderColor: 'divider',
+                            borderRight: '0.001px solid white',
+                          }}
+                        >
+                          {fmt(totals.netSalary)}
+                        </TableCell>
 
-        <DialogActions>
-          <Button
-            variant='outlined'
-            onClick={() => setOpenPdfDialog(true)}
-            disabled={rows.length === 0 || isLoading}
-          >
-            Print
-          </Button>
-          <Button onClick={onClose}>Close</Button>
-        </DialogActions>
-      </Dialog>
+                        {unique_contributions_types.map((type: any) => (
+                          <TableCell
+                            key={`contribution-total-${type.employer_contribution_type_id}`}
+                            align='right'
+                            sx={{
+                              fontWeight: 700,
+                              borderTop: '2px solid',
+                              borderColor: 'divider',
+                              borderRight: '0.001px solid white',
+                            }}
+                          >
+                            {fmt(
+                              calculateTotalAmtByType(
+                                type,
+                                type.employer_contribution_type_id,
+                                'contribution'
+                              )
+                            )}
+                          </TableCell>
+                        ))}
 
-      {/* PDF Dialog */}
-      <Dialog
-        open={openPdfDialog}
-        onClose={() => setOpenPdfDialog(false)}
-        fullWidth
-        maxWidth='xl'
-        PaperProps={{
-          sx: {
-            bgcolor: 'background.paper',
-          },
-        }}
-      >
-        <DialogContent>
-          <PDFContent
-            document={
-              <SalarySheetPDF
-                organization={organization}
-                periodLabel={periodLabel}
-                rows={exportedRows}
-                allowanceTypes={employeeAllowance}
-                deductionTypes={employeeDeductions}
-                contributionTypes={employeecontributions}
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 700,
+                            borderTop: '2px solid',
+                            borderColor: 'divider',
+                            borderRight: '0.001px solid white',
+                          }}
+                        >
+                          {fmt(totals.totalEmployerCost)}
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </DialogContent>
+          </>
+        ) : (
+          <>
+            <DialogContent>
+              <PDFContent
+                document={
+                  <SalarySheetPDF
+                    organization={organization}
+                    periodLabel={periodLabel}
+                    rows={exportedRows}
+                    allowanceTypes={employeeAllowance}
+                    deductionTypes={employeeDeductions}
+                    contributionTypes={employeecontributions}
+                  />
+                }
+                fileName={`Salary-Sheet-${periodLabel}`}
               />
-            }
-            fileName={`Salary-Sheet-${periodLabel}`}
-          />
-        </DialogContent>
+            </DialogContent>
+          </>
+        )}
         <DialogActions>
-          <LoadingButton
-            size='small'
-            onClick={() => handleExcelExport(exportedData)}
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              padding: '4px',
-              gap: 1,
-            }}
-            color='success'
-            variant='contained'
-            disabled={isExporting || rows.length === 0 || isLoading}
-            loading={isExporting}
-          >
-            <FontAwesomeIcon icon={faFileExcel} color='green' /> Excel
-          </LoadingButton>
-          <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
+          {!smallScreen && <Button onClick={onClose}>Close</Button>}
         </DialogActions>
       </Dialog>
     </>
