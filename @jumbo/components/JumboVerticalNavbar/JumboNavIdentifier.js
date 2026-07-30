@@ -9,7 +9,7 @@ const NAV_VARIANTS = {
     'nav-item': JumboNavItem
 };
 
-const JumboNavIdentifier = ({item, isNested = false}) => {
+const JumboNavIdentifier = ({item, isNested = false, isSearchActive = false}) => {
     const [mounted, setMounted] = React.useState(false);
     if(!item) return null;
 
@@ -21,7 +21,7 @@ const JumboNavIdentifier = ({item, isNested = false}) => {
 
     if(item.type && ['section', 'collapsible', 'nav-item'].includes(item.type)) {
         const NavComponent = NAV_VARIANTS[item.type];
-        return <NavComponent translate item={item} isNested={isNested}/>
+        return <NavComponent translate item={item} isNested={isNested} isSearchActive={isSearchActive}/>
     }
 };
 

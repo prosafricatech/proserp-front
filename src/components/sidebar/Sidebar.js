@@ -11,6 +11,9 @@ import { PROS_CONTROL_PERMISSIONS } from '@/utilities/constants/prosControlPermi
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import JumboVerticalNavbar from '@jumbo/components/JumboVerticalNavbar/JumboVerticalNavbar';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
+import { useTranslation } from '@/hooks/useTranslation';
+import { Box } from '@mui/material';
+import JumboSearch from '@jumbo/components/JumboSearch';
 
 const collapseMenusByModule = (items, dictionary) => {
     const homeLabel = dictionary.sidebar.menu.home;
@@ -40,9 +43,39 @@ const collapseMenusByModule = (items, dictionary) => {
     });
 };
 
+const filterMenuItems = (items, searchTerm, translateLabel) => {
+    const normalizedSearch = searchTerm?.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+        return items;
+    }
+
+    return items.flatMap((item) => {
+        if (!item) {
+            return [];
+        }
+
+        const labelText = typeof translateLabel === 'function' ? translateLabel(item) : item.label || '';
+        const uriText = item.uri || '';
+        const matchesSelf = `${labelText} ${uriText}`.toLowerCase().includes(normalizedSearch);
+
+        const children = Array.isArray(item.children)
+            ? filterMenuItems(item.children, normalizedSearch, translateLabel)
+            : [];
+
+        if (matchesSelf || children.length > 0) {
+            return [{ ...item, children: children.length > 0 ? children : item.children }];
+        }
+
+        return [];
+    });
+};
+
 function Sidebar({ menus }) {
     const dictionary = useDictionary();
+    const { t } = useTranslation();
     const [menuItems, setMenuItems] = React.useState(menus);
+    const [searchTerm, setSearchTerm] = React.useState('');
     const { authOrganization, checkPermission, checkOrganizationPermission, organizationHasSubscribed, authUser } = useJumboAuth();
 
     React.useEffect(() => {
@@ -940,9 +973,25 @@ function Sidebar({ menus }) {
         setMenuItems(collapseMenusByModule(updatedMenus, dictionary));
     }, [authOrganization, checkOrganizationPermission, authUser?.permissions, checkPermission, dictionary, menus, organizationHasSubscribed]);
 
+    const visibleMenuItems = React.useMemo(() => {
+        return filterMenuItems(menuItems, searchTerm, (item) => t(item.label));
+    }, [menuItems, searchTerm, t]);
+
     return (
         <React.Fragment>
             <SidebarHeader />
+            <Box sx={{ px: 2.5, pt: 1.5, pb: 1 }}>
+                <JumboSearch
+                    value={searchTerm}
+                    onChange={(value) => setSearchTerm(value)}
+                    sx={{ width: '100%' }}
+                />
+            </Box>
+            {searchTerm.trim() && visibleMenuItems.length === 0 && (
+                <Box sx={{ px: 3, py: 2, color: 'text.secondary', fontSize: '0.875rem' }}>
+                    No matching menu found.
+                </Box>
+            )}
             <JumboScrollbar
                 autoHide
                 autoHideDuration={200}
@@ -963,7 +1012,7 @@ function Sidebar({ menus }) {
                         </Div>
                     }
                 >
-                    <JumboVerticalNavbar items={menuItems} />
+                    <JumboVerticalNavbar items={visibleMenuItems} isSearchActive={Boolean(searchTerm.trim())} />
                 </Suspense>
             </JumboScrollbar>
         </React.Fragment>

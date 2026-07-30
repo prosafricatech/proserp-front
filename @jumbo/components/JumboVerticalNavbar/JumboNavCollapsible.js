@@ -29,7 +29,7 @@ const menuBefore = {
   backgroundColor: 'transparent'
 };
 
-const JumboNavCollapsible = ({ item, translate, isNested = false }) => {
+const JumboNavCollapsible = ({ item, translate, isNested = false, isSearchActive = false }) => {
   const [open, setOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const openPopover = Boolean(anchorEl);
@@ -57,8 +57,13 @@ const JumboNavCollapsible = ({ item, translate, isNested = false }) => {
   }, [item, pathname, previousPath]);
 
   React.useEffect(() => {
+    if (isSearchActive) {
+      setOpen(true);
+      return;
+    }
+
     setOpen(isUrlInChildren(item, previousPath));
-  }, [item, previousPath]);
+  }, [isSearchActive, item, previousPath]);
 
   const label = React.useMemo(() => {
     return translate ? t(item.label) : item.label;
@@ -125,7 +130,7 @@ const JumboNavCollapsible = ({ item, translate, isNested = false }) => {
         <Collapse component="li" in={open} timeout="auto" unmountOnExit>
           <List disablePadding>
             {subMenus.map((child, index) => (
-              <JumboNavIdentifier item={child} key={`${item.label}-${index}`} isNested={true} />
+              <JumboNavIdentifier item={child} key={`${item.label}-${index}`} isNested={true} isSearchActive={isSearchActive} />
             ))}
           </List>
         </Collapse>
@@ -143,7 +148,7 @@ const JumboNavCollapsible = ({ item, translate, isNested = false }) => {
         >
           <List disablePadding>
             {subMenus.map((child, index) => (
-              <JumboNavIdentifier item={child} key={`${item.label}-mini-${index}`} isNested={true} />
+              <JumboNavIdentifier item={child} key={`${item.label}-mini-${index}`} isNested={true} isSearchActive={isSearchActive} />
             ))}
           </List>
         </Popover>

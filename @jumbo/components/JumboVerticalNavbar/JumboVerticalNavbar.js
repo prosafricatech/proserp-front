@@ -5,7 +5,7 @@ import PropTypes from 'prop-types';
 import { SIDEBAR_VIEWS } from '@jumbo/utilities/constants';
 import { useJumboLayout } from '../JumboLayout/hooks';
 
-const JumboVerticalNavbar = ({items}) => {
+const JumboVerticalNavbar = ({items, isSearchActive = false}) => {
     const { sidebarOptions } = useJumboLayout();
 
     const isMiniAndClosed = React.useMemo(() => {
@@ -22,7 +22,7 @@ const JumboVerticalNavbar = ({items}) => {
         >
             {
                 items.map((item, index) => (
-                    <JumboNavIdentifier item={item} key={index} />
+                    <JumboNavIdentifier item={item} key={index} isSearchActive={isSearchActive} />
                 ))
             }
         </List>
@@ -31,6 +31,7 @@ const JumboVerticalNavbar = ({items}) => {
 
 JumboVerticalNavbar.propTypes = {
     items: PropTypes.array,
+    isSearchActive: PropTypes.bool,
 };
 
 export default JumboVerticalNavbar;
