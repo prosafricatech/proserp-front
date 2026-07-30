@@ -366,6 +366,7 @@ function Sidebar({ menus }) {
                     PERMISSIONS.PROJECTS_DELETE,
                     PERMISSIONS.PROJECT_CATEGORIES_EDIT,
                     PERMISSIONS.PROJECT_CATEGORIES_CREATE,
+                    PERMISSIONS.PROJECT_CATEGORIES_READ,
                     PERMISSIONS.PROJECT_CATEGORIES_EDIT,
                     PERMISSIONS.PROJECT_CATEGORIES_DELETE,
                 ])) {
@@ -388,7 +389,7 @@ function Sidebar({ menus }) {
                 }
 
                 const hasProjectMasters = checkOrganizationPermission([
-                    PERMISSIONS.PRODUCT_CATEGORIES_READ,
+                    PERMISSIONS.PROJECT_CATEGORIES_READ,
                     PERMISSIONS.PROJECT_CATEGORIES_CREATE,
                     PERMISSIONS.PROJECT_CATEGORIES_EDIT,
                     PERMISSIONS.PROJECT_CATEGORIES_DELETE,
@@ -414,80 +415,6 @@ function Sidebar({ menus }) {
                                 item => item.label !== dictionary.sidebar.menuItem.projectCategories
                             );
                         }
-                    }
-                }
-            }
-
-            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
-                if (checkOrganizationPermission([
-                    PERMISSIONS.EMPLOYEES_READ,
-                    PERMISSIONS.EMPLOYEES_CREATE,
-                    PERMISSIONS.EMPLOYEES_UPDATE,
-                    PERMISSIONS.EMPLOYEES_DELETE,
-                    PERMISSIONS.PAYROLLRUNS_CREATE,
-                    PERMISSIONS.PAYROLL_READ,
-                    PERMISSIONS.LEAVE_ALLOCATIONS_READ,
-                    PERMISSIONS.LOANS_READ,
-                    PERMISSIONS.LEAVE_REQUESTS_READ
-                ])) {
-                    // Human Resources
-                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
-                }
-
-
-                // HR > Employee
-                if (!checkOrganizationPermission([
-                    PERMISSIONS.EMPLOYEES_READ,
-                    PERMISSIONS.EMPLOYEES_CREATE,
-                    PERMISSIONS.EMPLOYEES_UPDATE,
-                    PERMISSIONS.EMPLOYEES_DELETE
-                ])) {
-                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
-                    if (hrMenuIndex >= 0) {
-                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
-                            child => child.label !== dictionary.sidebar.menuItem.employees
-                        );
-                    }
-                }
-
-                // HR > leave requests
-                if (!checkOrganizationPermission([
-                    PERMISSIONS.LEAVE_REQUESTS_CREATE,
-                    PERMISSIONS.LEAVE_REQUESTS_DELETE,
-                    PERMISSIONS.LEAVE_REQUESTS_READ,
-                    PERMISSIONS.LEAVE_REQUESTS_EDIT,
-                ])) {
-                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
-                    if (hrMenuIndex >= 0) {
-                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
-                            child => child.label !== dictionary.sidebar.menuItem.leave_requests
-                        );
-                    }
-                }
-
-                // HR > loan requests
-                if (!checkOrganizationPermission([
-                    PERMISSIONS.LOANS_CREATE,
-                    PERMISSIONS.LOANS_READ, PERMISSIONS.LOANS_EDIT, PERMISSIONS.LOANS_DELETE
-                ])) {
-                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
-                    if (hrMenuIndex >= 0) {
-                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
-                            child => child.label !== dictionary.sidebar.menuItem.loan_requests
-                        );
-                    }
-                }
-
-                // HR > payrollrun
-                if (!checkOrganizationPermission([
-                    PERMISSIONS.PAYROLL_READ,
-                    PERMISSIONS.PAYROLLRUNS_CREATE
-                ])) {
-                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
-                    if (hrMenuIndex >= 0) {
-                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
-                            child => child.label !== dictionary.sidebar.menuItem.payroll
-                        );
                     }
                 }
             }
@@ -770,6 +697,80 @@ function Sidebar({ menus }) {
                                 item => item.label !== dictionary.sidebar.menuItem.stores
                             );
                         }
+                    }
+                }
+            }
+
+            if (organizationHasSubscribed(MODULES.HUMAN_RESOURCES)) {
+                if (checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.EMPLOYEES_DELETE,
+                    PERMISSIONS.PAYROLLRUNS_CREATE,
+                    PERMISSIONS.PAYROLL_READ,
+                    PERMISSIONS.LEAVE_ALLOCATIONS_READ,
+                    PERMISSIONS.LOANS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_READ
+                ])) {
+                    // Human Resources
+                    updatedMenus = [...updatedMenus, ...menus.filter(menu => menu.label === dictionary.sidebar.menu.humanResources)];
+                }
+
+
+                // HR > Employee
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.EMPLOYEES_READ,
+                    PERMISSIONS.EMPLOYEES_CREATE,
+                    PERMISSIONS.EMPLOYEES_UPDATE,
+                    PERMISSIONS.EMPLOYEES_DELETE
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.employees
+                        );
+                    }
+                }
+
+                // HR > leave requests
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.LEAVE_REQUESTS_CREATE,
+                    PERMISSIONS.LEAVE_REQUESTS_DELETE,
+                    PERMISSIONS.LEAVE_REQUESTS_READ,
+                    PERMISSIONS.LEAVE_REQUESTS_EDIT,
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.leave_requests
+                        );
+                    }
+                }
+
+                // HR > loan requests
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.LOANS_CREATE,
+                    PERMISSIONS.LOANS_READ, PERMISSIONS.LOANS_EDIT, PERMISSIONS.LOANS_DELETE
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.loan_requests
+                        );
+                    }
+                }
+
+                // HR > payrollrun
+                if (!checkOrganizationPermission([
+                    PERMISSIONS.PAYROLL_READ,
+                    PERMISSIONS.PAYROLLRUNS_CREATE
+                ])) {
+                    const hrMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.humanResources);
+                    if (hrMenuIndex >= 0) {
+                        updatedMenus[hrMenuIndex].children = updatedMenus[hrMenuIndex].children.filter(
+                            child => child.label !== dictionary.sidebar.menuItem.payroll
+                        );
                     }
                 }
             }
