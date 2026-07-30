@@ -2,6 +2,8 @@
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
 import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import { AuthObject } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
@@ -22,11 +24,8 @@ import {
   Button,
   Dialog,
   DialogContent,
-  Grid,
   IconButton,
   Skeleton,
-  Tab,
-  Tabs,
   Tooltip,
   useMediaQuery,
 } from '@mui/material';
@@ -55,7 +54,7 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryKey: ['transfer', transaction.id],
     queryFn: () => fundTransferServices.show(transaction.id),
   });
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -85,38 +84,28 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     );
   }
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
   return (
     <DialogContent>
-      {belowLargeScreen && (
-        <Grid container alignItems='center' justifyContent='space-between'>
-          <Grid size={11}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label='transfer View Tabs'
-            >
-              <Tab label='ONSCREEN' />
-              <Tab label='PDF' />
-            </Tabs>
-          </Grid>
-
-          <Grid size={1} textAlign='right'>
-            <Tooltip title='Close'>
-              <IconButton
-                size='small'
-                onClick={() => setOpenDocumentDialog(false)}
-              >
-                <HighlightOff color='primary' />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
-      )}
-      {belowLargeScreen && activeTab === 0 ? (
+      <PreviewTopBar
+        fileExportGrid={
+          <FileExportGrid
+            exportPdf
+            handlePdf={() => {
+              setShowOnScreen((prev) => !prev);
+            }}
+          />
+        }
+        closeButton={
+          <IconButton
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            <HighlightOff color='primary' />
+          </IconButton>
+        }
+      />
+      {showOnScreen ? (
         <TransferOnScreen transaction={data} authObject={authObject} />
       ) : (
         <PDFContent

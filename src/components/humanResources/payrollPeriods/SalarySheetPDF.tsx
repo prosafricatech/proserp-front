@@ -13,10 +13,7 @@ type SalaryTypeItem = {
   category?: string;
   is_pre_tax?: boolean;
   computation_method?:
-    | 'fixed'
-    | 'percentage_of_basic'
-    | 'percentage_of_gross'
-    | string;
+    'fixed' | 'percentage_of_basic' | 'percentage_of_gross' | string;
   default_value?: number;
 };
 
@@ -1222,7 +1219,7 @@ const SalarySheetPDF = ({
               </Text>
             </View>
           ))}
-          <View
+          {/* <View
             style={[
               styles.summaryRow,
               { borderTopWidth: 1, borderTopColor: '#000' },
@@ -1232,7 +1229,7 @@ const SalarySheetPDF = ({
             <Text style={styles.summaryBlank}></Text>
             <Text style={styles.summaryAmount}>{fmt(summaryTotal)}</Text>
             <Text style={styles.summaryPercent}></Text>
-          </View>
+          </View> */}
         </View>
 
         {/* Corporate Approvals and Signatures Field Area */}

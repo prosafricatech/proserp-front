@@ -1,25 +1,43 @@
-'use client'
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { AttachmentOutlined, DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
-import { useSnackbar } from 'notistack';
-import React, { useState } from 'react';
-import receiptServices from './receipt-services';
-import ReceiptFormDialogContent from './ReceiptFormDialogContent';
-import ReceiptInvoicePDF from './ReceiptPDF';
-import ReceiptOnScreen from './ReceiptOnScreen';
-import dayjs, { Dayjs } from 'dayjs';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+'use client';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { AuthObject } from '@/types/auth-types';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { JumboDdMenu } from '@jumbo/components';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { MenuItemProps } from '@jumbo/types';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
-import PDFContent from '@/components/pdf/PDFContent';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
-import { AuthObject } from '@/types/auth-types';
+import {
+  AttachmentOutlined,
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Skeleton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
+import { useSnackbar } from 'notistack';
+import React, { useState } from 'react';
 import { Transaction } from '../TransactionTypes';
+import receiptServices from './receipt-services';
+import ReceiptFormDialogContent from './ReceiptFormDialogContent';
+import ReceiptOnScreen from './ReceiptOnScreen';
+import ReceiptInvoicePDF from './ReceiptPDF';
 
 interface DocumentDialogProps {
   transaction: Transaction;
@@ -27,16 +45,16 @@ interface DocumentDialogProps {
   setOpenDocumentDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const DocumentDialog: React.FC<DocumentDialogProps> = ({ 
-  transaction, 
-  authObject, 
-  setOpenDocumentDialog 
+const DocumentDialog: React.FC<DocumentDialogProps> = ({
+  transaction,
+  authObject,
+  setOpenDocumentDialog,
 }) => {
   const { data, isFetching } = useQuery({
     queryKey: ['receipt', transaction.id],
     queryFn: () => receiptServices.show(transaction.id),
   });
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -44,65 +62,71 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
   if (isFetching) {
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
     );
   }
 
-  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
-    setActiveTab(newValue);
-  };
-
   return (
     <DialogContent>
-      {belowLargeScreen && (
-        <Grid container alignItems="center" justifyContent="space-between">
-          <Grid size={11}>
-            <Tabs
-              value={activeTab}
-              onChange={handleTabChange}
-              aria-label="receipt View Tabs"
-            >
-              <Tab label="ONSCREEN" />
-              <Tab label="PDF" />
-            </Tabs>
-          </Grid>
-
-          <Grid size={1} textAlign="right">
-            <Tooltip title="Close">
-              <IconButton
-                size="small"
-                onClick={() => setOpenDocumentDialog(false)}
-              >
-                <HighlightOff color="primary" />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
-      )}
-      {belowLargeScreen && activeTab === 0 ? (
-        <ReceiptOnScreen transaction={data} authObject={authObject} /> 
+      <PreviewTopBar
+        fileExportGrid={
+          <FileExportGrid
+            exportPdf
+            handlePdf={() => {
+              setShowOnScreen((prev) => !prev);
+            }}
+          />
+        }
+        closeButton={
+          <IconButton
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            <HighlightOff color='primary' />
+          </IconButton>
+        }
+      />
+      {showOnScreen ? (
+        <ReceiptOnScreen transaction={data} authObject={authObject} />
       ) : (
         <PDFContent
-          document={<ReceiptInvoicePDF transaction={data} authObject={authObject} />}
+          document={
+            <ReceiptInvoicePDF transaction={data} authObject={authObject} />
+          }
           fileName={transaction.voucherNo}
         />
       )}
-      {
-        belowLargeScreen &&
-        <Box textAlign="right" marginTop={5}>
-          <Button 
-            variant="outlined" 
-            size='small' 
-            color="primary" 
+      {belowLargeScreen && (
+        <Box textAlign='right' marginTop={5}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
             onClick={() => setOpenDocumentDialog(false)}
           >
             Close
           </Button>
         </Box>
-      }
+      )}
     </DialogContent>
   );
 };
@@ -112,13 +136,16 @@ interface AttachDialogProps {
   setAttachDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const AttachDialog: React.FC<AttachDialogProps> = ({ transaction, setAttachDialog }) => {
+const AttachDialog: React.FC<AttachDialogProps> = ({
+  transaction,
+  setAttachDialog,
+}) => {
   return (
-    <AttachmentForm 
-      setAttachDialog={setAttachDialog} 
-      attachment_sourceNo={transaction.voucherNo} 
-      attachmentable_type={'receipt'} 
-      attachment_name={'Receipt Voucher'} 
+    <AttachmentForm
+      setAttachDialog={setAttachDialog}
+      attachment_sourceNo={transaction.voucherNo}
+      attachmentable_type={'receipt'}
+      attachment_name={'Receipt Voucher'}
       attachmentable_id={transaction.id}
     />
   );
@@ -128,7 +155,9 @@ interface ReceiptItemActionProps {
   transaction: Transaction;
 }
 
-const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) => {
+const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({
+  transaction,
+}) => {
   const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
   const { showDialog, hideDialog } = useJumboDialog();
   const { enqueueSnackbar } = useSnackbar();
@@ -153,26 +182,47 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
   });
 
   const menuItems: MenuItemProps[] = [
-    (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_MASTERS_READ, PERMISSIONS.RECEIPTS_READ]) && { 
-      icon: <VisibilityOutlined/>, 
-      title: 'View', 
-      action: 'open' 
-    })as MenuItemProps,
-    { 
-      icon: <AttachmentOutlined/>, 
-      title: "Attach", 
-      action: "attach" 
-    }as MenuItemProps,
-    checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.RECEIPTS_EDIT]) && 
-      !!transaction.editable &&
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.RECEIPTS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
-      { icon: <EditOutlined/>, title: 'Edit', action: 'edit' } : null,
-    checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.RECEIPTS_DELETE]) && 
-      !!transaction.editable &&
-      (checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.RECEIPTS_BACKDATE]) || 
-      transaction.transaction_date >= dayjs().startOf('date').toISOString()) ? 
-      { icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete' } : null
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_MASTERS_READ,
+      PERMISSIONS.RECEIPTS_READ,
+    ]) && {
+      icon: <VisibilityOutlined />,
+      title: 'View',
+      action: 'open',
+    }) as MenuItemProps,
+    {
+      icon: <AttachmentOutlined />,
+      title: 'Attach',
+      action: 'attach',
+    } as MenuItemProps,
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+      PERMISSIONS.RECEIPTS_EDIT,
+    ]) &&
+    !!transaction.editable &&
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+      PERMISSIONS.RECEIPTS_BACKDATE,
+    ]) ||
+      transaction.transaction_date >= dayjs().startOf('date').toISOString())
+      ? { icon: <EditOutlined />, title: 'Edit', action: 'edit' }
+      : null,
+    checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+      PERMISSIONS.RECEIPTS_DELETE,
+    ]) &&
+    !!transaction.editable &&
+    (checkOrganizationPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+      PERMISSIONS.RECEIPTS_BACKDATE,
+    ]) ||
+      transaction.transaction_date >= dayjs().startOf('date').toISOString())
+      ? {
+          icon: <DeleteOutlined color='error' />,
+          title: 'Delete',
+          action: 'delete',
+        }
+      : null,
   ].filter((item): item is MenuItemProps => item !== null);
 
   const EditReceiptDialog = () => {
@@ -180,17 +230,32 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
       queryKey: ['receipt', transaction.id],
       queryFn: () => receiptServices.show(transaction.id),
     });
-    
+
     if (isFetching) {
       return (
         <div style={{ width: '100%', padding: '16px' }}>
-          <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-          <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-          <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+          <Skeleton
+            variant='text'
+            width={180}
+            height={32}
+            style={{ borderRadius: 4, marginLeft: 'auto' }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={48}
+            style={{ borderRadius: 4 }}
+          />
+          <Skeleton
+            variant='rectangular'
+            width='100%'
+            height={32}
+            style={{ borderRadius: 4 }}
+          />
         </div>
       );
     }
-    
+
     return (
       <ReceiptFormDialogContent setOpen={setOpenEditDialog} receipt={receipt} />
     );
@@ -213,7 +278,7 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
             deleteReceipt.mutate(transaction);
           },
           onNo: () => hideDialog(),
-          variant: 'confirm'
+          variant: 'confirm',
         });
         break;
       case 'edit':
@@ -242,23 +307,31 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
         fullScreen={belowLargeScreen}
         maxWidth={openEditDialog ? 'lg' : 'md'}
       >
-        {openEditDialog && (
-          checkOrganizationPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.RECEIPTS_EDIT]) ? 
-            <EditReceiptDialog/> : 
-            <UnauthorizedAccess/>
-        )}
-        {openDocumentDialog && (
-          checkOrganizationPermission([PERMISSIONS.ACCOUNTS_MASTERS_READ, PERMISSIONS.RECEIPTS_READ]) ? 
-            <DocumentDialog 
-              setOpenDocumentDialog={setOpenDocumentDialog} 
-              transaction={transaction} 
+        {openEditDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+            PERMISSIONS.RECEIPTS_EDIT,
+          ]) ? (
+            <EditReceiptDialog />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
+        {openDocumentDialog &&
+          (checkOrganizationPermission([
+            PERMISSIONS.ACCOUNTS_MASTERS_READ,
+            PERMISSIONS.RECEIPTS_READ,
+          ]) ? (
+            <DocumentDialog
+              setOpenDocumentDialog={setOpenDocumentDialog}
+              transaction={transaction}
               authObject={authObject as unknown as AuthObject}
-            /> : 
-            <UnauthorizedAccess/>
-        )}
+            />
+          ) : (
+            <UnauthorizedAccess />
+          ))}
         {attachDialog && (
-          <AttachDialog 
-            transaction={transaction} 
+          <AttachDialog
+            transaction={transaction}
             setAttachDialog={setAttachDialog}
           />
         )}
@@ -266,7 +339,7 @@ const ReceiptItemAction: React.FC<ReceiptItemActionProps> = ({ transaction }) =>
       <JumboDdMenu
         icon={
           <Tooltip title='Actions'>
-            <MoreHorizOutlined/>
+            <MoreHorizOutlined />
           </Tooltip>
         }
         menuItems={menuItems}

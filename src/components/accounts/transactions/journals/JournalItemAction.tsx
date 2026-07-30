@@ -1,19 +1,16 @@
-'use client'
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogContent,
-  Grid,
-  IconButton,
-  LinearProgress,
-  Skeleton,
-  Tab,
-  Tabs,
-  Tooltip,
-  useMediaQuery,
-} from '@mui/material';
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
+import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { AuthObject } from '@/types/auth-types';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { JumboDdMenu } from '@jumbo/components';
+import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { MenuItemProps } from '@jumbo/types';
 import {
   AttachmentOutlined,
   ContentCopyOutlined,
@@ -23,24 +20,25 @@ import {
   MoreHorizOutlined,
   VisibilityOutlined,
 } from '@mui/icons-material';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useSnackbar } from 'notistack';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Skeleton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import dayjs from 'dayjs';
-import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { JumboDdMenu } from '@jumbo/components';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import JournalPDF from './JournalPDF';
-import JournalOnScreen from './JournalOnScreen';
-import JournalFormDialogContent from './JournalFormDialogContent';
-import journalServices from './journal-services';
-import PDFContent from '@/components/pdf/PDFContent';
-import AttachmentForm from '@/components/filesShelf/attachments/AttachmentForm';
-import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
+import { useSnackbar } from 'notistack';
+import React, { useEffect, useState } from 'react';
 import { Transaction } from '../TransactionTypes';
-import { AuthObject } from '@/types/auth-types';
-import { MenuItemProps } from '@jumbo/types';
+import JournalFormDialogContent from './JournalFormDialogContent';
+import JournalOnScreen from './JournalOnScreen';
+import JournalPDF from './JournalPDF';
+import journalServices from './journal-services';
 
 interface DocumentDialogProps {
   transaction: Transaction;
@@ -58,51 +56,75 @@ const DocumentDialog: React.FC<DocumentDialogProps> = ({
     queryFn: () => journalServices.show(transaction.id),
   });
 
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-  if (isFetching)     
+  if (isFetching)
     return (
       <div style={{ width: '100%', padding: '16px' }}>
-        <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-        <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-        <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
       </div>
-    );;
+    );
 
   return (
     <DialogContent>
-      {belowLargeScreen && (
-        <Grid container alignItems="center" justifyContent="space-between" mb={2}>
-          <Grid size={11}>
-            <Tabs value={activeTab} onChange={(_, v) => setActiveTab(v)}>
-              <Tab label="ONSCREEN" />
-              <Tab label="PDF" />
-            </Tabs>
-          </Grid>
-          <Grid size={1} textAlign="right">
-            <Tooltip title="Close">
-              <IconButton size="small" onClick={() => setOpenDocumentDialog(false)}>
-                <HighlightOff color="primary" />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
-      )}
-      {belowLargeScreen && activeTab === 0 ? (
+      <PreviewTopBar
+        fileExportGrid={
+          <FileExportGrid
+            exportPdf
+            handlePdf={() => {
+              setShowOnScreen((prev) => !prev);
+            }}
+          />
+        }
+        closeButton={
+          <IconButton
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
+            <HighlightOff color='primary' />
+          </IconButton>
+        }
+      />
+      {showOnScreen ? (
         <JournalOnScreen transaction={data} authObject={authObject} />
       ) : (
-        <PDFContent document={<JournalPDF transaction={data} authObject={authObject} />} fileName={transaction.voucherNo} />
+        <PDFContent
+          document={<JournalPDF transaction={data} authObject={authObject} />}
+          fileName={transaction.voucherNo}
+        />
       )}
-      {
-        belowLargeScreen &&
-        <Box textAlign="right" mt={5}>
-          <Button variant="outlined" size="small" color="primary" onClick={() => setOpenDocumentDialog(false)}>
+      {belowLargeScreen && (
+        <Box textAlign='right' mt={5}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
+            onClick={() => setOpenDocumentDialog(false)}
+          >
             Close
           </Button>
         </Box>
-      }
+      )}
     </DialogContent>
   );
 };
@@ -112,12 +134,15 @@ interface AttachDialogProps {
   setAttachDialog: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
-const AttachDialog: React.FC<AttachDialogProps> = ({ transaction, setAttachDialog }) => (
+const AttachDialog: React.FC<AttachDialogProps> = ({
+  transaction,
+  setAttachDialog,
+}) => (
   <AttachmentForm
     setAttachDialog={setAttachDialog}
     attachment_sourceNo={transaction.voucherNo}
-    attachmentable_type="journal_voucher"
-    attachment_name="Journal Voucher"
+    attachmentable_type='journal_voucher'
+    attachment_name='Journal Voucher'
     attachmentable_id={transaction.id}
   />
 );
@@ -126,7 +151,9 @@ interface JournalItemActionProps {
   transaction: Transaction;
 }
 
-const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) => {
+const JournalItemAction: React.FC<JournalItemActionProps> = ({
+  transaction,
+}) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
   const { showDialog, hideDialog } = useJumboDialog();
@@ -159,7 +186,10 @@ const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) =>
   });
 
   const menuItems: MenuItemProps[] = [
-    checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.JOURNAL_VOUCHERS_READ]) && {
+    checkPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+      PERMISSIONS.JOURNAL_VOUCHERS_READ,
+    ]) && {
       icon: <VisibilityOutlined />,
       title: 'View',
       action: 'open',
@@ -169,25 +199,42 @@ const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) =>
       title: 'Attach',
       action: 'attach',
     },
-    checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE, PERMISSIONS.JOURNAL_VOUCHERS_CREATE]) && {
+    checkPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+      PERMISSIONS.JOURNAL_VOUCHERS_CREATE,
+    ]) && {
       icon: <ContentCopyOutlined />,
       title: 'Duplicate',
       action: 'duplicate',
     },
-    checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.JOURNAL_VOUCHERS_EDIT]) &&
-    (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE]) ||
-      transaction.transaction_date >= dayjs().startOf('day').toISOString()) && {
-      icon: <EditOutlined />,
-      title: 'Edit',
-      action: 'edit',
-    },
-    checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE, PERMISSIONS.JOURNAL_VOUCHERS_DELETE]) &&
-    (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE, PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE]) ||
-      transaction.transaction_date >= dayjs().startOf('day').toISOString()) && {
-      icon: <DeleteOutlined color="error" />,
-      title: 'Delete',
-      action: 'delete',
-    },
+    checkPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+      PERMISSIONS.JOURNAL_VOUCHERS_EDIT,
+    ]) &&
+      (checkPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+        PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE,
+      ]) ||
+        transaction.transaction_date >=
+          dayjs().startOf('day').toISOString()) && {
+        icon: <EditOutlined />,
+        title: 'Edit',
+        action: 'edit',
+      },
+    checkPermission([
+      PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
+      PERMISSIONS.JOURNAL_VOUCHERS_DELETE,
+    ]) &&
+      (checkPermission([
+        PERMISSIONS.ACCOUNTS_TRANSACTIONS_BACKDATE,
+        PERMISSIONS.JOURNAL_VOUCHERS_BACKDATE,
+      ]) ||
+        transaction.transaction_date >=
+          dayjs().startOf('day').toISOString()) && {
+        icon: <DeleteOutlined color='error' />,
+        title: 'Delete',
+        action: 'delete',
+      },
   ].filter(Boolean) as MenuItemProps[];
 
   const handleItemAction = (menuItem: MenuItemProps) => {
@@ -228,8 +275,13 @@ const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) =>
   return (
     <>
       <Dialog
-        open={openEditDialog || openDuplicateDialog || openDocumentDialog || attachDialog}
-        scroll="paper"
+        open={
+          openEditDialog ||
+          openDuplicateDialog ||
+          openDocumentDialog ||
+          attachDialog
+        }
+        scroll='paper'
         fullScreen={belowLargeScreen}
         fullWidth
         maxWidth={openEditDialog || openDuplicateDialog ? 'lg' : 'md'}
@@ -238,31 +290,84 @@ const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) =>
         }}
       >
         {openEditDialog &&
-          (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT, PERMISSIONS.JOURNAL_VOUCHERS_EDIT]) ? (
+          (checkPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
+            PERMISSIONS.JOURNAL_VOUCHERS_EDIT,
+          ]) ? (
             isFetching ? (
-                  <div style={{ width: '100%', padding: '16px' }}>
-                    <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-                    <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-                    <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-                  </div>
-                ) : <JournalFormDialogContent journal={journalData} setOpen={setOpenEditDialog} isEdit isDuplicate={false} />
+              <div style={{ width: '100%', padding: '16px' }}>
+                <Skeleton
+                  variant='text'
+                  width={180}
+                  height={32}
+                  style={{ borderRadius: 4, marginLeft: 'auto' }}
+                />
+                <Skeleton
+                  variant='rectangular'
+                  width='100%'
+                  height={48}
+                  style={{ borderRadius: 4 }}
+                />
+                <Skeleton
+                  variant='rectangular'
+                  width='100%'
+                  height={32}
+                  style={{ borderRadius: 4 }}
+                />
+              </div>
+            ) : (
+              <JournalFormDialogContent
+                journal={journalData}
+                setOpen={setOpenEditDialog}
+                isEdit
+                isDuplicate={false}
+              />
+            )
           ) : (
             <UnauthorizedAccess />
           ))}
         {openDuplicateDialog &&
-          (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE, PERMISSIONS.JOURNAL_VOUCHERS_CREATE]) ? (
+          (checkPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE,
+            PERMISSIONS.JOURNAL_VOUCHERS_CREATE,
+          ]) ? (
             isFetching ? (
               <div style={{ width: '100%', padding: '16px' }}>
-                <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-                <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-                <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
+                <Skeleton
+                  variant='text'
+                  width={180}
+                  height={32}
+                  style={{ borderRadius: 4, marginLeft: 'auto' }}
+                />
+                <Skeleton
+                  variant='rectangular'
+                  width='100%'
+                  height={48}
+                  style={{ borderRadius: 4 }}
+                />
+                <Skeleton
+                  variant='rectangular'
+                  width='100%'
+                  height={32}
+                  style={{ borderRadius: 4 }}
+                />
               </div>
-            ) : <JournalFormDialogContent journal={journalData} setOpen={setOpenDuplicateDialog} isEdit={false} isDuplicate />
+            ) : (
+              <JournalFormDialogContent
+                journal={journalData}
+                setOpen={setOpenDuplicateDialog}
+                isEdit={false}
+                isDuplicate
+              />
+            )
           ) : (
             <UnauthorizedAccess />
           ))}
         {openDocumentDialog &&
-          (checkPermission([PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ, PERMISSIONS.JOURNAL_VOUCHERS_READ]) ? (
+          (checkPermission([
+            PERMISSIONS.ACCOUNTS_TRANSACTIONS_READ,
+            PERMISSIONS.JOURNAL_VOUCHERS_READ,
+          ]) ? (
             <DocumentDialog
               transaction={transaction}
               setOpenDocumentDialog={setOpenDocumentDialog}
@@ -271,12 +376,17 @@ const JournalItemAction: React.FC<JournalItemActionProps> = ({ transaction }) =>
           ) : (
             <UnauthorizedAccess />
           ))}
-        {attachDialog && <AttachDialog transaction={transaction} setAttachDialog={setAttachDialog} />}
+        {attachDialog && (
+          <AttachDialog
+            transaction={transaction}
+            setAttachDialog={setAttachDialog}
+          />
+        )}
       </Dialog>
 
       <JumboDdMenu
         icon={
-          <Tooltip title="Actions">
+          <Tooltip title='Actions'>
             <MoreHorizOutlined />
           </Tooltip>
         }

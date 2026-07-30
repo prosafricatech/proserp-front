@@ -5,15 +5,10 @@ import {
   Alert,
   DialogContent,
   DialogTitle,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
   Grid,
   IconButton,
   LinearProgress,
   MenuItem,
-  Radio,
-  RadioGroup,
   Stack,
   TextField,
   Tooltip,
@@ -28,6 +23,7 @@ import * as yup from 'yup';
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
 import { HighlightOff } from '@mui/icons-material';
@@ -56,9 +52,9 @@ function IncomeStatement({
     authOrganization,
     authUser: { user },
   } = useJumboAuth();
-  const [displayAs, setDisplayAs] = useState('on screen');
   const [reportData, setReportData] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -248,48 +244,52 @@ function IncomeStatement({
                     size='small'
                     fullWidth
                     value={watch('aggregate_by') ?? ''}
-                    sx={{ width: { xs: '100%', md: 180 }, maxWidth: 180, position: 'relative' }}
+                    sx={{
+                      width: { xs: '100%', md: 180 },
+                      maxWidth: 180,
+                      position: 'relative',
+                    }}
                     InputProps={{
-                      endAdornment:
-                        watch('aggregate_by') ? (
-                          <Tooltip title="Clear aggregate option">
-                            <IconButton
-                              size="small"
-                              aria-label="clear aggregate by"
-                              onClick={() => {
-                                setValue('aggregate_by', '', {
-                                  shouldValidate: true,
-                                  shouldDirty: true,
+                      endAdornment: watch('aggregate_by') ? (
+                        <Tooltip title='Clear aggregate option'>
+                          <IconButton
+                            size='small'
+                            aria-label='clear aggregate by'
+                            onClick={() => {
+                              setValue('aggregate_by', '', {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                              const fromDate = watch('from');
+                              const toDate = watch('to');
+                              const selectedCostCenters =
+                                watch('cost_center_ids');
+                              if (fromDate && toDate) {
+                                retrieveReport({
+                                  from: fromDate,
+                                  to: toDate,
+                                  cost_center_ids: selectedCostCenters,
+                                  aggregate_by: null,
                                 });
-                                const fromDate = watch('from');
-                                const toDate = watch('to');
-                                const selectedCostCenters = watch('cost_center_ids');
-                                if (fromDate && toDate) {
-                                  retrieveReport({
-                                    from: fromDate,
-                                    to: toDate,
-                                    cost_center_ids: selectedCostCenters,
-                                    aggregate_by: null,
-                                  });
-                                }
-                              }}
-                              edge="end"
-                              sx={{
-                                opacity: 0.5,
-                                transition: 'opacity 0.2s',
-                                ml: 0.5,
-                                p: 0.5,
-                                '&:hover': { opacity: 1, bgcolor: 'transparent' },
-                                position: 'absolute',
-                                right: 25,
-                                top: '50%',
-                                transform: 'translateY(-50%)',
-                              }}
-                            >
-                              <HighlightOff fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        ) : null,
+                              }
+                            }}
+                            edge='end'
+                            sx={{
+                              opacity: 0.5,
+                              transition: 'opacity 0.2s',
+                              ml: 0.5,
+                              p: 0.5,
+                              '&:hover': { opacity: 1, bgcolor: 'transparent' },
+                              position: 'absolute',
+                              right: 25,
+                              top: '50%',
+                              transform: 'translateY(-50%)',
+                            }}
+                          >
+                            <HighlightOff fontSize='small' />
+                          </IconButton>
+                        </Tooltip>
+                      ) : null,
                     }}
                     onChange={(e) => {
                       const selectedAggregate = e.target.value;
@@ -328,16 +328,19 @@ function IncomeStatement({
                   alignItems='center'
                 >
                   <>
-                    <LoadingButton
-                      size='small'
-                      onClick={() => handlExcelExport()}
-                      loading={isExporting}
-                      disabled={isExporting || isFetching}
-                      variant='contained'
-                      color='success'
-                    >
-                      Excel
-                    </LoadingButton>
+                    {(reportData?.direct_expenses.length > 0 ||
+                      reportData?.incomes.length > 0 ||
+                      reportData?.indirect_expenses.length > 0) && (
+                      <FileExportGrid
+                        exportExcel
+                        handlExcelExport={() => handlExcelExport()}
+                        exportingExcel={isExporting}
+                        exportPdf
+                        handlePdf={() => {
+                          setShowOnScreen((prev) => !prev);
+                        }}
+                      />
+                    )}
                     <LoadingButton
                       loading={isFetching}
                       disabled={isExporting}
@@ -350,7 +353,7 @@ function IncomeStatement({
                   </>
                 </Stack>
               </Grid>
-              <Grid size={12}>
+              {/* <Grid size={12}>
                 <FormControl>
                   <FormLabel id='display_as_radiobuttons'>Display As</FormLabel>
                   <RadioGroup
@@ -372,7 +375,7 @@ function IncomeStatement({
                     />
                   </RadioGroup>
                 </FormControl>
-              </Grid>
+              </Grid> */}
             </Grid>
           </form>
         </Span>
@@ -383,7 +386,7 @@ function IncomeStatement({
         ) : reportData?.direct_expenses.length > 0 ||
           reportData?.incomes.length > 0 ||
           reportData?.indirect_expenses.length > 0 ? (
-          displayAs === 'pdf' ? (
+          !showOnScreen ? (
             <PDFContent
               document={
                 <IncomeStatementPDF
@@ -394,10 +397,8 @@ function IncomeStatement({
               }
               fileName={downloadFileName}
             />
-          ) : displayAs === 'on screen' ? (
-            <IncomeStatementOnScreen reportData={reportData} />
           ) : (
-            ''
+            <IncomeStatementOnScreen reportData={reportData} />
           )
         ) : (
           <Alert variant='outlined' severity='info'>

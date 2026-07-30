@@ -2,6 +2,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
@@ -15,8 +16,6 @@ import {
   IconButton,
   LinearProgress,
   Stack,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -280,18 +279,14 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
 
   const [isFetching, setisFetching] = useState(false);
   const [reportData, setReportData] = useState(null);
-  const [activeTab, setActiveTab] = useState(0);
   const [isDownloadingTemplate, setIsDownloadingTemplate] =
     React.useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   //Screen handling constants
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
 
   const downloadExcelTemplate = async () => {
     try {
@@ -414,15 +409,17 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
                   alignItems='center'
                 >
                   <>
-                    <LoadingButton
-                      size='small'
-                      onClick={downloadExcelTemplate}
-                      loading={isDownloadingTemplate}
-                      variant='contained'
-                      color='success'
-                    >
-                      Excel
-                    </LoadingButton>
+                    {reportData && (
+                      <FileExportGrid
+                        exportExcel
+                        handlExcelExport={() => downloadExcelTemplate()}
+                        exportingExcel={isDownloadingTemplate}
+                        exportPdf
+                        handlePdf={() => {
+                          setShowOnScreen((prev) => !prev);
+                        }}
+                      />
+                    )}
                     <LoadingButton
                       loading={isFetching}
                       type='submit'
@@ -437,16 +434,6 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
             </Grid>
           </form>
         </Span>
-        {reportData && belowLargeScreen && (
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant='fullWidth'
-          >
-            <Tab label='On-Screen' />
-            <Tab label='PDF' />
-          </Tabs>
-        )}
       </DialogTitle>
       <DialogContent>
         {isFetching ? (
@@ -454,7 +441,7 @@ function TrialBalance({ setOpenTrialBalanceDialog }) {
         ) : (
           reportData && (
             <>
-              {belowLargeScreen && activeTab === 0 ? (
+              {showOnScreen ? (
                 <TrialBalanceOnScreen
                   reportData={reportData}
                   authOrganization={authOrganization}

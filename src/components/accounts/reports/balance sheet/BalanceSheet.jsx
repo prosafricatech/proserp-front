@@ -2,6 +2,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -10,14 +11,9 @@ import { LoadingButton } from '@mui/lab';
 import {
   DialogContent,
   DialogTitle,
-  FormControl,
-  FormControlLabel,
-  FormLabel,
   Grid,
   IconButton,
   LinearProgress,
-  Radio,
-  RadioGroup,
   Stack,
   Tooltip,
   Typography,
@@ -308,6 +304,7 @@ function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
   const [isDownloadingTemplate, setIsDownloadingTemplate] =
     React.useState(false);
   const [uploadFieldsKey, setUploadFieldsKey] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -441,23 +438,25 @@ function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
                   />
                 </Div>
               </Grid>
-              <Grid size={{ xs: 12, md: 2, lg: 2.5 }} textAlign='right'>
+              <Grid size={{ xs: 12, md: 6, lg: 6 }} textAlign='right'>
                 <Stack
                   direction='row'
                   spacing={0.5}
-                  justifyContent='flex-end'
+                  justifyContent='end'
                   alignItems='center'
                 >
                   <>
-                    <LoadingButton
-                      size='small'
-                      onClick={downloadExcelTemplate}
-                      loading={isDownloadingTemplate}
-                      variant='contained'
-                      color='success'
-                    >
-                      Excel
-                    </LoadingButton>
+                    {reportData && (
+                      <FileExportGrid
+                        exportExcel
+                        handlExcelExport={() => downloadExcelTemplate()}
+                        exportingExcel={isDownloadingTemplate}
+                        exportPdf
+                        handlePdf={() => {
+                          setShowOnScreen((prev) => !prev);
+                        }}
+                      />
+                    )}
                     <LoadingButton
                       loading={isFetching}
                       type='submit'
@@ -469,29 +468,6 @@ function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
                   </>
                 </Stack>
               </Grid>
-              <Grid size={{ xs: 12 }}>
-                <FormControl>
-                  <FormLabel id='display_as_radiobuttons'>Display As</FormLabel>
-                  <RadioGroup
-                    row
-                    aria-labelledby='display_as_radiobuttons'
-                    name='row-radio-buttons-group'
-                    value={displayAs}
-                    onChange={(e) => setDisplayAs(e.target.value)}
-                  >
-                    <FormControlLabel
-                      value='on screen'
-                      control={<Radio />}
-                      label='On Screen'
-                    />
-                    <FormControlLabel
-                      value='pdf'
-                      control={<Radio />}
-                      label='PDF'
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid>
             </Grid>
           </form>
         </Span>
@@ -501,7 +477,7 @@ function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
           <LinearProgress />
         ) : (
           reportData &&
-          (displayAs === 'pdf' ? (
+          (!showOnScreen ? (
             <PDFContent
               document={
                 <ReportDocument
@@ -512,10 +488,8 @@ function BalanceSheet({ as_at, setOpenBalanceSheettDialog }) {
               }
               fileName={`Balance Sheet as of ${readableDate(reportData?.filters?.as_at, true)}`}
             />
-          ) : displayAs === 'on screen' ? (
-            <BalanceSheetOnScreen reportData={reportData} />
           ) : (
-            ''
+            <BalanceSheetOnScreen reportData={reportData} />
           ))
         )}
       </DialogContent>
