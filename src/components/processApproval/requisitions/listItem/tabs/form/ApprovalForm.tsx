@@ -900,7 +900,6 @@ const getInitialLedgerItems = (): RequisitionItem[] => {
             <Div sx={{ mt: 0.5 }}>
               <DateTimePicker
                 label='Approval Date'
-                readOnly={true}
                 defaultValue={approvalDate}
                 minDate={
                   checkOrganizationPermission(PERMISSIONS.APPROVAL_BACKDATE)
