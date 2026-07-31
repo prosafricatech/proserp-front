@@ -482,6 +482,12 @@ const PayrollRunsListItem = ({
         }}
         payslip={selectedPayslip}
       />
+
+      {/* <PayslipDialog
+        open={openPayslipDialog}
+        onClose={() => setOpenPayslipDialog(false)}
+        runId={payrollRun.id}
+      /> */}
     </>
   );
 };

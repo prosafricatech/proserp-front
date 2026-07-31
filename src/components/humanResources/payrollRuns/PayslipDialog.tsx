@@ -1,6 +1,11 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import {
+  KeyboardArrowDownOutlined,
+  KeyboardArrowUpOutlined,
+} from '@mui/icons-material';
 import { LoadingButton } from '@mui/lab';
 import {
   Box,
@@ -14,7 +19,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  GlobalStyles,
   IconButton,
   Skeleton,
   Stack,
@@ -23,19 +27,14 @@ import {
   TableCell,
   TableHead,
   TableRow,
-  Tooltip,
   Typography,
   useMediaQuery,
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { KeyboardArrowDownOutlined, KeyboardArrowUpOutlined } from '@mui/icons-material';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import PDFContent from '@/components/pdf/PDFContent';
 import humanResourcesServices from '../humanResourcesServices';
 import { getPayslipCalculations } from './payslipCalculations';
-import PayslipPDF from './PayslipPDF';
 
 type PayslipDialogProps = {
   open: boolean;
@@ -51,7 +50,9 @@ function fmt(value: number) {
   });
 }
 
-function statusColor(status?: string): 'default' | 'warning' | 'success' | 'info' | 'error' {
+function statusColor(
+  status?: string
+): 'default' | 'warning' | 'success' | 'info' | 'error' {
   switch ((status || '').toLowerCase()) {
     case 'finalized':
       return 'success';
@@ -62,7 +63,12 @@ function statusColor(status?: string): 'default' | 'warning' | 'success' | 'info
   }
 }
 
-const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) => {
+const PayslipDialog = ({
+  open,
+  onClose,
+  runId,
+  periodId,
+}: PayslipDialogProps) => {
   const authObject = useJumboAuth() as any;
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
@@ -74,23 +80,30 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
   const { data: run, isLoading } = useQuery({
     queryKey: ['showPayrollRun', String(runId)],
     queryFn: () => humanResourcesServices.showPayrollRun(String(runId)),
-    enabled: open && Boolean(runId),
+    enabled: open && !!runId,
   });
 
   const { mutate: finalize, isPending: isFinalizing } = useMutation({
     mutationFn: () => humanResourcesServices.finalizePayrollRun(String(runId)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['showPayrollRun', String(runId)] });
+      queryClient.invalidateQueries({
+        queryKey: ['showPayrollRun', String(runId)],
+      });
       if (periodId) {
-        queryClient.invalidateQueries({ queryKey: ['payrollRunsForPeriod', String(periodId)] });
+        queryClient.invalidateQueries({
+          queryKey: ['payrollRunsForPeriod', String(periodId)],
+        });
       }
       enqueueSnackbar('Payslip finalized', { variant: 'success' });
     },
-    onError: () => enqueueSnackbar('Error finalizing payslip', { variant: 'error' }),
+    onError: () =>
+      enqueueSnackbar('Error finalizing payslip', { variant: 'error' }),
   });
 
   const name = run
-    ? [run.employee?.first_name, run.employee?.last_name].filter(Boolean).join(' ')
+    ? [run.employee?.first_name, run.employee?.last_name]
+        .filter(Boolean)
+        .join(' ')
     : '';
 
   const {
@@ -119,7 +132,13 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
 
   return (
     <>
-      <Dialog open={open} onClose={onClose} fullWidth maxWidth='md' fullScreen={belowLargeScreen}>
+      <Dialog
+        open={open}
+        onClose={onClose}
+        fullWidth
+        maxWidth='md'
+        fullScreen={belowLargeScreen}
+      >
         <DialogTitle>
           <Stack direction='row' alignItems='center' spacing={2}>
             <Box flex={1}>
@@ -128,7 +147,11 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                 {run?.payroll_period?.period_name || 'Payroll Period'}
               </Typography>
             </Box>
-            <Chip size='small' label={run?.status || 'draft'} color={statusColor(run?.status)} />
+            <Chip
+              size='small'
+              label={run?.status || 'draft'}
+              color={statusColor(run?.status)}
+            />
           </Stack>
         </DialogTitle>
 
@@ -136,7 +159,12 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
           {isLoading ? (
             <Stack spacing={2}>
               {Array.from({ length: 5 }).map((_, index) => (
-                <Skeleton key={index} variant='rectangular' height={56} sx={{ borderRadius: 1 }} />
+                <Skeleton
+                  key={index}
+                  variant='rectangular'
+                  height={56}
+                  sx={{ borderRadius: 1 }}
+                />
               ))}
             </Stack>
           ) : (
@@ -144,14 +172,22 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
               <Card variant='outlined'>
                 <CardContent>
                   <Stack spacing={2}>
-                    <Stack direction='row' justifyContent='space-between' flexWrap='wrap' useFlexGap>
+                    <Stack
+                      direction='row'
+                      justifyContent='space-between'
+                      flexWrap='wrap'
+                      useFlexGap
+                    >
                       <Box>
                         <Typography variant='h5'>PAYSLIP</Typography>
-                        <Typography variant='body1'>{run?.payroll_period?.period_name || '-'}</Typography>
+                        <Typography variant='body1'>
+                          {run?.payroll_period?.period_name || '-'}
+                        </Typography>
                       </Box>
                       <Box textAlign='right'>
                         <Typography variant='subtitle1'>
-                          {authObject?.authOrganization?.organization?.name || 'Organization'}
+                          {authObject?.authOrganization?.organization?.name ||
+                            'Organization'}
                         </Typography>
                         <Typography variant='body2' color='text.secondary'>
                           {name || ''}
@@ -161,18 +197,33 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
 
                     <Divider />
 
-                    <Stack direction='row' spacing={3} flexWrap='wrap' useFlexGap>
+                    <Stack
+                      direction='row'
+                      spacing={3}
+                      flexWrap='wrap'
+                      useFlexGap
+                    >
                       <Box minWidth={220}>
-                        <Typography variant='body2' color='text.secondary'>Employee</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          Employee
+                        </Typography>
                         <Typography variant='body1'>{name || '-'}</Typography>
                       </Box>
                       <Box minWidth={180}>
-                        <Typography variant='body2' color='text.secondary'>Employee No.</Typography>
-                        <Typography variant='body1'>{run?.employee?.employee_number || '-'}</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          Employee No.
+                        </Typography>
+                        <Typography variant='body1'>
+                          {run?.employee?.employee_number || '-'}
+                        </Typography>
                       </Box>
                       <Box minWidth={220}>
-                        <Typography variant='body2' color='text.secondary'>Designation</Typography>
-                        <Typography variant='body1'>{run?.contract?.designation?.title || '-'}</Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          Designation
+                        </Typography>
+                        <Typography variant='body1'>
+                          {run?.contract?.designation?.title || '-'}
+                        </Typography>
                       </Box>
                     </Stack>
 
@@ -187,12 +238,18 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                               {row.label}
                               {!row.taxable ? ' (Non-Taxable)' : ''}
                             </TableCell>
-                            <TableCell align='right'>{fmt(row.amount)}</TableCell>
+                            <TableCell align='right'>
+                              {fmt(row.amount)}
+                            </TableCell>
                           </TableRow>
                         ))}
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>Gross Salary</TableCell>
-                          <TableCell align='right' sx={{ fontWeight: 700 }}>{fmt(grossSalary)}</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            Gross Salary
+                          </TableCell>
+                          <TableCell align='right' sx={{ fontWeight: 700 }}>
+                            {fmt(grossSalary)}
+                          </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -212,31 +269,58 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                         {deductionsTableRows.map((row, index) => (
                           <TableRow key={`${row.label}-${index}`}>
                             <TableCell>{row.label}</TableCell>
-                            <TableCell sx={{ textTransform: 'capitalize' }}>{row.category}</TableCell>
-                            <TableCell align='right'>{fmt(row.amount)}</TableCell>
+                            <TableCell sx={{ textTransform: 'capitalize' }}>
+                              {row.category}
+                            </TableCell>
+                            <TableCell align='right'>
+                              {fmt(row.amount)}
+                            </TableCell>
                           </TableRow>
                         ))}
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>Total Deductions</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            Total Deductions
+                          </TableCell>
                           <TableCell />
-                          <TableCell align='right' sx={{ fontWeight: 700 }}>{fmt(totalDeductions)}</TableCell>
+                          <TableCell align='right' sx={{ fontWeight: 700 }}>
+                            {fmt(totalDeductions)}
+                          </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
 
                     <Divider />
 
-                    <Stack direction='row' alignItems='center' justifyContent='space-between'>
+                    <Stack
+                      direction='row'
+                      alignItems='center'
+                      justifyContent='space-between'
+                    >
                       <Typography variant='h6'>Net Pay</Typography>
                       <Typography variant='h5'>{fmt(netSalary)}</Typography>
                     </Stack>
 
                     <Card variant='outlined'>
                       <CardContent>
-                        <Stack direction='row' alignItems='center' justifyContent='space-between'>
-                          <Typography variant='subtitle1'>Taxable Income Breakdown</Typography>
-                          <IconButton size='small' onClick={() => setShowTaxBreakdown((value) => !value)}>
-                            {showTaxBreakdown ? <KeyboardArrowUpOutlined /> : <KeyboardArrowDownOutlined />}
+                        <Stack
+                          direction='row'
+                          alignItems='center'
+                          justifyContent='space-between'
+                        >
+                          <Typography variant='subtitle1'>
+                            Taxable Income Breakdown
+                          </Typography>
+                          <IconButton
+                            size='small'
+                            onClick={() =>
+                              setShowTaxBreakdown((value) => !value)
+                            }
+                          >
+                            {showTaxBreakdown ? (
+                              <KeyboardArrowUpOutlined />
+                            ) : (
+                              <KeyboardArrowDownOutlined />
+                            )}
                           </IconButton>
                         </Stack>
                         <Collapse in={showTaxBreakdown}>
@@ -244,7 +328,9 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                             <TableBody>
                               <TableRow>
                                 <TableCell>Basic Salary</TableCell>
-                                <TableCell align='right'>{fmt(run?.basic_salary || 0)}</TableCell>
+                                <TableCell align='right'>
+                                  {fmt(run?.basic_salary || 0)}
+                                </TableCell>
                               </TableRow>
                               <TableRow>
                                 <TableCell>Taxable Allowances</TableCell>
@@ -259,11 +345,20 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                               </TableRow>
                               <TableRow>
                                 <TableCell>Pre-Tax Deductions</TableCell>
-                                <TableCell align='right'>- {fmt(preTaxDeductions)}</TableCell>
+                                <TableCell align='right'>
+                                  - {fmt(preTaxDeductions)}
+                                </TableCell>
                               </TableRow>
                               <TableRow>
-                                <TableCell sx={{ fontWeight: 700 }}>Taxable Income</TableCell>
-                                <TableCell align='right' sx={{ fontWeight: 700 }}>{fmt(taxableIncome)}</TableCell>
+                                <TableCell sx={{ fontWeight: 700 }}>
+                                  Taxable Income
+                                </TableCell>
+                                <TableCell
+                                  align='right'
+                                  sx={{ fontWeight: 700 }}
+                                >
+                                  {fmt(taxableIncome)}
+                                </TableCell>
                               </TableRow>
                             </TableBody>
                           </Table>
@@ -273,7 +368,9 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
 
                     <Divider />
 
-                    <Typography variant='h6'>Employer Contributions (for reference only)</Typography>
+                    <Typography variant='h6'>
+                      Employer Contributions (for reference only)
+                    </Typography>
                     <Table size='small'>
                       <TableHead>
                         <TableRow>
@@ -293,22 +390,32 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
                           employerContributionRows.map((row, index) => (
                             <TableRow key={`${row.label}-${index}`}>
                               <TableCell>{row.label}</TableCell>
-                              <TableCell sx={{ textTransform: 'capitalize' }}>{row.category}</TableCell>
-                              <TableCell align='right'>{fmt(row.amount)}</TableCell>
+                              <TableCell sx={{ textTransform: 'capitalize' }}>
+                                {row.category}
+                              </TableCell>
+                              <TableCell align='right'>
+                                {fmt(row.amount)}
+                              </TableCell>
                             </TableRow>
                           ))
                         )}
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>Total Employer Contributions</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            Total Employer Contributions
+                          </TableCell>
                           <TableCell />
                           <TableCell align='right' sx={{ fontWeight: 700 }}>
                             {fmt(totalEmployerContributions)}
                           </TableCell>
                         </TableRow>
                         <TableRow>
-                          <TableCell sx={{ fontWeight: 700 }}>Total Employer Cost</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            Total Employer Cost
+                          </TableCell>
                           <TableCell />
-                          <TableCell align='right' sx={{ fontWeight: 700 }}>{fmt(totalEmployerCost)}</TableCell>
+                          <TableCell align='right' sx={{ fontWeight: 700 }}>
+                            {fmt(totalEmployerCost)}
+                          </TableCell>
                         </TableRow>
                       </TableBody>
                     </Table>
@@ -321,31 +428,31 @@ const PayslipDialog = ({ open, onClose, runId, periodId }: PayslipDialogProps) =
 
         <DialogActions>
           {run?.status !== 'finalized' && (
-            <LoadingButton loading={isFinalizing} variant='contained' onClick={() => finalize()}>
+            <LoadingButton
+              loading={isFinalizing}
+              variant='contained'
+              onClick={() => finalize()}
+            >
               Finalize
             </LoadingButton>
           )}
-          <Button variant='outlined' onClick={() => setOpenPdfDialog(true)} disabled={!run}>
+          <Button
+            variant='outlined'
+            onClick={() => setOpenPdfDialog(true)}
+            disabled={!run}
+          >
             Print Payslip
           </Button>
           <Button onClick={onClose}>Close</Button>
         </DialogActions>
       </Dialog>
 
-      <Dialog open={openPdfDialog} onClose={() => setOpenPdfDialog(false)} fullWidth maxWidth='lg'>
-        <DialogContent>
-          {run && (
-            <PDFContent
-              document={
-                <PayslipPDF
-                  payrollRun={run as any}
-                  organization={authObject?.authOrganization?.organization}
-                />
-              }
-              fileName={`Payslip-${run?.employee?.first_name || 'Employee'}-${run?.employee?.last_name || ''}`}
-            />
-          )}
-        </DialogContent>
+      <Dialog
+        open={openPdfDialog}
+        onClose={() => setOpenPdfDialog(false)}
+        fullWidth
+        maxWidth='lg'
+      >
         <DialogActions>
           <Button onClick={() => setOpenPdfDialog(false)}>Close</Button>
         </DialogActions>
