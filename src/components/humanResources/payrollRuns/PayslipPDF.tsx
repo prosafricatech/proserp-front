@@ -1,461 +1,671 @@
-'use client';
-
+import { Organization } from '@/types/auth-types';
 import { Document, Page, Text, View } from '@react-pdf/renderer';
 import React from 'react';
-import pdfStyles from '@/components/pdf/pdf-styles';
-import PageFooter from '@/components/pdf/PageFooter';
-import PdfLogo from '@/components/pdf/PdfLogo';
-import { Organization } from '@/types/auth-types';
-import { getPayslipCalculations } from './payslipCalculations';
-
-interface PayrollRun {
-  id: string;
-  employee?: {
-    first_name: string;
-    last_name: string;
-    employee_number: string;
-  };
-  contract?: {
-    designation?: {
-      title: string;
-    };
-  };
-  basic_salary?: number;
-  paye?: number;
-  status?: string;
-  payroll_period?: {
-    period_name?: string;
-    start_date?: string;
-    end_date?: string;
-  };
-}
+import PageFooter from '../../pdf/PageFooter';
+import pdfStyles from '../../pdf/pdf-styles';
+import PdfLogo from '../../pdf/PdfLogo';
+import { getEmployeeName } from './payrollUtils';
 
 interface PayslipPDFProps {
-  payrollRun: PayrollRun;
-  organization: Organization;
+  payslip: any;
+  organization: Organization | null;
+  thermalPrinter?: boolean;
 }
 
 function fmt(value: number) {
-  return value.toLocaleString(undefined, {
+  return (value || 0).toLocaleString('en-US', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
   });
 }
 
-function fmtStatus(value?: string) {
-  if (!value) return '-';
-  return value
-    .split('_')
-    .join(' ')
-    .replace(/\b\w/g, (char) => char.toUpperCase());
-}
+const PayslipPDF: React.FC<PayslipPDFProps> = ({
+  payslip,
+  organization,
+  thermalPrinter = false,
+}) => {
+  const mainColor = organization?.settings?.main_color || '#2113AD';
+  const lightColor = organization?.settings?.light_color || '#bec5da';
+  const contrastText = organization?.settings?.contrast_text || '#FFFFFF';
 
-const PayslipPDF: React.FC<PayslipPDFProps> = ({ payrollRun, organization }) => {
-  const mainColor = organization.settings?.main_color || '#2113AD';
-  const lightColor = organization.settings?.light_color || '#bec5da';
-  const contrastText = organization.settings?.contrast_text || '#FFFFFF';
+  const employeeName = getEmployeeName(payslip?.employee || payslip);
 
-  const name = payrollRun
-    ? [payrollRun.employee?.first_name, payrollRun.employee?.last_name]
-        .filter(Boolean)
-        .join(' ')
-    : '';
+  const employeeNo =
+    payslip?.employee?.employee_number || payslip?.employee_number || 'N/A';
 
-  const {
-    paye,
-    earningsRows,
-    deductionRows,
-    employerContributionRows,
-    grossSalary,
-    preTaxDeductions,
-    taxableIncome,
-    otherDeductions,
-    totalDeductions,
-    netSalary,
-    totalEmployerContributions,
-    totalEmployerCost,
-  } = getPayslipCalculations(payrollRun);
+  const period =
+    payslip?.payroll_period ||
+    (payslip?.run?.period
+      ? `${payslip.run.period.year} - ${payslip.run.period.month}`
+      : '-');
 
-  const netPaySummaryRows = [
-    { label: 'Gross Salary', amount: fmt(grossSalary) },
-    { label: 'Pre-Tax Deductions', amount: `- ${fmt(preTaxDeductions)}` },
-    { label: 'Taxable Income', amount: fmt(taxableIncome) },
-    { label: 'PAYE', amount: `- ${fmt(paye)}` },
-    { label: 'Other Deductions', amount: `- ${fmt(otherDeductions)}` },
-    { label: 'Net Salary', amount: fmt(netSalary), isTotal: true },
-  ];
-
-  const deductionTableRows = [
-    { label: 'PAYE', category: 'Tax', amount: fmt(paye) },
-    ...deductionRows.map((row) => ({
-      label: row.label,
-      category: row.category,
-      amount: fmt(row.amount),
-    })),
-  ];
-
-  const getRowColors = (index: number) => ({
-    backgroundColor: index % 2 === 0 ? '#FFFFFF' : lightColor,
-    color: '#111111',
-  });
-
-  return (
-    <Document
-      title={`Payslip ${name}`}
-      author={organization.name}
-      subject="Employee Payslip"
-      creator="ProsERP"
-      producer="ProsERP"
+  // 80mm Thermal Version
+  const PDF80mm = () => (
+    <Page
+      size={[80 * 2.83465, 297 * 2.83465]}
+      style={{ ...pdfStyles.page, padding: 10 }}
     >
-      <Page size="A4" style={pdfStyles.page}>
-        {/* Header with Logo */}
-        <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
-          <View style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}>
-            <PdfLogo organization={organization} />
-          </View>
-          <View style={{ flex: 1, textAlign: 'right' }}>
-            <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>PAYSLIP</Text>
-            <Text style={{ ...pdfStyles.midInfo }}>{name}</Text>
-            {payrollRun?.employee?.employee_number && (
-              <Text style={{ ...pdfStyles.minInfo }}>{payrollRun.employee.employee_number}</Text>
-            )}
+      <View>
+        {/* Header Logo */}
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            marginBottom: 10,
+            justifyContent: 'center',
+          }}
+        >
+          <View
+            style={{
+              flex: 1,
+              padding: 1,
+              maxWidth: organization?.logo_path ? 130 : 250,
+            }}
+          >
+            {organization && <PdfLogo organization={organization} />}
           </View>
         </View>
 
-        {/* Employee & Period Info */}
-        <View style={{ ...pdfStyles.tableRow, marginBottom: 15 }}>
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Employee</Text>
-            <Text style={{ ...pdfStyles.minInfo }}>{name}</Text>
-          </View>
-          {payrollRun?.contract?.designation?.title && (
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Designation</Text>
-              <Text style={{ ...pdfStyles.minInfo }}>{payrollRun.contract.designation.title}</Text>
-            </View>
-          )}
-          {payrollRun?.payroll_period?.period_name && (
-            <View style={{ flex: 1, padding: 2 }}>
-              <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Period</Text>
-              <Text style={{ ...pdfStyles.minInfo }}>{payrollRun.payroll_period.period_name}</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Earnings Section */}
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginBottom: 0, textAlign: 'center' }}>
-          EARNINGS
-        </Text>
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Description
+        {/* Title & Organization Info */}
+        <View
+          style={{
+            ...pdfStyles.tableRow,
+            marginBottom: 8,
+            textAlign: 'center',
+          }}
+        >
+          <View style={{ flex: 1 }}>
+            <Text style={{ ...pdfStyles.midInfo, fontWeight: 'bold' }}>
+              PAYSLIP
             </Text>
+            <Text style={{ ...pdfStyles.midInfo, textAlign: 'center' }}>
+              {organization?.name}
+            </Text>
+          </View>
+        </View>
+
+        {/* Employee Info */}
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1 }}>Employee:</Text>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1.5, textAlign: 'right' }}>
+            {employeeName}
+          </Text>
+        </View>
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 4 }}>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1 }}>Emp No:</Text>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1.5, textAlign: 'right' }}>
+            {employeeNo}
+          </Text>
+        </View>
+        <View style={{ ...pdfStyles.tableRow, marginBottom: 8 }}>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1 }}>Period:</Text>
+          <Text style={{ ...pdfStyles.minInfo, flex: 1.5, textAlign: 'right' }}>
+            {period}
+          </Text>
+        </View>
+
+        {/* Summary Table */}
+        <View style={{ ...pdfStyles.table, marginBottom: 8 }}>
+          <View style={pdfStyles.tableRow}>
+            <Text style={{ ...pdfStyles.tableHeader, flex: 2 }}>Item</Text>
             <Text
               style={{
                 ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
+                flex: 1.5,
+                textAlign: 'right',
               }}
             >
               Amount
             </Text>
           </View>
 
-          {earningsRows.map((row, index) => {
-            const { backgroundColor, color } = getRowColors(index);
-            return (
-            <View style={pdfStyles.tableRow} key={row.label}>
-              <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>
-                {row.label}
-                {!row.taxable ? ' (non-taxable)' : ''}
-              </Text>
-              <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
-                {fmt(row.amount)}
-              </Text>
-            </View>
-          )})}
-
-          <View
-            style={{
-              ...pdfStyles.tableRow,
-              backgroundColor: mainColor,
-            }}
-          >
+          <View style={{ ...pdfStyles.tableRow, borderTop: '1px solid #ddd' }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
+              Basic Salary
+            </Text>
             <Text
-              style={{
-                ...pdfStyles.tableCell,
-                flex: 2,
-                fontWeight: 'bold',
-                color: contrastText,
-              }}
+              style={{ ...pdfStyles.tableCell, flex: 1.5, textAlign: 'right' }}
             >
+              {fmt(payslip?.basic_salary)}
+            </Text>
+          </View>
+          <View style={{ ...pdfStyles.tableRow }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
               Gross Salary
             </Text>
             <Text
-              style={{
-                ...pdfStyles.tableCell,
-                flex: 1,
-                textAlign: 'right',
-                fontWeight: 'bold',
-                color: contrastText,
-              }}
+              style={{ ...pdfStyles.tableCell, flex: 1.5, textAlign: 'right' }}
             >
-              {fmt(grossSalary)}
+              {fmt(payslip?.gross_salary)}
             </Text>
           </View>
-        </View>
-
-        {/* Deductions Section */}
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
-          DEDUCTIONS
-        </Text>
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Description
+          <View style={{ ...pdfStyles.tableRow }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
+              Total Allowances
             </Text>
             <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
+              style={{ ...pdfStyles.tableCell, flex: 1.5, textAlign: 'right' }}
             >
-              Category
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Amount
+              {fmt(payslip?.total_allowances)}
             </Text>
           </View>
-
-          {deductionTableRows.map((row, index) => {
-            const { backgroundColor, color } = getRowColors(index);
-            return (
-              <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}-${index}`}>
-                <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>{row.label}</Text>
-                <Text style={{ ...pdfStyles.tableCell, flex: 1, backgroundColor, color }}>{row.category}</Text>
-                <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
-                  {row.amount}
-                </Text>
-              </View>
-            );
-          })}
-
-          <View
-            style={{
-              ...pdfStyles.tableRow,
-              backgroundColor: mainColor,
-            }}
-          >
-            <Text
-              style={{
-                ...pdfStyles.tableCell,
-                flex: 2,
-                fontWeight: 'bold',
-                color: contrastText,
-              }}
-            >
+          <View style={{ ...pdfStyles.tableRow }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>
               Total Deductions
             </Text>
             <Text
-              style={{
-                ...pdfStyles.tableCell,
-                flex: 1,
-                color: contrastText,
-              }}
+              style={{ ...pdfStyles.tableCell, flex: 1.5, textAlign: 'right' }}
             >
-              
+              {fmt(payslip?.total_deductions)}
             </Text>
+          </View>
+          <View style={{ ...pdfStyles.tableRow }}>
+            <Text style={{ ...pdfStyles.tableCell, flex: 2 }}>PAYE</Text>
+            <Text
+              style={{ ...pdfStyles.tableCell, flex: 1.5, textAlign: 'right' }}
+            >
+              {fmt(payslip?.paye)}
+            </Text>
+          </View>
+          <View
+            style={{
+              ...pdfStyles.tableRow,
+              borderTop: '1px solid #000',
+              marginTop: 2,
+            }}
+          >
+            <Text style={{ ...pdfStyles.tableHeader, flex: 2 }}>Net Pay</Text>
             <Text
               style={{
-                ...pdfStyles.tableCell,
-                flex: 1,
+                ...pdfStyles.tableHeader,
+                flex: 1.5,
                 textAlign: 'right',
+              }}
+            >
+              {fmt(payslip?.net_salary)}
+            </Text>
+          </View>
+        </View>
+
+        {/* Allowances Breakdown */}
+        {payslip?.allowances?.length > 0 && (
+          <View style={{ marginBottom: 8 }}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
                 fontWeight: 'bold',
-                color: contrastText,
+                textDecoration: 'underline',
+                marginBottom: 2,
               }}
             >
-              {fmt(totalDeductions)}
+              Allowances
             </Text>
+            {payslip.allowances.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.minInfo, flex: 2 }}>
+                  {item.label}
+                </Text>
+                <Text
+                  style={{ ...pdfStyles.minInfo, flex: 1, textAlign: 'right' }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
           </View>
+        )}
+
+        {/* Deductions Breakdown */}
+        {payslip?.deductions?.length > 0 && (
+          <View style={{ marginBottom: 8 }}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                marginBottom: 2,
+              }}
+            >
+              Deductions
+            </Text>
+            {payslip.deductions.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.minInfo, flex: 2 }}>
+                  {item.label}
+                </Text>
+                <Text
+                  style={{ ...pdfStyles.minInfo, flex: 1, textAlign: 'right' }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* Employer Contributions Breakdown */}
+        {payslip?.employer_contributions?.length > 0 && (
+          <View style={{ marginBottom: 8 }}>
+            <Text
+              style={{
+                ...pdfStyles.minInfo,
+                fontWeight: 'bold',
+                textDecoration: 'underline',
+                marginBottom: 2,
+              }}
+            >
+              Employer Contributions
+            </Text>
+            {payslip.employer_contributions.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text style={{ ...pdfStyles.minInfo, flex: 2 }}>
+                  {item.label}
+                </Text>
+                <Text
+                  style={{ ...pdfStyles.minInfo, flex: 1, textAlign: 'right' }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        <View style={{ marginTop: 15, textAlign: 'center' }}>
+          <PageFooter />
+        </View>
+      </View>
+    </Page>
+  );
+
+  // A4 Standard Version
+  const PDFA4 = () => (
+    <Page size='A4' style={pdfStyles.page}>
+      {/* Header */}
+      <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
+        <View
+          style={{ flex: 1, maxWidth: organization?.logo_path ? 130 : 250 }}
+        >
+          {organization && <PdfLogo organization={organization} />}
+        </View>
+        <View style={{ flex: 1, textAlign: 'right' }}>
+          <Text style={{ ...pdfStyles.majorInfo, color: mainColor }}>
+            PAYSLIP
+          </Text>
+          <Text style={{ ...pdfStyles.midInfo }}>{period}</Text>
+        </View>
+      </View>
+
+      {/* Employee & Org Metadata */}
+      <View style={{ ...pdfStyles.tableRow, marginBottom: 15 }}>
+        <View style={{ flex: 1, padding: 2 }}>
+          <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+            Employee Name
+          </Text>
+          <Text style={{ ...pdfStyles.minInfo }}>{employeeName}</Text>
+        </View>
+        <View style={{ flex: 1, padding: 2 }}>
+          <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+            Employee No.
+          </Text>
+          <Text style={{ ...pdfStyles.minInfo }}>{employeeNo}</Text>
+        </View>
+        <View style={{ flex: 1, padding: 2 }}>
+          <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>
+            Company
+          </Text>
+          <Text style={{ ...pdfStyles.minInfo }}>
+            {organization?.name || '-'}
+          </Text>
+        </View>
+      </View>
+
+      {/* Payslip Summary Table */}
+      <View style={{ ...pdfStyles.table, marginBottom: 15 }}>
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableHeader,
+              backgroundColor: mainColor,
+              color: contrastText,
+              flex: 3,
+            }}
+          >
+            Description
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableHeader,
+              backgroundColor: mainColor,
+              color: contrastText,
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            Amount
+          </Text>
         </View>
 
-        {/* Net Pay Summary */}
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
-          NET PAY SUMMARY
-        </Text>
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Description
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Amount
-            </Text>
-          </View>
-
-          {netPaySummaryRows.map((row, index) => (
-            <View
-              key={`${row.label}-${index}`}
-              style={{
-                ...pdfStyles.tableRow,
-                ...(row.isTotal ? { backgroundColor: mainColor } : getRowColors(index)),
-              }}
-            >
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  flex: 2,
-                  ...(!row.isTotal ? getRowColors(index) : {}),
-                  ...(row.isTotal ? { fontWeight: 'bold', color: contrastText } : {}),
-                }}
-              >
-                {row.label}
-              </Text>
-              <Text
-                style={{
-                  ...pdfStyles.tableCell,
-                  flex: 1,
-                  textAlign: 'right',
-                  ...(!row.isTotal ? getRowColors(index) : {}),
-                  ...(row.isTotal ? { fontWeight: 'bold', color: contrastText } : {}),
-                }}
-              >
-                {row.amount}
-              </Text>
-            </View>
-          ))}
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 3,
+            }}
+          >
+            Basic Salary
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.basic_salary)}
+          </Text>
+        </View>
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: lightColor,
+              flex: 3,
+            }}
+          >
+            Gross Salary
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: lightColor,
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.gross_salary)}
+          </Text>
+        </View>
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 3,
+            }}
+          >
+            Total Allowances
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.total_allowances)}
+          </Text>
+        </View>
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: lightColor,
+              flex: 3,
+            }}
+          >
+            Total Deductions
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: lightColor,
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.total_deductions)}
+          </Text>
+        </View>
+        <View style={pdfStyles.tableRow}>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 3,
+            }}
+          >
+            PAYE
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableCell,
+              backgroundColor: '#FFFFFF',
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.paye)}
+          </Text>
         </View>
 
-        <Text style={{ ...pdfStyles.majorInfo, color: mainColor, marginTop: 15, marginBottom: 0, textAlign: 'center' }}>
-          EMPLOYER CONTRIBUTIONS
-        </Text>
-        <View style={pdfStyles.table}>
-          <View style={pdfStyles.tableRow}>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 2,
-              }}
-            >
-              Description
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Category
-            </Text>
-            <Text
-              style={{
-                ...pdfStyles.tableHeader,
-                backgroundColor: mainColor,
-                color: contrastText,
-                flex: 1,
-              }}
-            >
-              Amount
-            </Text>
-          </View>
+        {/* Net Pay Highlight */}
+        <View style={{ ...pdfStyles.tableRow, marginTop: 4 }}>
+          <Text
+            style={{
+              ...pdfStyles.tableHeader,
+              backgroundColor: mainColor,
+              color: contrastText,
+              flex: 3,
+            }}
+          >
+            Net Pay
+          </Text>
+          <Text
+            style={{
+              ...pdfStyles.tableHeader,
+              backgroundColor: mainColor,
+              color: contrastText,
+              flex: 1.5,
+              textAlign: 'right',
+            }}
+          >
+            {fmt(payslip?.net_salary)}
+          </Text>
+        </View>
+      </View>
 
-          {employerContributionRows.length === 0 ? (
+      {/* Allowances List */}
+      {payslip?.allowances?.length > 0 && (
+        <View style={{ marginBottom: 15 }}>
+          <Text
+            style={{ ...pdfStyles.midInfo, color: mainColor, marginBottom: 5 }}
+          >
+            Allowances Breakdown
+          </Text>
+          <View style={pdfStyles.table}>
             <View style={pdfStyles.tableRow}>
-              <Text style={{ ...pdfStyles.tableCell, flex: 4 }}>No employer contributions</Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3,
+                }}
+              >
+                Label
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.5,
+                  textAlign: 'right',
+                }}
+              >
+                Amount
+              </Text>
             </View>
-          ) : (
-            employerContributionRows.map((row, index) => {
-              const { backgroundColor, color } = getRowColors(index);
-              return (
-                <View style={pdfStyles.tableRow} key={`${row.label}-${row.category}-${index}`}>
-                  <Text style={{ ...pdfStyles.tableCell, flex: 2, backgroundColor, color }}>{row.label}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, flex: 1, backgroundColor, color }}>{row.category}</Text>
-                  <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', backgroundColor, color }}>
-                    {fmt(row.amount)}
-                  </Text>
-                </View>
-              );
-            })
-          )}
-
-          <View style={{ ...pdfStyles.tableRow, backgroundColor: mainColor }}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2, fontWeight: 'bold', color: contrastText }}>
-              Total Employer Contributions
-            </Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, color: contrastText }}>
-              
-            </Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', fontWeight: 'bold', color: contrastText }}>
-              {fmt(totalEmployerContributions)}
-            </Text>
-          </View>
-
-          <View style={{ ...pdfStyles.tableRow, backgroundColor: mainColor }}>
-            <Text style={{ ...pdfStyles.tableCell, flex: 2, fontWeight: 'bold', color: contrastText }}>
-              Total Employer Cost
-            </Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, color: contrastText }}>
-              
-            </Text>
-            <Text style={{ ...pdfStyles.tableCell, flex: 1, textAlign: 'right', fontWeight: 'bold', color: contrastText }}>
-              {fmt(totalEmployerCost)}
-            </Text>
+            {payslip.allowances.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 3,
+                  }}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 1.5,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
+      )}
 
-        <View style={{ ...pdfStyles.tableRow, marginTop: 40 }}>
-          <View style={{ flex: 1, padding: 2 }}>
-            <Text style={{ ...pdfStyles.minInfo, color: mainColor }}>Status</Text>
-            <Text style={{ ...pdfStyles.minInfo }}>{fmtStatus(payrollRun?.status)}</Text>
+      {/* Deductions List */}
+      {payslip?.deductions?.length > 0 && (
+        <View style={{ marginBottom: 15 }}>
+          <Text
+            style={{ ...pdfStyles.midInfo, color: mainColor, marginBottom: 5 }}
+          >
+            Deductions Breakdown
+          </Text>
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.tableRow}>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3,
+                }}
+              >
+                Label
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.5,
+                  textAlign: 'right',
+                }}
+              >
+                Amount
+              </Text>
+            </View>
+            {payslip.deductions.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 3,
+                  }}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 1.5,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
           </View>
         </View>
+      )}
 
-        {/* Footer */}
-        <PageFooter />
-      </Page>
+      {/* Employer Contributions List */}
+      {payslip?.employer_contributions?.length > 0 && (
+        <View style={{ marginBottom: 15 }}>
+          <Text
+            style={{ ...pdfStyles.midInfo, color: mainColor, marginBottom: 5 }}
+          >
+            Employer Contributions
+          </Text>
+          <View style={pdfStyles.table}>
+            <View style={pdfStyles.tableRow}>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 3,
+                }}
+              >
+                Label
+              </Text>
+              <Text
+                style={{
+                  ...pdfStyles.tableHeader,
+                  backgroundColor: mainColor,
+                  color: contrastText,
+                  flex: 1.5,
+                  textAlign: 'right',
+                }}
+              >
+                Amount
+              </Text>
+            </View>
+            {payslip.employer_contributions.map((item: any, idx: number) => (
+              <View key={idx} style={pdfStyles.tableRow}>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 3,
+                  }}
+                >
+                  {item.label}
+                </Text>
+                <Text
+                  style={{
+                    ...pdfStyles.tableCell,
+                    backgroundColor: idx % 2 === 0 ? '#FFFFFF' : lightColor,
+                    flex: 1.5,
+                    textAlign: 'right',
+                  }}
+                >
+                  {fmt(item.amount)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <PageFooter />
+    </Page>
+  );
+
+  return (
+    <Document
+      title={`Payslip - ${employeeName}`}
+      subject='Employee Payslip'
+      creator='ProsERP'
+      producer='ProsERP'
+    >
+      {thermalPrinter ? <PDF80mm /> : <PDFA4 />}
     </Document>
   );
 };
