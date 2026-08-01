@@ -236,7 +236,7 @@ function IncomeStatement({
                   />
                 </Div>
               </Grid>
-              <Grid size={{ xs: 6, md: 3.5, lg: 3.5 }}>
+              <Grid size={{ xs: 12, md: 3.5, lg: 3.5 }}>
                 <Div sx={{ mt: 1, mb: 1, display: 'flex' }}>
                   <TextField
                     select
@@ -246,7 +246,6 @@ function IncomeStatement({
                     value={watch('aggregate_by') ?? ''}
                     sx={{
                       width: { xs: '100%', md: 180 },
-                      maxWidth: 180,
                       position: 'relative',
                     }}
                     InputProps={{
@@ -320,7 +319,7 @@ function IncomeStatement({
                   </TextField>
                 </Div>
               </Grid>
-              <Grid size={{ xs: 6, md: 8.5, lg: 8.5 }} textAlign='right'>
+              <Grid size={{ xs: 12, md: 8.5, lg: 8.5 }} textAlign='right'>
                 <Stack
                   direction='row'
                   spacing={0.5}
@@ -353,29 +352,6 @@ function IncomeStatement({
                   </>
                 </Stack>
               </Grid>
-              {/* <Grid size={12}>
-                <FormControl>
-                  <FormLabel id='display_as_radiobuttons'>Display As</FormLabel>
-                  <RadioGroup
-                    row
-                    aria-labelledby='display_as_radiobuttons'
-                    name='row-radio-buttons-group'
-                    value={displayAs}
-                    onChange={(e) => setDisplayAs(e.target.value)}
-                  >
-                    <FormControlLabel
-                      value='on screen'
-                      control={<Radio />}
-                      label='On Screen'
-                    />
-                    <FormControlLabel
-                      value='pdf'
-                      control={<Radio />}
-                      label='PDF'
-                    />
-                  </RadioGroup>
-                </FormControl>
-              </Grid> */}
             </Grid>
           </form>
         </Span>
