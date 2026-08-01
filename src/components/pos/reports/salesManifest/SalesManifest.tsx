@@ -152,14 +152,26 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
     PERMISSIONS.ACCOUNTS_REPORTS,
   ]);
 
+  // The overall Summary section blends totals across every transaction, which can
+  // be in different currencies, so it must convert revenue into one common
+  // (base) currency to sum meaningfully. cost is already always base currency.
+  const baseRate = (rate: number, exchangeRate: number): number =>
+    rate * (exchangeRate || 1);
+
+  // Per-transaction sections instead show each sale in its own currency, so there
+  // it's cost (always base currency) that gets converted into the sale's currency.
+  const saleCurrencyCost = (cost: number, exchangeRate: number): number =>
+    cost / (exchangeRate || 1);
+
   const saleAmount = (sale: Transaction): number => {
     return sale.items.reduce((amount: number, saleItem: SaleItem) => {
+      const rate = baseRate(saleItem.rate, sale.exchange_rate);
       if (saleItem.product.vat_exempted) {
-        return amount + saleItem.quantity * saleItem.rate;
+        return amount + saleItem.quantity * rate;
       } else {
         return (
           amount +
-          saleItem.quantity * saleItem.rate * (1 + sale.vat_percentage * 0.01)
+          saleItem.quantity * rate * (1 + sale.vat_percentage * 0.01)
         );
       }
     }, 0);
@@ -187,7 +199,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
   const totalSaleAmount = (sale: Transaction): number => {
     return sale.items.reduce(
       (amount: number, saleItem: SaleItem) =>
-        amount + saleItem.quantity * saleItem.rate,
+        amount + saleItem.quantity * baseRate(saleItem.rate, sale.exchange_rate),
       0
     );
   };
@@ -334,6 +346,17 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                     Summary
                   </Text>
                 </View>
+                <Text
+                  style={{
+                    ...pdfStyles.minInfo,
+                    color: 'gray',
+                    textAlign: 'center',
+                  }}
+                >
+                  Converted to base currency (transactions may be in different
+                  currencies). Each transaction below shows its own figures in
+                  its own sale currency.
+                </Text>
               </View>
             </View>
 
@@ -540,6 +563,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
 
         {reportData.transactions.map((sale, index) => {
           const vat_percentage = sale.vat_percentage;
+          const exchangeRate = sale.exchange_rate;
 
           return (
             <React.Fragment key={index}>
@@ -559,7 +583,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
               </View>
               <View style={{ ...pdfStyles.tableRow }}>
                 <Text style={{ ...pdfStyles.midInfo, textAlign: 'right' }}>
-                  {sale.counter}
+                  {sale.counter} | Currency: {sale.currency.code} ({sale.currency.symbol})
                 </Text>
               </View>
 
@@ -671,7 +695,9 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                 </View>
 
                 {/* Table Rows */}
-                {sale.items.map((saleItem, itemIndex) => (
+                {sale.items.map((saleItem, itemIndex) => {
+                  const cost = saleCurrencyCost(saleItem.cost, exchangeRate);
+                  return (
                   <View key={itemIndex} style={pdfStyles.tableRow}>
                     <Text
                       style={{
@@ -790,7 +816,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                             textAlign: 'right',
                           }}
                         >
-                          {(saleItem.cost / saleItem.quantity).toLocaleString(
+                          {(cost / saleItem.quantity).toLocaleString(
                             'en-US',
                             {
                               maximumFractionDigits: 2,
@@ -807,7 +833,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                             textAlign: 'right',
                           }}
                         >
-                          {saleItem.cost.toLocaleString('en-US', {
+                          {cost.toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
                           })}
@@ -830,7 +856,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                                   : saleItem.quantity *
                                     saleItem.rate *
                                     vat_percentage *
-                                    0.01)) - saleItem.cost
+                                    0.01)) - cost
                           ).toLocaleString('en-US', {
                             maximumFractionDigits: 2,
                             minimumFractionDigits: 2,
@@ -839,7 +865,8 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                       </React.Fragment>
                     )}
                   </View>
-                ))}
+                  );
+                })}
 
                 {/* Table Footer */}
                 <View style={pdfStyles.tableRow}>
@@ -933,7 +960,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                       >
                         {sale.items
                           .reduce(
-                            (total, currentItem) => total + currentItem.cost,
+                            (total, currentItem) => total + saleCurrencyCost(currentItem.cost, exchangeRate),
                             0
                           )
                           .toLocaleString('en-US', {
@@ -963,7 +990,7 @@ const SalesManifestPDF: React.FC<SalesManifestPDFProps> = ({
                                       currentItem.rate *
                                       vat_percentage *
                                       0.01)) -
-                                currentItem.cost),
+                                saleCurrencyCost(currentItem.cost, exchangeRate)),
                             0
                           )
                           .toLocaleString('en-US', {
