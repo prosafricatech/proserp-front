@@ -1,6 +1,6 @@
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Grid, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete } from '@mui/material';
-import { useEffect, useState } from 'react'
+import { Grid, TextField, FormControl, InputLabel, Select, MenuItem, Autocomplete, Dialog, Tooltip } from '@mui/material';
+import { useCallback, useEffect, useState } from 'react'
 import * as yup from 'yup';
 import { useForm } from 'react-hook-form';
 import { LoadingButton } from '@mui/lab';
@@ -11,9 +11,14 @@ import MeasurementSelector from '@/components/masters/measurementUnits/Measureme
 import CommaSeparatedField from '@/shared/Inputs/CommaSeparatedField';
 import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import { AddOutlined, CheckOutlined, DisabledByDefault } from '@mui/icons-material';
-import { IconButton, LinearProgress, Tooltip } from '@mui/material';
+import { IconButton, LinearProgress } from '@mui/material';
 import { useLedgerSelect } from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 import { useCurrencySelect } from '@/components/masters/Currencies/CurrencySelectProvider';
+import QuickAddLedger from '@/components/accounts/ledgers/forms/QuickAddLedger';
+import LedgerGroupProvider from '@/components/accounts/ledgerGroups/LedgerGroupProvider';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 
 function LedgerItemsTab({
   index = -1,
@@ -31,9 +36,25 @@ function LedgerItemsTab({
   const [isAdding, setIsAdding] = useState(false);
   const [boundToOption, setBoundToOption] = useState(ledgerItem?.selectedItemable ? 'Task' : ledgerItem?.bound_to === 'ProjectTask' ? 'Task' : '');
   const [selectedItemable, setSelectedItemable] = useState(ledgerItem?.selectedItemable ?? allTasks.find(task => task.id === ledgerItem?.budget_itemable_id) ?? null);
+  const [openQuickAddLedger, setOpenQuickAddLedger] = useState(false);
+  const [recentlyAddedLedger, setRecentlyAddedLedger] = useState(null);
   const { ungroupedLedgerOptions } = useLedgerSelect();
   const { currencies } = useCurrencySelect();
   const [triggerKey, setTriggerKey] = useState(0);
+  const { checkOrganizationPermission, organizationHasSubscribed } = useJumboAuth();
+  const canQuickAddLedger = organizationHasSubscribed(MODULES.ACCOUNTS_AND_FINANCE) && checkOrganizationPermission(PERMISSIONS.ACCOUNTS_MASTERS_CREATE);
+
+  const formatTaskOptionLabel = (option) => {
+    if (!option) return '';
+    const code = String(option.code || '').trim();
+    const name = String(option.name || option.label || '').trim();
+
+    if (code && name) {
+      return `${code} - ${name}`;
+    }
+
+    return name;
+  };
 
   const validationSchema = yup.object({
     ledger_id: yup.number().required("Expense name is required").typeError('Expense name is required'),
@@ -66,6 +87,17 @@ function LedgerItemsTab({
   useEffect(() => {
     setIsDirty?.(Object.keys(dirtyFields).length > 0);
   }, [dirtyFields, setIsDirty]);
+
+  const handleLedgerChange = useCallback((newValue) => {
+    if (Array.isArray(newValue)) return;
+
+    setRecentlyAddedLedger(newValue || null);
+    setValue('ledger_id', newValue ? newValue.id : null, {
+      shouldValidate: true,
+      shouldDirty: true,
+    });
+    setValue('ledger', newValue || null);
+  }, [setValue]);
 
   const updateItems = async (item) => {
     setIsAdding(true);
@@ -109,6 +141,7 @@ function LedgerItemsTab({
         description: '',
       });
       setSelectedItemable(null);
+      setRecentlyAddedLedger(null);
       setBoundToOption('');
       setTriggerKey(prev => prev + 1);
       setIsDirty?.(false);
@@ -138,15 +171,17 @@ function LedgerItemsTab({
               label="Expense Name"
               allowedGroups={['Expenses']}
               frontError={errors?.ledger_id}
-              value={ungroupedLedgerOptions.find(option => option.id === watch('ledger_id')) || null}
-              onChange={(newValue) => {
-                if (Array.isArray(newValue)) return;
-                setValue(`ledger_id`, newValue ? newValue.id : null,{
-                  shouldValidate: true,
-                  shouldDirty: true
-                });
-                setValue('ledger', newValue || null);
-              }}
+              addedLedger={recentlyAddedLedger}
+              value={recentlyAddedLedger || ungroupedLedgerOptions.find(option => option.id === watch('ledger_id')) || null}
+              onChange={handleLedgerChange}
+              startAdornment={canQuickAddLedger ? (
+                <Tooltip title="Quick Add Ledger" placement="top">
+                  <AddOutlined
+                    onClick={() => setOpenQuickAddLedger(true)}
+                    sx={{ cursor: 'pointer' }}
+                  />
+                </Tooltip>
+              ) : null}
             />
           </Div>
         </Grid>
@@ -178,7 +213,7 @@ function LedgerItemsTab({
                 <Autocomplete
                   options={boundToOption === 'Task' ? allTasks : []}
                   isOptionEqualToValue={(option, value) => option.id === value?.id}
-                  getOptionLabel={(option) => option.label}
+                  getOptionLabel={(option) => formatTaskOptionLabel(option)}
                   value={selectedItemable}
                   renderInput={(params) => (
                     <TextField {...params} label={`Select ${boundToOption}`} size="small" fullWidth />
@@ -189,7 +224,7 @@ function LedgerItemsTab({
                   }}
                   renderOption={(props, option) => (
                     <li {...props} key={option.id}>
-                      {option.label}
+                      {formatTaskOptionLabel(option)}
                     </li>
                   )}
                 />
@@ -316,6 +351,23 @@ function LedgerItemsTab({
           </Div>
         </Grid>
       </Grid>
+      <Dialog open={openQuickAddLedger} onClose={() => setOpenQuickAddLedger(false)} maxWidth="md" fullWidth>
+        <LedgerGroupProvider>
+          <QuickAddLedger
+            ledgerType="debit"
+            toggleOpen={setOpenQuickAddLedger}
+            heading="Quick Add Ledger"
+            setAddedLedger={(newLedger) => {
+              setRecentlyAddedLedger(newLedger);
+              setValue('ledger_id', newLedger?.id ?? null, {
+                shouldValidate: true,
+                shouldDirty: true,
+              });
+              setValue('ledger', newLedger || null);
+            }}
+          />
+        </LedgerGroupProvider>
+      </Dialog>
       <Grid size={12} textAlign={'end'}>
         <LoadingButton
           loading={false}
