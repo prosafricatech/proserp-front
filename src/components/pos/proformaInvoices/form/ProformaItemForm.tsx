@@ -124,6 +124,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
     setValue,
     handleSubmit,
     watch,
+    control,
     reset,
     register,
     formState: { errors, dirtyFields },
@@ -154,12 +155,12 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
 
   const { isFetching } = useQuery({
     queryKey: [
-      'sellingPrice', 
-      { 
+      'sellingPrice',
+      {
         id: watch('product')?.id,
         sales_outlet_id: activeOutlet?.id,
         currency_id: selectedCurrencyId,
-      }
+      },
     ],
     queryFn: async () => {
       const product_id = watch('product')?.id;
@@ -173,12 +174,12 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
           shouldDirty: true,
           shouldValidate: true,
         });
-        setValue('currency_id' as keyof FormValues, response.currency_id)
+        setValue('currency_id' as keyof FormValues, response.currency_id);
         return response;
       }
       return null;
     },
-    enabled: !!watch('product')?.id && !!activeOutlet?.id && !item
+    enabled: !!watch('product')?.id && !!activeOutlet?.id && !item,
   });
 
   const calculateAmount = (): number => {
@@ -359,6 +360,13 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                 fullWidth
                 size='small'
                 defaultValue={item?.quantity ?? ''}
+                onChange={(e) => {
+                  setValue(
+                    'quantity',
+                    e.target.value ? sanitizedNumber(e.target.value) : 0,
+                    { shouldDirty: true, shouldValidate: true }
+                  );
+                }}
                 InputProps={{
                   inputComponent: CommaSeparatedField,
                   endAdornment: product && selectedUnit && (
@@ -399,7 +407,7 @@ const ProformaItemForm: React.FC<ProformaItemFormProps> = ({
                 }}
                 error={!!errors.quantity}
                 helperText={errors.quantity?.message}
-                {...register('quantity')}
+                // {...register('quantity')}
               />
             </Grid>
 
