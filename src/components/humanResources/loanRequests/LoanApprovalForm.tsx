@@ -12,7 +12,9 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -56,6 +58,7 @@ const LoanApprovalForm = ({
     defaultInstallments
   );
   const [remarks, setRemarks] = useState('');
+  const [approvalDate, setApprovalDate] = useState(dayjs().format('YYYY-MM-DD'));
   const [amountError, setAmountError] = useState('');
   const [installmentsError, setInstallmentsError] = useState('');
   const [remarksError, setRemarksError] = useState('');
@@ -68,6 +71,7 @@ const LoanApprovalForm = ({
     setAmountApproved(ceilingAmount);
     setInstallmentsApproved(defaultInstallments);
     setRemarks('');
+    setApprovalDate(dayjs().format('YYYY-MM-DD'));
     setAmountError('');
     setInstallmentsError('');
     setRemarksError('');
@@ -134,6 +138,7 @@ const LoanApprovalForm = ({
       installments_approved:
         status === 'approved' ? Number(installmentsApproved) : undefined,
       remarks,
+      approval_date: approvalDate || undefined,
     });
   };
 
@@ -183,6 +188,14 @@ const LoanApprovalForm = ({
               setInstallmentsApproved(
                 e.target.value === '' ? '' : sanitizedNumber(e.target.value)
               );
+            }}
+          />
+          <DatePicker
+            label='Approval Date'
+            value={approvalDate ? dayjs(approvalDate) : null}
+            onChange={(val) => setApprovalDate(val?.format('YYYY-MM-DD') || '')}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
             }}
           />
           <TextField

@@ -199,9 +199,12 @@ const LoanRequestsListItem = ({
           </Grid>
 
           <Grid size={{ xs: 12, md: 1.8 }}>
-            <Tooltip title='Requested On'>
+            <Tooltip title='Loan Request Date'>
               <Typography>
-                {readableDate(loanRequest.created_at, false)}
+                {readableDate(
+                  loanRequest.requested_at || loanRequest.created_at,
+                  false
+                )}
               </Typography>
             </Tooltip>
           </Grid>
@@ -429,24 +432,6 @@ const LoanRequestsListItem = ({
                             </Typography>
                           </Card>
                         </Grid>
-                      </Grid>
-                    </CardContent>
-                  </Card>
-
-                  <Card sx={{ width: '100%' }}>
-                    <CardContent>
-                      <Grid container spacing={2}>
-                        <Grid size={12}>
-                          <SectionTitle>Meta</SectionTitle>
-                        </Grid>
-                        <Field
-                          label='Created By'
-                          value={`${details.employee?.first_name} ${details.employee?.middle_name ? details.employee?.middle_name : ''} ${details.employee?.last_name}`}
-                        />
-                        <Field
-                          label='Created At'
-                          value={readableDate(details.created_at, false)}
-                        />
                       </Grid>
                     </CardContent>
                   </Card>

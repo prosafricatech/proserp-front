@@ -68,12 +68,16 @@ const PayrollRunsListItem = ({
   const isSubmitted = status === 'submitted';
   const isApproved = status === 'approved';
   const isPosted = status === 'posted';
+  const isPartiallyPaid = status === 'partially_paid';
   const isPaid = status === 'paid';
   const hasChain = Boolean(
     payrollRun.approval_chain_id || payrollRun.approval_chain
   );
   const hasPayslips =
-    status === 'approved' || status === 'posted' || status === 'paid';
+    status === 'approved' ||
+    status === 'posted' ||
+    status === 'partially_paid' ||
+    status === 'paid';
 
   // Invalidate queries helper
   const invalidatePayrollRunQueries = () => {
@@ -221,26 +225,6 @@ const PayrollRunsListItem = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  const { mutate: payPayrollRun, isPending: isPaying } = useMutation({
-    mutationFn: (data: any) => {
-      return humanResourcesServices.payPayrollRun({
-        id: payrollRun.id,
-        ...data,
-      });
-    },
-    onSuccess: (response: any) => {
-      invalidatePayrollRunQueries();
-      enqueueSnackbar(
-        response?.payment?.voucher_no
-          ? `Payroll paid: ${response.payment.voucher_no}`
-          : 'Payroll run paid',
-        { variant: 'success' }
-      );
-    },
-    onError: (error) =>
-      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
-  });
-
   const { mutate: deletePayrollRun, isPending: isDeleting } = useMutation({
     mutationFn: () => humanResourcesServices.deletePayrollRun(payrollRun.id),
     onSuccess: () => {
@@ -262,9 +246,6 @@ const PayrollRunsListItem = ({
         break;
       case 'post':
         postPayrollRun(data || {});
-        break;
-      case 'pay':
-        payPayrollRun(data || {});
         break;
       case 'complete':
         completePayrollRun();
@@ -396,6 +377,7 @@ const PayrollRunsListItem = ({
                 isSubmitted={isSubmitted}
                 isApproved={isApproved}
                 isPosted={isPosted}
+                isPartiallyPaid={isPartiallyPaid}
                 isPaid={isPaid}
                 hasChain={hasChain}
                 payrollRunId={payrollRun.id}
@@ -406,7 +388,6 @@ const PayrollRunsListItem = ({
                 isDeleting={isDeleting}
                 isApproving={isApproving}
                 isPosting={isPosting}
-                isPaying={isPaying}
                 runLabel={runLabel}
                 isCompleting={isCompleting}
               />
@@ -453,6 +434,7 @@ const PayrollRunsListItem = ({
                     onViewPayslip={handleViewPayslip}
                     runStatus={payrollRun.status || 'approved'}
                     isPaid={isPaid}
+                    isPartiallyPaid={isPartiallyPaid}
                     isPosted={isPosted}
                   />
                 </TabPanel>

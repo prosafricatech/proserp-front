@@ -696,6 +696,21 @@ humanResourcesServices.markLoanRequestDisbursed = async ({ id, ...payload }) => 
     return data;
 }
 
+humanResourcesServices.reverseLoanDisbursement = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/reverseDisbursement`);
+    return data;
+}
+
+humanResourcesServices.reverseLoanApproval = async (id) => {
+    const { data } = await axios.post(`/api/humanResources/loanRequests/${id}/reverseApproval`);
+    return data;
+}
+
+humanResourcesServices.updateLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.put(`/api/humanResources/loanRequests/${id}`, payload);
+    return data;
+}
+
 // ============================================
 // PAYE TAX BANDS
 // ============================================
@@ -930,9 +945,28 @@ humanResourcesServices.postPayrollRunTransactions = async ({ id, ...payload }) =
     return data;
 }
 
-// Pay Employees - creates Payment Voucher
+// Pay Employees - creates Payment Voucher. payload may include payslip_payments
+// for partial/specific-employee payments; omit it to pay everyone in full.
 humanResourcesServices.payPayrollRun = async ({ id, ...payload }) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/pay`, payload);
+    return data;
+}
+
+// What's left to pay, per employee — for the partial-payment screen.
+humanResourcesServices.payrollRunPayBalances = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/pay-balances`);
+    return data;
+}
+
+// What this run accrued/settled/still-owes per deduction/employer-contribution type.
+humanResourcesServices.payrollRunPayableSummary = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/payable-summary`);
+    return data;
+}
+
+// Settle (some or all of) this run's deduction/employer-contribution payables.
+humanResourcesServices.payPayrollRunPayables = async ({ id, ...payload }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/pay-payables`, payload);
     return data;
 }
 
@@ -1064,6 +1098,11 @@ humanResourcesServices.myHrLoanRequests = async (params = {}) => {
 // --- add loan request ---
 humanResourcesServices.myHrAddLoanRequests = async (loan) => {
     const { data } = await axios.post(`/api/humanResources/myHr/loanRequests/add`, loan)
+    return data;
+}
+// --- update loan request (creator only, while still in_review) ---
+humanResourcesServices.myHrUpdateLoanRequest = async ({ id, ...payload }) => {
+    const { data } = await axios.put(`/api/humanResources/myHr/loanRequests/${id}`, payload);
     return data;
 }
 

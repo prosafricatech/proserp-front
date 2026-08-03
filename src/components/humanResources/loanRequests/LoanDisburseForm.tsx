@@ -12,7 +12,9 @@ import {
   DialogTitle,
   Stack,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -32,12 +34,14 @@ const LoanDisburseForm = ({
   onClose,
 }: LoanDisburseFormProps) => {
   const [creditLedgerId, setCreditLedgerId] = useState(0);
+  const [disbursedAt, setDisbursedAt] = useState(dayjs().format('YYYY-MM-DD'));
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!open) return;
     setCreditLedgerId(0);
+    setDisbursedAt(dayjs().format('YYYY-MM-DD'));
   }, [open]);
 
   const { mutate: disburse, isPending } = useMutation({
@@ -60,7 +64,11 @@ const LoanDisburseForm = ({
 
   const handleSubmit = () => {
     if (!creditLedgerId) return;
-    disburse({ id: loanRequest.id, credit_ledger_id: creditLedgerId });
+    disburse({
+      id: loanRequest.id,
+      credit_ledger_id: creditLedgerId,
+      disbursed_at: disbursedAt || undefined,
+    });
   };
 
   return (
@@ -92,6 +100,14 @@ const LoanDisburseForm = ({
               onChange={(ledger: any) => setCreditLedgerId(ledger?.id || 0)}
             />
           </LedgerSelectProvider>
+          <DatePicker
+            label='Payment Date'
+            value={disbursedAt ? dayjs(disbursedAt) : null}
+            onChange={(val) => setDisbursedAt(val?.format('YYYY-MM-DD') || '')}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+            }}
+          />
         </Stack>
       </DialogContent>
       <DialogActions>

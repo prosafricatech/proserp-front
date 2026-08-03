@@ -10,7 +10,9 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -30,12 +32,14 @@ const LoanMarkDisbursedForm = ({
   onClose,
 }: LoanMarkDisbursedFormProps) => {
   const [reference, setReference] = useState('');
+  const [disbursedAt, setDisbursedAt] = useState(dayjs().format('YYYY-MM-DD'));
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!open) return;
     setReference('');
+    setDisbursedAt(dayjs().format('YYYY-MM-DD'));
   }, [open]);
 
   const { mutate: markDisbursed, isPending } = useMutation({
@@ -61,6 +65,7 @@ const LoanMarkDisbursedForm = ({
     markDisbursed({
       id: loanRequest.id,
       reference: reference || undefined,
+      disbursed_at: disbursedAt || undefined,
     });
   };
 
@@ -85,6 +90,14 @@ const LoanMarkDisbursedForm = ({
             minRows={2}
             value={reference}
             onChange={(e) => setReference(e.target.value)}
+          />
+          <DatePicker
+            label='Payment Date'
+            value={disbursedAt ? dayjs(disbursedAt) : null}
+            onChange={(val) => setDisbursedAt(val?.format('YYYY-MM-DD') || '')}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+            }}
           />
         </Stack>
       </DialogContent>

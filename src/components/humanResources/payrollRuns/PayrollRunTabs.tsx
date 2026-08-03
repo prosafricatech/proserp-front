@@ -718,6 +718,7 @@ interface PayslipsTabProps {
   onViewPayslip: (payslip: any) => void;
   runStatus: string;
   isPaid: boolean;
+  isPartiallyPaid?: boolean;
   isPosted: boolean;
 }
 
@@ -728,6 +729,7 @@ export const PayslipsTab = ({
   onViewPayslip,
   runStatus,
   isPaid,
+  isPartiallyPaid,
   isPosted,
 }: PayslipsTabProps) => {
   const router = useRouter();
@@ -884,7 +886,13 @@ export const PayslipsTab = ({
                           label={runStatus || 'approved'}
                           size='small'
                           color={
-                            isPaid ? 'success' : isPosted ? 'primary' : 'info'
+                            isPaid
+                              ? 'success'
+                              : isPartiallyPaid
+                                ? 'warning'
+                                : isPosted
+                                  ? 'primary'
+                                  : 'info'
                           }
                         />
                       </TableCell>

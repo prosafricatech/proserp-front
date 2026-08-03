@@ -10,6 +10,7 @@ import {
   DeleteOutlined,
   DoneAllOutlined,
   MonetizationOnOutlined,
+  PaymentsOutlined,
   PreviewOutlined,
   ReceiptLongOutlined,
   SendOutlined,
@@ -34,6 +35,8 @@ import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 import BankTransferListDialog from './BankTransferListView/BankTransferListDialog';
+import PayEmployeesDialog from './PayEmployeesDialog';
+import PayPayablesDialog from './PayPayablesDialog';
 import { getPayslipCalculations, PayslipComputed } from './payslipCalculations';
 import { SalarySheetType } from './salarySheetType';
 
@@ -42,6 +45,7 @@ interface PayrollRunActionsProps {
   isSubmitted: boolean;
   isApproved: boolean;
   isPosted: boolean;
+  isPartiallyPaid: boolean;
   isPaid: boolean;
   hasChain: boolean;
   payrollRunId: number;
@@ -50,7 +54,6 @@ interface PayrollRunActionsProps {
   isDeleting: boolean;
   isApproving: boolean;
   isPosting: boolean;
-  isPaying: boolean;
   isCompleting: boolean;
   runLabel?: string;
   payrollRun?: any;
@@ -61,10 +64,6 @@ interface PostFormData {
   salary_expense_ledger_id: number;
   paye_payable_ledger_id: number;
   fallback_payable_ledger_id: number;
-}
-
-interface PayFormData {
-  credit_ledger_id: number;
 }
 
 interface ConfirmDialogState {
@@ -95,6 +94,7 @@ export const PayrollRunActions = ({
   isSubmitted,
   isApproved,
   isPosted,
+  isPartiallyPaid,
   isPaid,
   hasChain,
   payrollRunId,
@@ -103,7 +103,6 @@ export const PayrollRunActions = ({
   isDeleting,
   isApproving,
   isPosting,
-  isPaying,
   isCompleting,
   runLabel = 'this run',
   payrollRun,
@@ -118,6 +117,7 @@ export const PayrollRunActions = ({
   const queryClient = useQueryClient();
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
+  const [openPayPayablesDialog, setOpenPayPayablesDialog] = useState(false);
   const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [isLoadingSalarySheet, setIsLoadingSalarySheet] = useState(false);
@@ -126,9 +126,6 @@ export const PayrollRunActions = ({
     salary_expense_ledger_id: 0,
     paye_payable_ledger_id: 0,
     fallback_payable_ledger_id: 0,
-  });
-  const [payForm, setPayForm] = useState<PayFormData>({
-    credit_ledger_id: 0,
   });
   const [bankTransferList, setBankTransferList] =
     useState<SalarySheetType | null>(null);
@@ -292,9 +289,6 @@ export const PayrollRunActions = ({
       case 'post':
         setOpenPostDialog(true);
         break;
-      case 'pay':
-        setOpenPayDialog(true);
-        break;
       case 'complete':
         setOpenCompleteDialog(true);
         break;
@@ -336,12 +330,6 @@ export const PayrollRunActions = ({
     });
   };
 
-  const handlePayConfirm = () => {
-    onAction('pay', payForm);
-    setOpenPayDialog(false);
-    setPayForm({ credit_ledger_id: 0 });
-  };
-
   const handleCompleteConfirm = () => {
     onAction('complete');
     setOpenCompleteDialog;
@@ -352,9 +340,8 @@ export const PayrollRunActions = ({
     postForm.paye_payable_ledger_id > 0 &&
     postForm.fallback_payable_ledger_id > 0;
 
-  const isPayFormValid = payForm.credit_ledger_id > 0;
-
-  const canViewBankTransferList = isApproved || isPosted || isPaid;
+  const canViewBankTransferList =
+    isApproved || isPosted || isPartiallyPaid || isPaid;
 
   const isDirectFlow = !payrollRun.approval_chain_id;
   const canDirectDecide = isDirectFlow && payrollRun.status === 'submitted';
@@ -459,26 +446,37 @@ export const PayrollRunActions = ({
           </Tooltip>
         )}
 
-        {/* 5. PAY EMPLOYEES - For posted runs */}
-        {isPosted && !isPaid && orgHasSubscribedAccountsAndFinance && (
-          <Tooltip title='Pay Employees'>
-            <IconButton
-              size='small'
-              onClick={() => handleActionClick('pay')}
-              disabled={isPaying}
-              color='success'
-              sx={{
-                color: 'sucess',
-              }}
-            >
-              {isPaying ? (
-                <CircularProgress size={18} />
-              ) : (
+        {/* 5. PAY EMPLOYEES - For posted or partially paid runs. Can be paid in
+             full or partial/multiple installments — see PayEmployeesDialog. */}
+        {(isPosted || isPartiallyPaid) &&
+          !isPaid &&
+          orgHasSubscribedAccountsAndFinance && (
+            <Tooltip title='Pay Employees'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenPayDialog(true)}
+                color='success'
+              >
                 <MonetizationOnOutlined fontSize='medium' />
-              )}
-            </IconButton>
-          </Tooltip>
-        )}
+              </IconButton>
+            </Tooltip>
+          )}
+
+        {/* 5b. PAY PAYABLES - Settle this run's deduction/employer-contribution
+             payables (NSSF, PAYE, etc.), independent of whether employees
+             themselves are fully paid yet. */}
+        {(isPosted || isPartiallyPaid || isPaid) &&
+          orgHasSubscribedAccountsAndFinance && (
+            <Tooltip title='Pay Payables'>
+              <IconButton
+                size='small'
+                onClick={() => setOpenPayPayablesDialog(true)}
+                color='secondary'
+              >
+                <PaymentsOutlined fontSize='medium' />
+              </IconButton>
+            </Tooltip>
+          )}
 
         {/* SHOW COMPLETE BUTTON IF NOT SUBSCRIBED TO ACCOUNTS AND FINANCE */}
         {isApproved && !orgHasSubscribedAccountsAndFinance && (
@@ -668,53 +666,17 @@ export const PayrollRunActions = ({
         </DialogActions>
       </Dialog>
 
-      {/* Pay Employees Dialog */}
-      <Dialog
+      <PayEmployeesDialog
         open={openPayDialog}
         onClose={() => setOpenPayDialog(false)}
-        fullWidth
-        maxWidth='xs'
-      >
-        <DialogTitle>
-          <Typography variant='h6' component='div' fontWeight={600}>
-            Pay Employees
-          </Typography>
-        </DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <Alert severity='info' sx={{ mb: 1 }}>
-              Select the bank or cash account the payroll payment will come
-              from.
-            </Alert>
+        payrollRunId={payrollRunId}
+      />
 
-            <LedgerSelect
-              label='Bank or Cash Account'
-              onChange={(ledger: any) =>
-                setPayForm({ credit_ledger_id: ledger?.id || 0 })
-              }
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button
-            onClick={() => setOpenPayDialog(false)}
-            variant='outlined'
-            size='small'
-            disabled={isPaying}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant='contained'
-            color='success'
-            size='small'
-            onClick={handlePayConfirm}
-            disabled={isPaying || !isPayFormValid}
-          >
-            {isPaying ? <CircularProgress size={18} /> : 'Pay Employees'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      <PayPayablesDialog
+        open={openPayPayablesDialog}
+        onClose={() => setOpenPayPayablesDialog(false)}
+        payrollRunId={payrollRunId}
+      />
 
       {/* Complete payroll confirmation Dialog */}
       <Dialog

@@ -275,6 +275,7 @@ function PaymentItemAction({ transaction }: { transaction: Transaction }) {
       action: 'duplicate',
     },
     !transaction.requisition_approval_id &&
+      !!transaction.editable &&
       checkOrganizationPermission([
         PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT,
         PERMISSIONS.PAYMENTS_EDIT,
@@ -290,6 +291,7 @@ function PaymentItemAction({ transaction }: { transaction: Transaction }) {
         action: 'edit',
       },
     !transaction.requisition_approval_id &&
+      !!transaction.editable &&
       checkOrganizationPermission([
         PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE,
         PERMISSIONS.PAYMENTS_DELETE,

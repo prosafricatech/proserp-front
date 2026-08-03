@@ -551,6 +551,17 @@ function Sidebar({ menus }) {
                     }
                 }
 
+                //Accounts > Approved Loans
+                if (!organizationHasSubscribed([MODULES.HUMAN_RESOURCES, MODULES.ACCOUNTS_AND_FINANCE]) && !checkOrganizationPermission(PERMISSIONS.ACCOUNTS_TRANSACTIONS_CREATE) && !checkOrganizationPermission(PERMISSIONS.LOANS_READ)) {
+                    const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);
+
+                    if (accountsMenuIndex >= 0) {
+                        updatedMenus[accountsMenuIndex].children = updatedMenus[accountsMenuIndex].children.filter(
+                            item => item.label !== dictionary.sidebar.menuItem.approvedLoans
+                        );
+                    }
+                }
+
                 // Accounts > Masters
                 if (!checkOrganizationPermission([PERMISSIONS.ACCOUNTS_MASTERS_READ, PERMISSIONS.ACCOUNTS_MASTERS_CREATE])) {
                     const accountsMenuIndex = updatedMenus.findIndex(menu => menu.label === dictionary.sidebar.menu.accounts_and_finance);

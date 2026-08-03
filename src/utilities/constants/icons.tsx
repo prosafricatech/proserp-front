@@ -55,6 +55,7 @@ export const ICONS = {
   approvals: ChecklistRtlOutlined,
   approvedPayments: PaymentsOutlined,
   approvedPayrollRuns: FactCheckOutlined,
+  approvedLoans: PaidOutlined,
   approvedPurchases: ShoppingCartCheckout,
   retirements: AssignmentTurnedInOutlined,
   counter: PointOfSaleOutlined,

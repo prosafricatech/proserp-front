@@ -11,7 +11,9 @@ import {
   Stack,
   TextField,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -43,6 +45,7 @@ const LoanDirectDecisionForm = ({
     loanRequest.installments
   );
   const [remarks, setRemarks] = useState('');
+  const [reviewedAt, setReviewedAt] = useState(dayjs().format('YYYY-MM-DD'));
   const [amountError, setAmountError] = useState('');
   const [remarksError, setRemarksError] = useState('');
 
@@ -54,6 +57,7 @@ const LoanDirectDecisionForm = ({
     setAmountApproved(loanRequest.amount);
     setInstallmentsApproved(loanRequest.installments);
     setRemarks('');
+    setReviewedAt(dayjs().format('YYYY-MM-DD'));
     setAmountError('');
     setRemarksError('');
   }, [open]);
@@ -110,6 +114,7 @@ const LoanDirectDecisionForm = ({
           ? Number(installmentsApproved)
           : undefined,
       remarks: remarks || undefined,
+      reviewed_at: reviewedAt || undefined,
     });
   };
 
@@ -161,6 +166,14 @@ const LoanDirectDecisionForm = ({
               />
             </>
           )}
+          <DatePicker
+            label={isApprove ? 'Approval Date' : 'Rejection Date'}
+            value={reviewedAt ? dayjs(reviewedAt) : null}
+            onChange={(val) => setReviewedAt(val?.format('YYYY-MM-DD') || '')}
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+            }}
+          />
           <TextField
             label='Remarks'
             size='small'

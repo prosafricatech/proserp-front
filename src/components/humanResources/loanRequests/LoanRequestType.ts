@@ -75,6 +75,7 @@ export interface LoanRequestType {
   installments_approved: number | null;
   installment_amount: number | null;
   reason: string | null;
+  requested_at: string | null;
   status: LoanRequestStatus;
   deduction_type_id: number | null;
   employee_deduction_id: number | null;

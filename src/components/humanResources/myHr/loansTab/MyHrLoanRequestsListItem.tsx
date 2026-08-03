@@ -1,8 +1,21 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
-import { PaidOutlined } from '@mui/icons-material';
-import { Chip, Divider, Grid, Stack, Tooltip, Typography } from '@mui/material';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import { EditOutlined, PaidOutlined } from '@mui/icons-material';
+import {
+  Chip,
+  Dialog,
+  Divider,
+  Grid,
+  IconButton,
+  Stack,
+  Tooltip,
+  Typography,
+  useMediaQuery,
+} from '@mui/material';
+import { useState } from 'react';
+import LoanRequstForm from './LoanRequstForm';
 import { MyHrLoanRequestType } from './LoanRequestType';
-// import { LoanRequest } from './LoanRequestType';
 
 const formatCurrency = (value?: number | null) =>
   value != null ? Number(value).toLocaleString() : '—';
@@ -28,6 +41,11 @@ const MyHrLoanRequestsListItem = ({
 }: {
   loanRequest: MyHrLoanRequestType;
 }) => {
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
+  const { authUser } = useJumboAuth();
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+
   const statusColor = STATUS_COLOR[loanRequest.status] || 'default';
   const statusLabel =
     STATUS_LABEL[loanRequest.status] || loanRequest.status || 'Pending';
@@ -36,8 +54,24 @@ const MyHrLoanRequestsListItem = ({
     loanRequest.amount_approved != null ||
     loanRequest.installments_approved != null;
 
+  // Only the creator can edit their own request, and only before anyone has
+  // acted on it — mirrors the admin-side list's canEdit and the backend's
+  // update() guards.
+  const canEdit =
+    loanRequest.status === 'in_review' &&
+    loanRequest.created_by === Number(authUser?.user?.id);
+
   return (
     <>
+      <Dialog
+        open={openEditDialog}
+        fullWidth
+        maxWidth='md'
+        fullScreen={belowLargeScreen}
+        onClose={() => setOpenEditDialog(false)}
+      >
+        <LoanRequstForm setOpenDialog={setOpenEditDialog} loan={loanRequest} />
+      </Dialog>
       <Divider />
       <Grid
         container
@@ -71,9 +105,12 @@ const MyHrLoanRequestsListItem = ({
         </Grid>
 
         <Grid size={{ xs: 12, md: 1.9 }}>
-          <Tooltip title='Requested On'>
+          <Tooltip title='Loan Request Date'>
             <Typography>
-              {readableDate(loanRequest.created_at, false)}
+              {readableDate(
+                loanRequest.requested_at || loanRequest.created_at,
+                false
+              )}
             </Typography>
           </Tooltip>
         </Grid>
@@ -92,6 +129,16 @@ const MyHrLoanRequestsListItem = ({
                 title={`Disbursed ${readableDate(loanRequest.disbursed_at, false)}`}
               >
                 <PaidOutlined color='success' fontSize='small' />
+              </Tooltip>
+            )}
+            {canEdit && (
+              <Tooltip title='Edit'>
+                <IconButton
+                  size='small'
+                  onClick={() => setOpenEditDialog(true)}
+                >
+                  <EditOutlined color='primary' fontSize='small' />
+                </IconButton>
               </Tooltip>
             )}
           </Stack>

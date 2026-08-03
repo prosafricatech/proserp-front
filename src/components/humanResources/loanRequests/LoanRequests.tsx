@@ -30,7 +30,15 @@ const STATUS_OPTIONS = [
   { label: 'Cancelled', value: 'cancelled' },
 ];
 
-const LoanRequests = () => {
+interface LoanRequestsProps {
+  defaultStatus?: string;
+  defaultDisbursed?: boolean;
+}
+
+const LoanRequests = ({
+  defaultStatus,
+  defaultDisbursed,
+}: LoanRequestsProps = {}) => {
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
   const { checkOrganizationPermission } = useJumboAuth();
@@ -43,7 +51,9 @@ const LoanRequests = () => {
   const [queryOptions, setQueryOptions] = React.useState({
     queryKey: 'loanRequests',
     queryParams: {
-      status: null,
+      status: defaultStatus ?? null,
+      disbursed:
+        defaultDisbursed === undefined ? undefined : defaultDisbursed ? 1 : 0,
       keyword: '',
     },
     countKey: 'total',
@@ -93,7 +103,7 @@ const LoanRequests = () => {
   return (
     <>
       <Typography variant={'h4'} mb={2}>
-        Loan Requests
+        {defaultStatus ? 'Approved Loans' : 'Loan Requests'}
       </Typography>
       <EmployeesProvider>
         <JumboRqList
@@ -136,30 +146,36 @@ const LoanRequests = () => {
                       }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 4 }}>
-                    <Autocomplete
-                      size='small'
-                      options={STATUS_OPTIONS}
-                      value={status}
-                      isOptionEqualToValue={(option, value) =>
-                        option?.value === value?.value
-                      }
-                      getOptionLabel={(option) => option.label}
-                      onChange={(_, newValue) => {
-                        setStatus(newValue);
-                        setQueryOptions((state) => ({
-                          ...state,
-                          queryParams: {
-                            ...state.queryParams,
-                            status: newValue?.value,
-                          },
-                        }));
-                      }}
-                      renderInput={(inputParams) => (
-                        <TextField {...inputParams} label='Status' fullWidth />
-                      )}
-                    />
-                  </Grid>
+                  {!defaultStatus && (
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Autocomplete
+                        size='small'
+                        options={STATUS_OPTIONS}
+                        value={status}
+                        isOptionEqualToValue={(option, value) =>
+                          option?.value === value?.value
+                        }
+                        getOptionLabel={(option) => option.label}
+                        onChange={(_, newValue) => {
+                          setStatus(newValue);
+                          setQueryOptions((state) => ({
+                            ...state,
+                            queryParams: {
+                              ...state.queryParams,
+                              status: newValue?.value,
+                            },
+                          }));
+                        }}
+                        renderInput={(inputParams) => (
+                          <TextField
+                            {...inputParams}
+                            label='Status'
+                            fullWidth
+                          />
+                        )}
+                      />
+                    </Grid>
+                  )}
                 </Grid>
               }
               actionTail={

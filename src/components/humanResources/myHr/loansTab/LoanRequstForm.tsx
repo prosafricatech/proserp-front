@@ -43,19 +43,26 @@ const LoanRequstForm = ({
   const queryClient = useQueryClient();
   const { enqueueSnackbar } = useSnackbar();
 
+  const isEditing = !!loan?.id;
+
   const {
-    mutate: addLoan,
+    mutate: submitLoan,
     isPending,
     error,
   } = useMutation<ApiResponse, any, FormData>({
     mutationFn: async (data) => {
-      return humanResourcesServices.myHrAddLoanRequests(data);
+      return isEditing
+        ? humanResourcesServices.myHrUpdateLoanRequest({ id: loan.id, ...data })
+        : humanResourcesServices.myHrAddLoanRequests(data);
     },
     onSuccess: () => {
       setOpenDialog(false);
-      enqueueSnackbar('Loan request added successfully', {
-        variant: 'success',
-      });
+      enqueueSnackbar(
+        isEditing
+          ? 'Loan request updated successfully'
+          : 'Loan request added successfully',
+        { variant: 'success' }
+      );
       queryClient.invalidateQueries({ queryKey: ['myHrLoanRequests'] });
     },
     onError: (err: any) => {
@@ -95,9 +102,9 @@ const LoanRequstForm = ({
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
     defaultValues: {
-      amount: null,
-      installments: '',
-      reason: '',
+      amount: loan?.amount ?? null,
+      installments: loan?.installments ? String(loan.installments) : '',
+      reason: loan?.reason ?? '',
     },
   });
 
@@ -105,7 +112,7 @@ const LoanRequstForm = ({
     value ? value.toLocaleString() : '';
 
   const onSubmit = (data: FormData) => {
-    addLoan(data);
+    submitLoan(data);
   };
   const onError = (error: any) => {
     console.log('error: ', error);
@@ -146,7 +153,7 @@ const LoanRequstForm = ({
                 label='Installments'
                 size='small'
                 fullWidth
-                // value={watch('installments')}
+                value={watch('installments')}
                 onChange={(e) => {
                   const val = e.target.value;
                   setValue('installments', val ? val : undefined, {

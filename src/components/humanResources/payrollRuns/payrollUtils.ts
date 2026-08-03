@@ -52,6 +52,8 @@ export const statusColor = (
       return 'warning';
     case 'processing':
       return 'warning';
+    case 'partially_paid':
+      return 'warning';
     case 'rejected':
     case 'cancelled':
       return 'error';

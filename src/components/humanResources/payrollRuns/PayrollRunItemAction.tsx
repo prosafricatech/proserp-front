@@ -9,6 +9,7 @@ import {
   DeleteOutlined,
   DownloadOutlined,
   PaidOutlined,
+  PaymentsOutlined,
   PreviewOutlined,
 } from '@mui/icons-material';
 import {
@@ -31,6 +32,8 @@ import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
+import PayEmployeesDialog from './PayEmployeesDialog';
+import PayPayablesDialog from './PayPayablesDialog';
 import { PayrollRunType } from './PayrollRunType';
 import { getPayslipCalculations } from './payslipCalculations';
 
@@ -74,6 +77,7 @@ const PayrollRunItemAction = ({
 
   const [openPostDialog, setOpenPostDialog] = useState(false);
   const [openPayDialog, setOpenPayDialog] = useState(false);
+  const [openPayPayablesDialog, setOpenPayPayablesDialog] = useState(false);
   const [openChainApprovalDialog, setOpenChainApprovalDialog] = useState(false);
   const [chainStatus, setChainStatus] = useState<
     'approved' | 'rejected' | 'on hold'
@@ -84,7 +88,6 @@ const PayrollRunItemAction = ({
     paye_payable_ledger_id: 0,
     fallback_payable_ledger_id: 0,
   });
-  const [payForm, setPayForm] = useState({ credit_ledger_id: 0 });
 
   // State for Salary Sheet Dialog
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
@@ -256,23 +259,6 @@ const PayrollRunItemAction = ({
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
   });
 
-  const { mutate: payPayrollRun, isPending: isPaying } = useMutation({
-    mutationFn: () =>
-      humanResourcesServices.payPayrollRun({ id: payrollRun.id, ...payForm }),
-    onSuccess: (response: any) => {
-      setOpenPayDialog(false);
-      invalidatePayrollRunQueries();
-      enqueueSnackbar(
-        response?.payment?.voucher_no
-          ? `Payroll paid: ${response.payment.voucher_no}`
-          : 'Payroll run paid',
-        { variant: 'success' }
-      );
-    },
-    onError: (error: any) =>
-      enqueueSnackbar(getErrorMessage(error), { variant: 'error' }),
-  });
-
   const { mutate: deletePayrollRun } = useMutation({
     mutationFn: humanResourcesServices.deletePayrollRun,
     onSuccess: () => {
@@ -291,6 +277,7 @@ const PayrollRunItemAction = ({
   const isSubmitted = status === 'submitted';
   const isApproved = status === 'approved';
   const isPosted = status === 'posted';
+  const isPartiallyPaid = status === 'partially_paid';
   const isPaid = status === 'paid';
 
   const handleItemAction = (action: string) => {
@@ -327,9 +314,6 @@ const PayrollRunItemAction = ({
         break;
       case 'post':
         setOpenPostDialog(true);
-        break;
-      case 'pay':
-        setOpenPayDialog(true);
         break;
       case 'delete':
         showDialog({
@@ -394,15 +378,28 @@ const PayrollRunItemAction = ({
         </Tooltip>
       )}
 
-      {!isFromPayrollPeriodsList && isPosted && !isPaid && (
+      {!isFromPayrollPeriodsList && (isPosted || isPartiallyPaid) && !isPaid && (
         <Tooltip title='Pay Employees'>
-          <IconButton size='small' onClick={() => handleItemAction('pay')}>
+          <IconButton size='small' onClick={() => setOpenPayDialog(true)}>
             <PaidOutlined color='success' />
           </IconButton>
         </Tooltip>
       )}
 
-      {!isFromPayrollPeriodsList && (isPaid || isPosted || isApproved) && (
+      {!isFromPayrollPeriodsList &&
+        (isPosted || isPartiallyPaid || isPaid) && (
+          <Tooltip title='Pay Payables'>
+            <IconButton
+              size='small'
+              onClick={() => setOpenPayPayablesDialog(true)}
+            >
+              <PaymentsOutlined color='secondary' />
+            </IconButton>
+          </Tooltip>
+        )}
+
+      {!isFromPayrollPeriodsList &&
+        (isPaid || isPartiallyPaid || isPosted || isApproved) && (
         <Tooltip title='Export Payslip'>
           <IconButton size='small' onClick={() => handleItemAction('export')}>
             <DownloadOutlined color='primary' />
@@ -539,42 +536,19 @@ const PayrollRunItemAction = ({
         </DialogActions>
       </Dialog>
 
-      {/* Pay Dialog */}
-      <Dialog
+      <PayEmployeesDialog
         open={openPayDialog}
         onClose={() => setOpenPayDialog(false)}
-        fullWidth
-        maxWidth='xs'
-      >
-        <DialogTitle>Pay Employees</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} mt={1}>
-            <Typography variant='body2' color='text.secondary'>
-              Select the bank or cash account the payroll payment will come
-              from.
-            </Typography>
-            <LedgerSelect
-              label='Bank or Cash Account'
-              onChange={(ledger: any) =>
-                setPayForm({ credit_ledger_id: ledger?.id || 0 })
-              }
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setOpenPayDialog(false)} disabled={isPaying}>
-            Cancel
-          </Button>
-          <Button
-            variant='contained'
-            color='success'
-            onClick={() => payPayrollRun()}
-            disabled={isPaying || !payForm.credit_ledger_id}
-          >
-            Pay
-          </Button>
-        </DialogActions>
-      </Dialog>
+        payrollRunId={payrollRun.id}
+        onSuccess={invalidatePayrollRunQueries}
+      />
+
+      <PayPayablesDialog
+        open={openPayPayablesDialog}
+        onClose={() => setOpenPayPayablesDialog(false)}
+        payrollRunId={payrollRun.id}
+        onSuccess={invalidatePayrollRunQueries}
+      />
 
       {/* Salary Sheet Dialog */}
       {salarySheetData && isLoadingSalarySheet ? (
