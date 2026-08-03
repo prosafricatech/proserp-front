@@ -158,7 +158,7 @@ const RequisitionsOnScreen: React.FC<Props> = ({
   };
 
   const formatNumber = (value: number) => {
-    return value.toLocaleString('en-US', {
+    return (value || 0).toLocaleString('en-US', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     });
@@ -185,9 +185,9 @@ const RequisitionsOnScreen: React.FC<Props> = ({
                   ? 'MATERIAL REQUISITION'
                   : isPurchase
                     ? 'PURCHASE REQUISITION'
-                  : isImprest
-                    ? 'IMPREST REQUISITION'
-                    : 'PAYMENT REQUISITION'}
+                    : isImprest
+                      ? 'IMPREST REQUISITION'
+                      : 'PAYMENT REQUISITION'}
               </Typography>
               <Typography variant='h6'>{requisition.requisitionNo}</Typography>
             </Box>
