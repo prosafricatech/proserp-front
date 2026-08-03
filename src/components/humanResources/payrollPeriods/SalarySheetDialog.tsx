@@ -341,8 +341,8 @@ const SalarySheetDialog = ({
                   No employees found for this payroll run.
                 </Alert>
               ) : (
-                <TableContainer>
-                  <Table size='small'>
+                <TableContainer sx={{ maxHeight: '80vh' }}>
+                  <Table size='small' stickyHeader>
                     <TableHead>
                       {/* Group Headers - RECRUITMENT, EMPLOYEE, EMPLOYER */}
                       <TableRow>

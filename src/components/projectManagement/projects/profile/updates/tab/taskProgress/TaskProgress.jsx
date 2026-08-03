@@ -10,6 +10,7 @@ import {
 } from '@mui/icons-material';
 import {
   Autocomplete,
+  Box,
   Button,
   Grid,
   IconButton,
@@ -18,12 +19,13 @@ import {
   Skeleton,
   TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import { useQuery } from '@tanstack/react-query';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { useForm, useFormState } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { useProjectProfile } from '../../../ProjectProfileProvider';
 import { useUpdateFormContext } from '../../UpdatesForm';
@@ -145,7 +147,6 @@ function TaskProgress({
     trigger,
     handleSubmit,
     watch,
-    control,
     getValues,
     reset,
     register,
@@ -173,11 +174,6 @@ function TaskProgress({
       removedTaskProgressItems,
     },
   });
-
-  const { isDirty, dirtyFields } = useFormState({ control });
-
-  // const isFormDirty =
-  //   dirtyFields.project_task_id || dirtyFields.quantity_executed;
 
   const formIsNotDirty =
     !watch('project_task_id') && !watch('quantity_executed') !== '';
@@ -287,8 +283,6 @@ function TaskProgress({
     return allTasks.filter((t) => allowedIds.includes(t.id));
   }, [selectedSubcontract, allTasks]);
 
-  //
-
   if (isAdding || (isLoading && !subcontractOptions?.length))
     return (
       <div style={{ width: '100%', padding: '16px' }}>
@@ -312,6 +306,8 @@ function TaskProgress({
         />
       </div>
     );
+
+  console.log(filteredTasks);
 
   return (
     <form autoComplete='off' onSubmit={handleSubmit(updateItems)}>
@@ -395,7 +391,12 @@ function TaskProgress({
             <Autocomplete
               options={filteredTasks}
               isOptionEqualToValue={(option, value) => option.id === value.id}
-              getOptionLabel={(option) => option.name}
+              getOptionLabel={(option) => {
+                if (option.code) {
+                  return `${option.name}`;
+                }
+                return option.name;
+              }}
               defaultValue={taskProgressItem?.task}
               renderInput={(params) => (
                 <TextField
@@ -429,7 +430,16 @@ function TaskProgress({
               }}
               renderOption={(props, option) => (
                 <li {...props} key={option.id}>
-                  {option.name}
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography variant='body2'>
+                      {option.name}
+                    </Typography>
+                    {option.code && (
+                      <Typography variant='caption' sx={{ color: 'text.secondary' }}>
+                        {option.code}
+                      </Typography>
+                    )}
+                  </Box>
                 </li>
               )}
             />

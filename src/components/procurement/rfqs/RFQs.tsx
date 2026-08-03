@@ -1,6 +1,8 @@
 'use client';
 
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
+import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
 import UnauthorizedAccess from '@/shared/Information/UnauthorizedAccess';
 import UnsubscribedAccess from '@/shared/Information/UnsubscribedAccess';
 import { MODULES } from '@/utilities/constants/modules';
@@ -15,8 +17,6 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import RFQListItem from './listItem/RFQListItem';
 import rfqServices from './rfq-services';
 import RFQActionTail from './RFQActionTail';
-import CurrencySelectProvider from '@/components/masters/Currencies/CurrencySelectProvider';
-import LedgerSelectProvider from '@/components/accounts/ledgers/forms/LedgerSelectProvider';
 
 // Status options with display names and values
 const STATUS_OPTIONS = [
@@ -31,10 +31,8 @@ function RFQs() {
   const params = useParams();
   const searchParams = useSearchParams();
   const listRef = useRef<any>(null);
-  const {
-    checkOrganizationPermission,
-    organizationHasSubscribed,
-  } = useJumboAuth();
+  const { checkOrganizationPermission, organizationHasSubscribed } =
+    useJumboAuth();
   const [mounted, setMounted] = useState(false);
 
   // Separate state for keyword to prevent infinite loops
@@ -151,10 +149,13 @@ function RFQs() {
                       ))}
                     </TextField>
                   </Grid>
-                  <Grid size={{ xs: 12, md: 5 }}>
-                    <JumboSearch value={keyword} onChange={handleKeywordChange} />
+                  <Grid size={{ xs: 11, md: 5 }}>
+                    <JumboSearch
+                      value={keyword}
+                      onChange={handleKeywordChange}
+                    />
                   </Grid>
-                  <Grid size={{ xs: 12, md: 1 }}>
+                  <Grid size={{ xs: 1, md: 1 }}>
                     <RFQActionTail />
                   </Grid>
                 </Grid>
