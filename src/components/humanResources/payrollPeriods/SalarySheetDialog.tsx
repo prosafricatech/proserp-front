@@ -360,7 +360,7 @@ const SalarySheetDialog = ({
                         </TableCell>
                         <TableCell
                           colSpan={
-                            3 +
+                            4 +
                             (hasAllowances
                               ? unique_allowances_types.length
                               : 0) +
@@ -482,6 +482,17 @@ const SalarySheetDialog = ({
                             borderColor: 'divider',
                           }}
                         >
+                          Total Deductions
+                        </TableCell>
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 500,
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        >
                           Net Payable
                         </TableCell>
 
@@ -574,6 +585,13 @@ const SalarySheetDialog = ({
                         >
                           PAYE
                         </TableCell>
+
+                        <TableCell
+                          sx={{
+                            border: '1px solid',
+                            borderColor: 'divider',
+                          }}
+                        />
 
                         <TableCell
                           sx={{
@@ -761,6 +779,17 @@ const SalarySheetDialog = ({
                                 borderColor: 'divider',
                               }}
                             >
+                              {fmt(entry.computed.totalDeductions)}
+                            </TableCell>
+
+                            <TableCell
+                              align='right'
+                              sx={{
+                                fontWeight: 400,
+                                border: '1px solid',
+                                borderColor: 'divider',
+                              }}
+                            >
                               {fmt(computed.netSalary)}
                             </TableCell>
 
@@ -895,6 +924,18 @@ const SalarySheetDialog = ({
                           }}
                         >
                           {fmt(totals.paye)}
+                        </TableCell>
+
+                        <TableCell
+                          align='right'
+                          sx={{
+                            fontWeight: 700,
+                            borderTop: '2px solid',
+                            borderColor: 'divider',
+                            borderRight: '0.001px solid white',
+                          }}
+                        >
+                          {fmt(totals.totalDeductions)}
                         </TableCell>
 
                         <TableCell
