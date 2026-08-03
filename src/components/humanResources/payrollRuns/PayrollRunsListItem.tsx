@@ -111,7 +111,7 @@ const PayrollRunsListItem = ({
   } = useQuery({
     queryKey: ['previewPayrollRunEmployees', payrollRun.id, selectedEmployees],
     queryFn: () => humanResourcesServices.previewPayrollRun(params as any),
-    enabled: expanded,
+    enabled: !!expanded,
   });
 
   const previewRows = previewData?.data?.rows || previewData?.rows || [];

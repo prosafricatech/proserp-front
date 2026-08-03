@@ -28,9 +28,9 @@ import {
   Tooltip,
   Typography,
 } from '@mui/material';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
 import SalarySheetDialog from '../payrollPeriods/SalarySheetDialog';
 import BankTransferListDialog from './BankTransferListView/BankTransferListDialog';
@@ -121,6 +121,7 @@ export const PayrollRunActions = ({
   const [openCompleteDialog, setOpenCompleteDialog] = useState(false);
   const [openSalarySheetDialog, setOpenSalarySheetDialog] = useState(false);
   const [isLoadingSalarySheet, setIsLoadingSalarySheet] = useState(false);
+  const [isFetchingSalarySheet, setIsFetchingSalarySheet] = useState(false);
   const [salarySheetData, setSalarySheetData] = useState<any>(null);
   const [postForm, setPostForm] = useState<PostFormData>({
     salary_expense_ledger_id: 0,
@@ -144,15 +145,40 @@ export const PayrollRunActions = ({
     color: 'primary',
   });
 
-  const handleOpenSalarySheet = async () => {
+  const { data: previewResponse, isFetching } = useQuery({
+    queryKey: ['payrollRuns', payrollRun.id],
+    queryFn: async () =>
+      await humanResourcesServices.previewPayrollRun({
+        id: payrollRun.id,
+      }),
+    refetchOnWindowFocus: true,
+    enabled: isFetchingSalarySheet,
+  });
+
+  useEffect(() => {
+    if (isFetching) {
+      setIsLoadingSalarySheet(true);
+      setOpenSalarySheetDialog(true);
+      setSalarySheetData({});
+    } else {
+      setIsLoadingSalarySheet(false);
+      setSalarySheetData(null);
+    }
+
+    if (previewResponse) {
+      handleOpenSalarySheet(previewResponse);
+    }
+  }, [previewResponse, isFetching]);
+
+  const handleOpenSalarySheet = (previewResponse: any) => {
     setIsLoadingSalarySheet(true);
     setOpenSalarySheetDialog(true);
 
     try {
       // Fetch preview data
-      const previewResponse = await humanResourcesServices.previewPayrollRun({
-        id: payrollRun.id,
-      });
+      // const previewResponse = await humanResourcesServices.previewPayrollRun({
+      //   id: payrollRun.id,
+      // });
       const previewRows =
         previewResponse?.data?.rows || previewResponse?.rows || [];
 
@@ -212,6 +238,7 @@ export const PayrollRunActions = ({
         periodLabel: periodLabel,
       });
 
+      // setIsFetchingSalarySheet(false);
       setIsLoadingSalarySheet(false);
     } catch (error: any) {
       enqueueSnackbar(getErrorMessage(error), { variant: 'error' });
@@ -264,7 +291,8 @@ export const PayrollRunActions = ({
   const handleActionClick = (action: string) => {
     switch (action) {
       case 'preview':
-        handleOpenSalarySheet();
+        // handleOpenSalarySheet();
+        setIsFetchingSalarySheet(true);
         break;
       case 'bankTransfer':
         handleOpenBankTransferList();
@@ -529,6 +557,7 @@ export const PayrollRunActions = ({
             onClose={() => {
               setOpenSalarySheetDialog(false);
               setSalarySheetData(null);
+              setIsFetchingSalarySheet(false);
             }}
             periodLabel={salarySheetData.periodLabel}
             rows={salarySheetData.rows}

@@ -1,10 +1,8 @@
 'use client';
 
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Div } from '@jumbo/shared';
 import { LoadingButton } from '@mui/lab';
 import {
-  Alert,
   Autocomplete,
   Button,
   DialogActions,
@@ -35,7 +33,7 @@ interface FormData {
   id?: number;
   employee_id: number;
   deduction_type_id: number;
-  value: string;                    // Keep as string for input handling
+  value: string; // Keep as string for input handling
   effective_from: string;
   effective_to?: string | null;
 }
@@ -61,12 +59,15 @@ const EmployeeDeductionForm = ({
 
   const [displayValue, setDisplayValue] = useState<string>('');
 
-  const { data: deductionTypesResponse, isFetching: fetchingDeductionTypes } = useQuery({
-    queryKey: ['fetchDeductionTypesForEmployeeDeductionForm'],
-    queryFn: () => humanResourcesServices.getDeductionTypesList({ page: 1, limit: 200 }),
-  });
+  const { data: deductionTypesResponse, isFetching: fetchingDeductionTypes } =
+    useQuery({
+      queryKey: ['fetchDeductionTypesForEmployeeDeductionForm'],
+      queryFn: () =>
+        humanResourcesServices.getDeductionTypesList({ page: 1, limit: 200 }),
+    });
 
-  const deductionTypes = (deductionTypesResponse?.data || []) as DeductionType[];
+  const deductionTypes = (deductionTypesResponse?.data ||
+    []) as DeductionType[];
 
   const {
     control,
@@ -108,31 +109,45 @@ const EmployeeDeductionForm = ({
   const addMutation = useMutation({
     mutationFn: humanResourcesServices.addEmployeeDeduction,
     onSuccess: () => {
-      enqueueSnackbar('Employee Deduction Added Successfully', { variant: 'success' });
+      enqueueSnackbar('Employee Deduction Added Successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['employeeDeductions'] });
       setOpenDialog(false);
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Failed to add deduction', { variant: 'error' });
+      enqueueSnackbar(
+        err?.response?.data?.message || 'Failed to add deduction',
+        { variant: 'error' }
+      );
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: humanResourcesServices.updateEmployeeDeduction,
     onSuccess: () => {
-      enqueueSnackbar('Employee Deduction Updated Successfully', { variant: 'success' });
+      enqueueSnackbar('Employee Deduction Updated Successfully', {
+        variant: 'success',
+      });
       queryClient.invalidateQueries({ queryKey: ['employeeDeductions'] });
       setOpenDialog(false);
     },
     onError: (err: any) => {
-      enqueueSnackbar(err?.response?.data?.message || 'Failed to update deduction', { variant: 'error' });
+      enqueueSnackbar(
+        err?.response?.data?.message || 'Failed to update deduction',
+        { variant: 'error' }
+      );
     },
   });
+
+  // auto-full value field with default value of selected deductions
+  const selectedDeductionTypeId = watch('deduction_type_id');
 
   const onSubmit = (data: FormData) => {
     const submitData = {
       ...data,
-      value: typeof data.value === 'string' ? parseFloat(data.value) : data.value,
+      value:
+        typeof data.value === 'string' ? parseFloat(data.value) : data.value,
     };
 
     if (data.id) {
@@ -152,33 +167,60 @@ const EmployeeDeductionForm = ({
   return (
     <>
       <DialogTitle>
-        <Grid size={12} textAlign="center" paddingBottom={2}>
-          {!employeeDeduction?.id ? 'Add Employee Deduction' : 'Edit Employee Deduction'}
+        <Grid size={12} textAlign='center' paddingBottom={2}>
+          {!employeeDeduction?.id
+            ? 'Add Employee Deduction'
+            : 'Edit Employee Deduction'}
         </Grid>
       </DialogTitle>
 
       <DialogContent>
-        <form onSubmit={handleSubmit(onSubmit)} autoComplete="off">
+        <form onSubmit={handleSubmit(onSubmit)} autoComplete='off'>
           <Grid container rowSpacing={2} columnSpacing={2} paddingTop={1}>
             <Grid size={{ xs: 12, md: 6 }}>
               {fetchingDeductionTypes ? (
                 <LinearProgress />
               ) : (
                 <Controller
-                  name="deduction_type_id"
+                  name='deduction_type_id'
                   control={control}
                   render={({ field }) => (
                     <Autocomplete
-                      size="small"
+                      size='small'
                       options={deductionTypes}
                       getOptionLabel={(option) => option.name || ''}
-                      isOptionEqualToValue={(option, value) => option.id === value?.id}
-                      value={deductionTypes.find((t) => t.id === field.value) || null}
-                      onChange={(_, newValue) => field.onChange(newValue?.id)}
+                      isOptionEqualToValue={(option, value) =>
+                        option.id === value?.id
+                      }
+                      value={
+                        deductionTypes.find((t) => t.id === field.value) || null
+                      }
+                      onChange={(_, newValue) => {
+                        field.onChange(newValue?.id);
+
+                        const selectedDeduction = deductionTypes.find(
+                          (t) => t.id === newValue?.id
+                        );
+                        if (selectedDeduction) {
+                          setValue(
+                            'value',
+                            selectedDeduction.default_value.toString(),
+                            {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            }
+                          );
+                        } else {
+                          setValue('value', '', {
+                            shouldDirty: true,
+                            shouldValidate: true,
+                          });
+                        }
+                      }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
-                          label="Deduction Type"
+                          label='Deduction Type'
                           error={!!errors.deduction_type_id}
                           helperText={errors.deduction_type_id?.message}
                         />
@@ -191,9 +233,9 @@ const EmployeeDeductionForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
-                label="Value"
+                label='Value'
                 fullWidth
-                size="small"
+                size='small'
                 value={displayValue}
                 onChange={handleValueChange}
                 error={!!errors.value}
@@ -206,13 +248,15 @@ const EmployeeDeductionForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Controller
-                name="effective_from"
+                name='effective_from'
                 control={control}
                 render={({ field }) => (
                   <DateTimePicker
-                    label="Effective From"
+                    label='Effective From'
                     value={field.value ? dayjs(field.value) : null}
-                    onChange={(newValue) => field.onChange(newValue?.toISOString() || '')}
+                    onChange={(newValue) =>
+                      field.onChange(newValue?.toISOString() || '')
+                    }
                     slotProps={{
                       textField: {
                         size: 'small',
@@ -228,13 +272,15 @@ const EmployeeDeductionForm = ({
 
             <Grid size={{ xs: 12, md: 6 }}>
               <Controller
-                name="effective_to"
+                name='effective_to'
                 control={control}
                 render={({ field }) => (
                   <DateTimePicker
-                    label="Effective To"
+                    label='Effective To'
                     value={field.value ? dayjs(field.value) : null}
-                    onChange={(newValue) => field.onChange(newValue?.toISOString() || null)}
+                    onChange={(newValue) =>
+                      field.onChange(newValue?.toISOString() || null)
+                    }
                     slotProps={{
                       textField: {
                         size: 'small',
@@ -252,8 +298,8 @@ const EmployeeDeductionForm = ({
           <DialogActions sx={{ mt: 3 }}>
             <Button onClick={() => setOpenDialog(false)}>Cancel</Button>
             <LoadingButton
-              type="submit"
-              variant="contained"
+              type='submit'
+              variant='contained'
               loading={addMutation.isPending || updateMutation.isPending}
             >
               Submit
