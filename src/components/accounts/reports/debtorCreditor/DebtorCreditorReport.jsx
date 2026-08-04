@@ -2,8 +2,7 @@
 import { readableDate } from '@/app/helpers/input-sanitization-helpers';
 import useProsERPStyles from '@/app/helpers/style-helpers';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { faFileExcel } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import { Div, Span } from '@jumbo/shared';
@@ -20,8 +19,6 @@ import {
   MenuItem,
   Select,
   Stack,
-  Tab,
-  Tabs,
   Tooltip,
   Typography,
   useMediaQuery,
@@ -217,7 +214,7 @@ function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
   } = useJumboAuth();
   const [reportData, setReportData] = useState(null);
   const [selectedType, setSelectedType] = useState('creditors');
-  const [activeTab, setActiveTab] = useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
   const [costCenterIds, setCostCenterIds] = useState(
     authOrganization?.costCenters.map((cost_center) => cost_center.id)
   );
@@ -404,17 +401,18 @@ function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
                   alignItems='center'
                 >
                   <>
-                    <LoadingButton
-                      size='small'
-                      onClick={() => handlExcelExport(exportedData)}
-                      loading={isExporting}
-                      disabled={isExporting || !reportData || isFetching}
-                      variant='contained'
-                      color='success'
-                    >
-                      <FontAwesomeIcon icon={faFileExcel} color='green' />
-                      Excel
-                    </LoadingButton>
+                    {reportData && (
+                      <FileExportGrid
+                        exportExcel
+                        handlExcelExport={() => handlExcelExport(exportedData)}
+                        exportingExcel={isExporting}
+                        exportPdf
+                        handlePdf={() => {
+                          setShowOnScreen((prev) => !prev);
+                        }}
+                      />
+                    )}
+
                     <LoadingButton
                       loading={isFetching}
                       type='submit'
@@ -439,17 +437,7 @@ function DebtorCreditorReport({ setOpenDebtorsCreditorsDialog }) {
           Object.values(reportData.debtors || reportData.creditors).length >
             0 && (
             <>
-              {belowLargeScreen && (
-                <Tabs
-                  value={activeTab}
-                  onChange={handleTabChange}
-                  variant='fullWidth'
-                >
-                  <Tab label='On-Screen' />
-                  <Tab label='PDF' />
-                </Tabs>
-              )}
-              {belowLargeScreen && activeTab === 0 ? (
+              {showOnScreen ? (
                 <DebtorCreditorOnScreen
                   reportData={reportData}
                   authOrganization={authOrganization}
