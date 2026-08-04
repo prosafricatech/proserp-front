@@ -1,22 +1,44 @@
-'use client'
-import { DeleteOutlined, EditOutlined, HighlightOff, MoreHorizOutlined, VisibilityOutlined } from '@mui/icons-material';
-import { Box, Button, Dialog, DialogContent, Grid, IconButton, LinearProgress, Skeleton, Tab, Tabs, Tooltip, useMediaQuery } from '@mui/material';
-import React, { useState } from 'react'
+'use client';
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import PDFContent from '@/components/pdf/PDFContent';
+import { FileExportGrid } from '@/components/sharedComponents/FileExportGrid';
+import PreviewTopBar from '@/components/sharedComponents/PreviewTopBar';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
+import { JumboDdMenu } from '@jumbo/components';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  HighlightOff,
+  MoreHorizOutlined,
+  VisibilityOutlined,
+} from '@mui/icons-material';
+import {
+  Box,
+  Button,
+  Dialog,
+  DialogContent,
+  IconButton,
+  Skeleton,
+  Tooltip,
+  useMediaQuery,
+} from '@mui/material';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
-import inventoryConsumptionsServices from './inventoryConsumptionsServices';
+import React, { useState } from 'react';
 import InventoryConsumptionsForm from './form/InventoryConsumptionForm';
 import InventoryConsumptionPDF from './InventoryConsumptionPDF';
 import InventoryConsumptionsOnScreen from './InventoryConsumptionsOnScreen';
-import dayjs from 'dayjs';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
-import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
-import PDFContent from '@/components/pdf/PDFContent';
-import { PERMISSIONS } from '@/utilities/constants/permissions';
-import { JumboDdMenu } from '@jumbo/components';
+import inventoryConsumptionsServices from './inventoryConsumptionsServices';
 
-const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'open', consumptionTab = false }) => {
+const ActionDialogContent = ({
+  inventoryConsumption,
+  setOpenDialog,
+  action = 'open',
+  consumptionTab = false,
+}) => {
   const { data, isFetching } = useQuery({
     queryKey: ['inventoryConsumption', inventoryConsumption.id],
     queryFn: ({ queryKey }) => {
@@ -29,21 +51,32 @@ const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'op
   const authObject = useJumboAuth();
   const { theme } = useJumboTheme();
   const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-  const [activeTab, setActiveTab] = React.useState(0);
+  const [showOnScreen, setShowOnScreen] = useState(true);
 
   if (isFetching) {
-        return (
-          <div style={{ width: '100%', padding: '16px' }}>
-            <Skeleton variant="text" width={180} height={32} style={{ borderRadius: 4, marginLeft: 'auto' }} />
-            <Skeleton variant="rectangular" width="100%" height={48} style={{ borderRadius: 4 }} />
-            <Skeleton variant="rectangular" width="100%" height={32} style={{ borderRadius: 4 }} />
-          </div>
-        );
+    return (
+      <div style={{ width: '100%', padding: '16px' }}>
+        <Skeleton
+          variant='text'
+          width={180}
+          height={32}
+          style={{ borderRadius: 4, marginLeft: 'auto' }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={48}
+          style={{ borderRadius: 4 }}
+        />
+        <Skeleton
+          variant='rectangular'
+          width='100%'
+          height={32}
+          style={{ borderRadius: 4 }}
+        />
+      </div>
+    );
   }
-
-  const handleTabChange = (event, newValue) => {
-    setActiveTab(newValue);
-  };
 
   let dialogContent;
 
@@ -58,32 +91,49 @@ const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'op
   } else if (belowLargeScreen) {
     dialogContent = (
       <>
-        <Grid container alignItems="center" justifyContent="space-between" margin={1}>
-          <Grid size={11}>
-            <Tabs value={activeTab} onChange={handleTabChange} aria-label="inventory consumption tabs">
-              <Tab label="ONSCREEN" />
-              <Tab label="PDF" />
-            </Tabs>
-          </Grid>
-          <Grid size={1} textAlign="right">
-            <Tooltip title="Close">
-              <IconButton size="small" onClick={() => setOpenDialog(false)}>
-                <HighlightOff color="primary" />
-              </IconButton>
-            </Tooltip>
-          </Grid>
-        </Grid>
-        {activeTab === 0 && (
-          <InventoryConsumptionsOnScreen inventoryConsumption={data} authObject={authObject} />
-        )}
-        {activeTab === 1 && (
-          <PDFContent
-            fileName={inventoryConsumption.consumptionNo}
-            document={<InventoryConsumptionPDF inventoryConsumption={data} authObject={authObject} />}
+        <PreviewTopBar
+          fileExportGrid={
+            <FileExportGrid
+              exportPdf
+              handlePdf={() => {
+                setShowOnScreen((prev) => !prev);
+              }}
+            />
+          }
+          closeButton={
+            <IconButton
+              size='small'
+              color='primary'
+              onClick={() => setOpenDialog(false)}
+            >
+              <HighlightOff color='primary' />
+            </IconButton>
+          }
+        />
+        {showOnScreen && (
+          <InventoryConsumptionsOnScreen
+            inventoryConsumption={data}
+            authObject={authObject}
           />
         )}
-        <Box textAlign="right" marginTop={5}>
-          <Button variant="outlined" size="small" color="primary" onClick={() => setOpenDialog(false)}>
+        {!showOnScreen && (
+          <PDFContent
+            fileName={inventoryConsumption.consumptionNo}
+            document={
+              <InventoryConsumptionPDF
+                inventoryConsumption={data}
+                authObject={authObject}
+              />
+            }
+          />
+        )}
+        <Box textAlign='right' marginTop={5}>
+          <Button
+            variant='outlined'
+            size='small'
+            color='primary'
+            onClick={() => setOpenDialog(false)}
+          >
             Close
           </Button>
         </Box>
@@ -93,7 +143,12 @@ const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'op
     dialogContent = (
       <PDFContent
         fileName={inventoryConsumption.consumptionNo}
-        document={<InventoryConsumptionPDF inventoryConsumption={data} authObject={authObject} />}
+        document={
+          <InventoryConsumptionPDF
+            inventoryConsumption={data}
+            authObject={authObject}
+          />
+        }
       />
     );
   }
@@ -101,90 +156,125 @@ const ActionDialogContent = ({ inventoryConsumption, setOpenDialog, action = 'op
   return dialogContent;
 };
 
-function InventoryConsumptionItemAction({inventoryConsumption, consumptionTab = false}) {
-    const {showDialog,hideDialog} = useJumboDialog();
-    const [openEditDialog, setOpenEditDialog] = useState(false);
-    const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
-    const queryClient = useQueryClient();
-    const { enqueueSnackbar } = useSnackbar();
-    const authObject = useJumboAuth();
-    const checkOrganizationPermission = authObject.checkOrganizationPermission;
+function InventoryConsumptionItemAction({
+  inventoryConsumption,
+  consumptionTab = false,
+}) {
+  const { showDialog, hideDialog } = useJumboDialog();
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [openDocumentDialog, setOpenDocumentDialog] = useState(false);
+  const queryClient = useQueryClient();
+  const { enqueueSnackbar } = useSnackbar();
+  const authObject = useJumboAuth();
+  const checkOrganizationPermission = authObject.checkOrganizationPermission;
 
-    const {theme} = useJumboTheme();
-    const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
-    
-    const { mutate: deleteInventoryConsumption } = useMutation({
-      mutationFn: inventoryConsumptionsServices.delete,
-      onSuccess: (data) => {
-        queryClient.invalidateQueries({ queryKey: ['inventoryConsumptions'] });
-        enqueueSnackbar(data.message, { variant: 'success' });
-      },
-      onError: (error) => {
-        enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
-      },
-    });
-  
-    // Consumptions raised by another process (a requisition issue, a project
-    // update) must keep their originating link intact — no inline editing,
-    // matching the backend's own block. Delete-and-reissue from that process
-    // is still the way to correct one.
-    const isEditable = inventoryConsumption?.is_editable !== false;
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
-    const menuItems = [
-      {icon: <VisibilityOutlined/> , title : "View" , action : "open"},
-      !consumptionTab && isEditable && (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) || inventoryConsumption.consumption_date >= dayjs().startOf('date').toISOString()) && {icon: <EditOutlined/>, title: 'Edit', action: 'edit'},
-      (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) || inventoryConsumption.consumption_date >= dayjs().startOf('date').toISOString()) && {icon: <DeleteOutlined color='error'/>, title: 'Delete', action: 'delete'}
-    ];
-  
-    const handleItemAction = (menuItem) => {
-      switch (menuItem.action) {
-        case 'edit':
-          setOpenEditDialog(true);
-          break;
-        case 'delete':
-          showDialog({
-            title: 'Confirm Inventory Consumption',
-            content: 'Are you sure you want to delete this Inventory Consumption?',
-            onYes: () =>{ 
-              hideDialog();
-              deleteInventoryConsumption(inventoryConsumption)
-            },
-            onNo: () => hideDialog(),
-            variant:'confirm'
-          });
-          break;
-          case 'open':
-            setOpenDocumentDialog(true);
-            break;
-          default:
-          break;
-      }
+  const { mutate: deleteInventoryConsumption } = useMutation({
+    mutationFn: inventoryConsumptionsServices.delete,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['inventoryConsumptions'] });
+      enqueueSnackbar(data.message, { variant: 'success' });
+    },
+    onError: (error) => {
+      enqueueSnackbar(error?.response?.data.message, { variant: 'error' });
+    },
+  });
+
+  // Consumptions raised by another process (a requisition issue, a project
+  // update) must keep their originating link intact — no inline editing,
+  // matching the backend's own block. Delete-and-reissue from that process
+  // is still the way to correct one.
+  const isEditable = inventoryConsumption?.is_editable !== false;
+
+  const menuItems = [
+    { icon: <VisibilityOutlined />, title: 'View', action: 'open' },
+    !consumptionTab &&
+      isEditable &&
+      (checkOrganizationPermission(
+        PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE
+      ) ||
+        inventoryConsumption.consumption_date >=
+          dayjs().startOf('date').toISOString()) && {
+        icon: <EditOutlined />,
+        title: 'Edit',
+        action: 'edit',
+      },
+    (checkOrganizationPermission(PERMISSIONS.INVENTORY_CONSUMPTIONS_BACKDATE) ||
+      inventoryConsumption.consumption_date >=
+        dayjs().startOf('date').toISOString()) && {
+      icon: <DeleteOutlined color='error' />,
+      title: 'Delete',
+      action: 'delete',
+    },
+  ];
+
+  const handleItemAction = (menuItem) => {
+    switch (menuItem.action) {
+      case 'edit':
+        setOpenEditDialog(true);
+        break;
+      case 'delete':
+        showDialog({
+          title: 'Confirm Inventory Consumption',
+          content:
+            'Are you sure you want to delete this Inventory Consumption?',
+          onYes: () => {
+            hideDialog();
+            deleteInventoryConsumption(inventoryConsumption);
+          },
+          onNo: () => hideDialog(),
+          variant: 'confirm',
+        });
+        break;
+      case 'open':
+        setOpenDocumentDialog(true);
+        break;
+      default:
+        break;
     }
+  };
 
-  return  (
+  return (
     <React.Fragment>
       <Dialog
-        scroll={belowLargeScreen ? 'body': 'paper'}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
         maxWidth={openDocumentDialog ? 'md' : 'lg'}
         fullScreen={belowLargeScreen}
         fullWidth
         onClose={() => setOpenDocumentDialog(false)}
         open={openEditDialog || openDocumentDialog}
       >
-        {openDocumentDialog && <DialogContent><ActionDialogContent setOpenDialog={setOpenDocumentDialog} action='open' inventoryConsumption={inventoryConsumption} /></DialogContent>}
-        {openEditDialog && <ActionDialogContent setOpenDialog={setOpenEditDialog} action='edit' inventoryConsumption={inventoryConsumption} consumptionTab={consumptionTab}/>}
+        {openDocumentDialog && (
+          <DialogContent>
+            <ActionDialogContent
+              setOpenDialog={setOpenDocumentDialog}
+              action='open'
+              inventoryConsumption={inventoryConsumption}
+            />
+          </DialogContent>
+        )}
+        {openEditDialog && (
+          <ActionDialogContent
+            setOpenDialog={setOpenEditDialog}
+            action='edit'
+            inventoryConsumption={inventoryConsumption}
+            consumptionTab={consumptionTab}
+          />
+        )}
       </Dialog>
       <JumboDdMenu
-          icon={
-            <Tooltip title='Actions'>
-              <MoreHorizOutlined/>
-            </Tooltip>
+        icon={
+          <Tooltip title='Actions'>
+            <MoreHorizOutlined />
+          </Tooltip>
         }
-          menuItems={menuItems}
-          onClickCallback={handleItemAction}
-        />
-      </React.Fragment>
-  )
+        menuItems={menuItems}
+        onClickCallback={handleItemAction}
+      />
+    </React.Fragment>
+  );
 }
 
-export default InventoryConsumptionItemAction
+export default InventoryConsumptionItemAction;
