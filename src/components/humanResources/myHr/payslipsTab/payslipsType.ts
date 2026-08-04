@@ -5,6 +5,8 @@ export interface MyHrPayslipListItem {
   employee_contract_id: number;
   basic_salary: number;
   paye: number;
+  paid_amount: number;
+  balance_remaining: number;
   created_by: number;
   created_at: string;
   updated_at: string;

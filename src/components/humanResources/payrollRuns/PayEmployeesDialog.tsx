@@ -1,8 +1,10 @@
 // components/humanResources/payrollRuns/PayEmployeesDialog.tsx
 'use client';
 
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   Alert,
   Box,
@@ -25,8 +27,11 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -63,11 +68,16 @@ const PayEmployeesDialog = ({
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [mode, setMode] = useState<'full' | 'partial'>('full');
   const [creditLedgerId, setCreditLedgerId] = useState(0);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [amounts, setAmounts] = useState<Record<number, string>>({});
+  const [transactionDate, setTransactionDate] = useState(
+    dayjs().format('YYYY-MM-DD')
+  );
 
   const { data, isLoading } = useQuery({
     queryKey: ['payrollRunPayBalances', payrollRunId],
@@ -85,6 +95,11 @@ const PayEmployeesDialog = ({
   // dialog opens or the balances refresh — a sensible starting point for
   // partial mode, editable from there.
   useEffect(() => {
+    if (!open) return;
+    setTransactionDate(dayjs().format('YYYY-MM-DD'));
+  }, [open]);
+
+  useEffect(() => {
     if (!open || payableRows.length === 0) return;
     const nextSelected: Record<number, boolean> = {};
     const nextAmounts: Record<number, string> = {};
@@ -98,8 +113,13 @@ const PayEmployeesDialog = ({
 
   const { mutate: pay, isPending } = useMutation({
     mutationFn: () => {
-      const payload: { credit_ledger_id: number; payslip_payments?: any[] } = {
+      const payload: {
+        credit_ledger_id: number;
+        payslip_payments?: any[];
+        transaction_date?: string;
+      } = {
         credit_ledger_id: creditLedgerId,
+        transaction_date: transactionDate || undefined,
       };
       if (mode === 'partial') {
         payload.payslip_payments = payableRows
@@ -146,7 +166,14 @@ const PayEmployeesDialog = ({
       ));
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth='sm'>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth='sm'
+      fullScreen={belowLargeScreen}
+      scroll={belowLargeScreen ? 'body' : 'paper'}
+    >
       <DialogTitle>
         <Typography variant='h6' component='div' fontWeight={600}>
           Pay Employees
@@ -167,6 +194,17 @@ const PayEmployeesDialog = ({
           <LedgerSelect
             label='Bank or Cash Account'
             onChange={(ledger: any) => setCreditLedgerId(ledger?.id || 0)}
+          />
+
+          <DatePicker
+            label='Payment Date'
+            value={transactionDate ? dayjs(transactionDate) : null}
+            onChange={(val) =>
+              setTransactionDate(val?.format('YYYY-MM-DD') || '')
+            }
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+            }}
           />
 
           {isLoading ? (
@@ -236,21 +274,28 @@ const PayEmployeesDialog = ({
                       <TableCell align='right'>
                         <TextField
                           size='small'
-                          type='number'
-                          value={amounts[row.payslip_id] ?? ''}
+                          value={
+                            amounts[row.payslip_id]
+                              ? Number(amounts[row.payslip_id]).toLocaleString()
+                              : ''
+                          }
                           disabled={!selected[row.payslip_id]}
                           inputProps={{
-                            min: 0,
-                            max: row.balance_remaining,
-                            step: 0.01,
                             style: { textAlign: 'right' },
                           }}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            const val =
+                              e.target.value === ''
+                                ? ''
+                                : sanitizedNumber(e.target.value);
                             setAmounts((state) => ({
                               ...state,
-                              [row.payslip_id]: e.target.value,
-                            }))
-                          }
+                              [row.payslip_id]:
+                                val === '' || isNaN(val as number)
+                                  ? ''
+                                  : String(val),
+                            }));
+                          }}
                           error={
                             Number(amounts[row.payslip_id]) >
                             row.balance_remaining

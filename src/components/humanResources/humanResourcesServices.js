@@ -970,6 +970,36 @@ humanResourcesServices.payPayrollRunPayables = async ({ id, ...payload }) => {
     return data;
 }
 
+// Every payment (employee net-pay or payable settlement) made against this run.
+humanResourcesServices.payrollRunPayments = async (id) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/payments`);
+    return data;
+}
+
+// Undo a specific payment (wrong date/amount, etc.) — recomputes the run's paid status.
+humanResourcesServices.reversePayrollRunPayment = async ({ id, payment_id }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/reversePayment`, { payment_id });
+    return data;
+}
+
+// Full breakdown of one payment — one line per employee/payable type.
+humanResourcesServices.payrollRunPaymentDetail = async ({ id, paymentId }) => {
+    const { data } = await axios.get(`/api/humanResources/payrollRuns/${id}/payments/${paymentId}`);
+    return data;
+}
+
+// Edit a payment's date/narration/credit ledger and/or individual line amounts.
+humanResourcesServices.updatePayrollRunPayment = async ({ id, paymentId, ...payload }) => {
+    const { data } = await axios.put(`/api/humanResources/payrollRuns/${id}/payments/${paymentId}`, payload);
+    return data;
+}
+
+// Remove one line from a payment (e.g. an employee paid by mistake).
+humanResourcesServices.removePayrollRunPaymentItem = async ({ id, paymentId, journal_id }) => {
+    const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/payments/${paymentId}/removeItem`, { journal_id });
+    return data;
+}
+
 // complete payroll run - if orgnization has not subscribed to accounts and finance module
 humanResourcesServices.completePayrollRun = async (id) => {
     const { data } = await axios.post(`/api/humanResources/payrollRuns/${id}/complete`);

@@ -1,4 +1,8 @@
-import { Card, CardContent, Grid, Typography } from '@mui/material';
+import { LoadingButton } from '@mui/lab';
+import { Card, CardContent, Grid, Stack, Typography } from '@mui/material';
+import { useState } from 'react';
+import EmployeeSelector from '../employees/EmployeeSelector';
+import { Employee } from '../employees/EmployeesType';
 
 interface SummaryTabProps {
   basic_salary?: number;
@@ -8,6 +12,8 @@ interface SummaryTabProps {
   paye?: number;
   total_allowances?: number;
   total_deductions?: number;
+  onSimulate?: (employeeId: number) => void;
+  isSimulating?: boolean;
 }
 
 const SummaryTab = ({
@@ -18,7 +24,12 @@ const SummaryTab = ({
   paye = 0,
   total_allowances = 0,
   total_deductions = 0,
+  onSimulate,
+  isSimulating = false,
 }: SummaryTabProps) => {
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(
+    null
+  );
   const sumarryData = {
     'Basic Salary': basic_salary.toLocaleString('en-US', {
       minimumFractionDigits: 2,
@@ -48,6 +59,38 @@ const SummaryTab = ({
   };
   return (
     <Grid container columnSpacing={2} rowSpacing={2}>
+      {onSimulate && (
+        <Grid size={12}>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            alignItems={{ sm: 'center' }}
+          >
+            <Grid size={{ xs: 12, sm: 5, md: 3 }}>
+              <EmployeeSelector
+                multiple={false}
+                value={selectedEmployee}
+                onChange={(value) =>
+                  setSelectedEmployee(
+                    Array.isArray(value) ? value[0] || null : value
+                  )
+                }
+              />
+            </Grid>
+            <LoadingButton
+              variant='outlined'
+              size='small'
+              loading={isSimulating}
+              disabled={!selectedEmployee}
+              onClick={() =>
+                selectedEmployee && onSimulate(selectedEmployee.id)
+              }
+            >
+              Simulate Payslip
+            </LoadingButton>
+          </Stack>
+        </Grid>
+      )}
       {Object.entries(sumarryData).map(([Key, value]) => (
         <Grid size={{ xs: 12, md: 6, lg: 3 }} key={Key}>
           <Card sx={{ minWidth: 275 }}>

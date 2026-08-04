@@ -31,6 +31,33 @@ const MyHrPayslipsListItem = ({
     ? `${MONTH_NAMES[period.month] || period.month} ${period.year}`
     : '—';
 
+  // This payslip's own paid/unpaid state, not the whole run's — an employee
+  // on a "partially paid" run who personally hasn't been paid yet should not
+  // see "Partially Paid" themselves. "partially_paid"/"paid" describe the RUN
+  // in aggregate, so they're only trustworthy as a fallback for this payslip
+  // when neither applies (nobody on the run has been paid at all yet);
+  // otherwise an untouched payslip shows the honest "Unpaid" instead.
+  const balanceRemaining = payslip.balance_remaining ?? 0;
+  const paidAmount = payslip.paid_amount ?? 0;
+  const isPaid =
+    balanceRemaining <= 0.01 && (paidAmount > 0 || payslip.basic_salary > 0);
+  const isPartiallyPaid = !isPaid && paidAmount > 0;
+  const runStatusRaw = (payslip.run?.status || '').toLowerCase();
+  const paymentStatusLabel = isPaid
+    ? 'Paid'
+    : isPartiallyPaid
+      ? 'Partially Paid'
+      : ['partially_paid', 'paid'].includes(runStatusRaw)
+        ? 'Unpaid'
+        : payslip.run?.status_label || payslip.run?.status || '—';
+  const paymentStatusColor = isPaid
+    ? 'success'
+    : isPartiallyPaid
+      ? 'warning'
+      : ['partially_paid', 'paid'].includes(runStatusRaw)
+        ? 'default'
+        : statusColor(payslip.run?.status || '');
+
   return (
     <>
       <Divider />
@@ -86,12 +113,12 @@ const MyHrPayslipsListItem = ({
         </Grid>
 
         <Grid size={{ xs: 12, md: 3 }}>
-          <Tooltip title='Payroll Run Status'>
+          <Tooltip title='Payment Status'>
             <div>
               <Chip
                 size='small'
-                label={payslip.run?.status_label || payslip.run?.status || '—'}
-                color={statusColor(payslip.run?.status || '')}
+                label={paymentStatusLabel}
+                color={paymentStatusColor}
                 sx={{ textTransform: 'capitalize' }}
               />
             </div>

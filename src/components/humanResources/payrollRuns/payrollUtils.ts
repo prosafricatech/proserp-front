@@ -19,7 +19,14 @@ export const calculateTotalAllowances = (allowances: any[]) => {
 
 export const calculateTotalDeductions = (deductions: any[]) => {
   if (!deductions || !Array.isArray(deductions)) return 0;
-  return deductions.reduce((sum, item) => sum + (item.amount || 0), 0);
+  // PAYE is stored as its own PayslipDeduction row too (deduction_type_id
+  // null, so it can carry a label/amount like any other line), on top of the
+  // dedicated `paye` field on the payslip — excluded here the same way the
+  // backend's Payslip::net_salary accessor excludes it, otherwise it gets
+  // subtracted twice: once here, once via the explicit `paye` param below.
+  return deductions
+    .filter((item) => item.deduction_type_id != null)
+    .reduce((sum, item) => sum + (item.amount || 0), 0);
 };
 
 export const calculateGrossSalary = (

@@ -14,7 +14,6 @@ import {
   Alert,
   Box,
   Chip,
-  CircularProgress,
   Grid,
   IconButton,
   InputAdornment,
@@ -31,17 +30,10 @@ import {
   Typography,
 } from '@mui/material';
 import { useRouter } from 'next/navigation';
-import EmployeeSelector from '../employees/EmployeeSelector';
-import { Employee } from '../employees/EmployeesType';
 import PayrollApprovalItemAction from './PayrollApprovalItemAction';
 import PayrollApprovalsActionTail from './PayrollApprovalsActionTail';
 import { PayrollRunType } from './PayrollRunType';
-import {
-  calculateGrossSalary,
-  calculateNetSalary,
-  formatMoney,
-  getEmployeeName,
-} from './payrollUtils';
+import { formatMoney, getEmployeeName } from './payrollUtils';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -55,670 +47,12 @@ export const TabPanel = ({ children, value, index }: TabPanelProps) => (
   </div>
 );
 
-// Helper to calculate total employer contributions
-const calculateTotalEmployerContributions = (contributions: any[]) => {
-  if (!contributions || !Array.isArray(contributions)) return 0;
-  return contributions?.reduce((sum, item) => sum + (item?.amount || 0), 0);
-};
-
-interface EmployeesTabProps {
-  rows: any[];
-  search: string;
-  onSearchChange: (value: string) => void;
-  selectedEmployees: Array<any> | null;
-  setSelectedEmployees: (value: any) => void;
-  onSimulate: (employeeId: number) => void;
-  isSimulating: boolean;
-  allowanceTypes?: any[];
-  deductionTypes?: any[];
-  contributionTypes?: any[];
-  isLoading?: boolean;
-}
-
-export const EmployeesTab = ({
-  rows,
-  search,
-  onSearchChange,
-  selectedEmployees = null,
-  setSelectedEmployees,
-  onSimulate,
-  isSimulating,
-  isLoading = false,
-}: EmployeesTabProps) => {
-  const router = useRouter();
-  const lang = useLanguage();
-  const loading = isLoading;
-
-  const filteredRows = rows.filter((row: any) => {
-    if (!search.trim()) return true;
-    const term = search.toLowerCase().trim();
-    const employee = row.employee || row;
-    const name = getEmployeeName(employee).toLowerCase();
-    const number = (employee?.employee_number || '').toLowerCase();
-    const id = employee?.id;
-    return name.includes(term) || number.includes(term);
-  });
-
-  if (loading) {
-    return (
-      <Box display='flex' justifyContent='center' alignItems='center' py={4}>
-        <CircularProgress size={30} />
-        <Typography variant='body2' color='text.secondary' sx={{ ml: 2 }}>
-          Loading salary types...
-        </Typography>
-      </Box>
-    );
-  }
-
-  const employeeDeductions = rows.flatMap((itm) =>
-    (itm.run?.deductions ?? itm.deductions)?.map((deduction: any) => ({
-      ...deduction,
-      employee_contract_id: itm.employee_contract_id,
-    }))
-  );
-  const employeeAllowance = rows.flatMap(
-    (itm) =>
-      itm.run?.allowances ??
-      itm.allowances?.map((allowance: any) => ({
-        ...allowance,
-        employee_contract_id: itm.employee_contract_id,
-      }))
-  );
-  const employeecontributions = rows.flatMap((itm) =>
-    (itm.run?.employer_contributions ?? itm.employer_contributions)?.map(
-      (contribution: any) => ({
-        ...contribution,
-        employee_contract_id: itm.employee_contract_id,
-      })
-    )
-  );
-
-  const getUniqueTypes = (value: Array<any>) => {
-    const filteredDeductions = Array.from(
-      new Map(
-        value.map((itm) => [
-          itm?.deduction_type_id ??
-            itm?.allowance_type_id ??
-            itm?.employer_contribution_type_id ??
-            itm?.label,
-          itm,
-        ])
-      ).values()
-    );
-    return filteredDeductions;
-  };
-
-  const unique_deductions_types = getUniqueTypes(employeeDeductions);
-  const unique_allowances_types = getUniqueTypes(employeeAllowance);
-  const unique_contributions_types = getUniqueTypes(employeecontributions);
-
-  const hasAllowances = unique_allowances_types.length > 0;
-  const hasDeductions = unique_deductions_types.length > 0;
-  const hasContributions = unique_contributions_types.length > 0;
-
-  const calculateTotalAmtByType = (
-    typeObj: any,
-    type_id: number,
-    type: 'deduction' | 'allowance' | 'contribution'
-  ) => {
-    if (type === 'allowance') {
-      return employeecontributions?.reduce(
-        (sum, item) =>
-          item.allowance_type_id === type_id || item.label === typeObj.label
-            ? sum + item?.amount
-            : sum,
-        0
-      );
-    }
-    if (type === 'deduction') {
-      return employeeDeductions?.reduce((sum, item) => {
-        return item.deduction_type_id === type_id ||
-          item.label === typeObj.label
-          ? sum + item?.amount
-          : sum;
-      }, 0);
-    }
-    if (type === 'contribution') {
-      return employeecontributions?.reduce((sum, item) => {
-        return item?.employer_contribution_type_id === type_id
-          ? sum + item?.amount
-          : sum;
-      }, 0);
-    }
-  };
-
-  return (
-    <>
-      <Grid
-        container
-        columnSpacing={2}
-        rowSpacing={2}
-        alignItems={'center'}
-        mb={2}
-      >
-        <Grid size={{ xs: 12, md: 4 }}>
-          <EmployeeSelector
-            value={selectedEmployees}
-            multiple
-            onChange={(value) =>
-              setSelectedEmployees((prev: Employee[]) => {
-                if (value) {
-                  if (Array.isArray(value)) {
-                    if (!prev || !Array.isArray(prev)) {
-                      return value.map((val) => val);
-                    } else {
-                      return value;
-                    }
-                  } else {
-                    if (!prev || !Array.isArray(prev)) {
-                      return [value];
-                    } else {
-                      return [...prev, value];
-                    }
-                  }
-                }
-              })
-            }
-          />
-        </Grid>
-        <Grid size={{ xs: 4, md: 4 }} textAlign={'left'}>
-          <Typography variant='caption' color='text.secondary'>
-            {filteredRows.length} of {rows.length} employees
-          </Typography>
-        </Grid>
-      </Grid>
-
-      {filteredRows.length === 0 ? (
-        <Typography variant='body2' color='text.secondary' py={2}>
-          {search
-            ? 'No employees match your search.'
-            : 'No employees found for this run.'}
-        </Typography>
-      ) : (
-        <TableContainer component={Paper} variant='outlined'>
-          <Table size='small'>
-            <TableHead>
-              {/* Group Headers */}
-              <TableRow>
-                <TableCell
-                  colSpan={2}
-                  sx={{
-                    textAlign: 'center',
-                    borderRight: '2px solid',
-                    borderRightColor: 'divider',
-                  }}
-                />
-                {hasAllowances && (
-                  <TableCell
-                    colSpan={unique_allowances_types.length}
-                    sx={{
-                      textAlign: 'center',
-                      borderRight: '2px solid',
-                      borderRightColor: 'divider',
-                      backgroundColor: 'action.hover',
-                    }}
-                  >
-                    <Typography variant='subtitle2' fontWeight={600}>
-                      Allowances
-                    </Typography>
-                  </TableCell>
-                )}
-                <TableCell
-                  sx={{
-                    borderRight: hasAllowances ? '2px solid' : 'none',
-                    borderRightColor: 'divider',
-                  }}
-                />
-                {hasDeductions && (
-                  <TableCell
-                    colSpan={unique_deductions_types.length}
-                    sx={{
-                      textAlign: 'center',
-                      borderRight: '2px solid',
-                      borderRightColor: 'divider',
-                      backgroundColor: 'action.hover',
-                    }}
-                  >
-                    <Typography variant='subtitle2' fontWeight={600}>
-                      Deductions
-                    </Typography>
-                  </TableCell>
-                )}
-                <TableCell />
-                {hasContributions && (
-                  <TableCell
-                    colSpan={unique_contributions_types.length + 1}
-                    sx={{
-                      textAlign: 'center',
-                      borderRight: '2px solid',
-                      borderRightColor: 'divider',
-                      backgroundColor: 'action.hover',
-                      textWrap: 'nowrap',
-                    }}
-                  >
-                    <Typography variant='subtitle2' fontWeight={600}>
-                      Employer Contributions
-                    </Typography>
-                  </TableCell>
-                )}
-                <TableCell />
-              </TableRow>
-
-              {/* Column Headers */}
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Employee</TableCell>
-                <TableCell align='right' sx={{ fontWeight: 700 }}>
-                  Basic
-                </TableCell>
-
-                {unique_allowances_types.map((type: any) => (
-                  <TableCell
-                    key={`allowance-header-${type.allowance_type_id}`}
-                    align='right'
-                    sx={{
-                      fontWeight: 600,
-                      borderRight: '2px solid',
-                      borderRightColor: 'divider',
-                    }}
-                  >
-                    {type.label || 'Allowance'}
-                  </TableCell>
-                ))}
-
-                <TableCell align='right' sx={{ fontWeight: 700 }}>
-                  Gross
-                </TableCell>
-
-                {unique_deductions_types.map((type: any) => {
-                  if (type.deduction_type_id !== null) {
-                    return (
-                      <TableCell
-                        key={`deduction-header-${type.deduction_type_id}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 600,
-                          borderRight: '2px solid',
-                          borderRightColor: 'divider',
-                        }}
-                      >
-                        {type.label || 'Deduction'}
-                      </TableCell>
-                    );
-                  }
-                })}
-
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 700, color: 'error.main' }}
-                >
-                  PAYE
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 700, color: 'success.main' }}
-                >
-                  Net
-                </TableCell>
-
-                {unique_contributions_types.map((type: any) => {
-                  if (type.employer_contribution_type_id !== null) {
-                    return (
-                      <TableCell
-                        key={`contribution-header-${type.employer_contribution_type_id}`}
-                        align='right'
-                        sx={{
-                          fontWeight: 600,
-                          borderRight: '2px solid',
-                          borderRightColor: 'divider',
-                        }}
-                      >
-                        {type.label || 'Contribution'}
-                      </TableCell>
-                    );
-                  }
-                })}
-
-                <TableCell
-                  align='right'
-                  sx={{ fontWeight: 700, textWrap: 'nowrap' }}
-                >
-                  Total Empr. Cost
-                </TableCell>
-                <TableCell align='center' sx={{ fontWeight: 700 }}>
-                  Actions
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredRows.map((row: any, index: number) => {
-                const allowances = row.allowances || [];
-                const deductions = row.deductions || [];
-                const contributions = row.employer_contributions || [];
-                const basicSalary = row.basic_salary || 0;
-                const paye = row.paye || 0;
-                const totalContributions =
-                  calculateTotalEmployerContributions(contributions);
-                const grossSalary =
-                  row.gross_salary ||
-                  calculateGrossSalary(basicSalary, allowances);
-                const netSalary =
-                  row.net_salary ||
-                  calculateNetSalary(basicSalary, allowances, deductions, paye);
-                const employerCost = grossSalary + totalContributions;
-
-                return (
-                  <TableRow key={index}>
-                    <TableCell sx={{ textWrap: 'nowrap' }}>
-                      <Typography
-                        variant='body2'
-                        onClick={() =>
-                          router.push(
-                            `/${lang}/humanResources/employees/${row.employee?.id}`
-                          )
-                        }
-                        sx={{
-                          cursor: 'pointer',
-                          '&:hover': {
-                            color: 'primary.main',
-                            textDecoration: 'underline',
-                          },
-                        }}
-                      >
-                        {getEmployeeName(row.employee)}
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        {row.employee?.employee_number}
-                      </Typography>
-                    </TableCell>
-                    <TableCell align='right'>
-                      {formatMoney(basicSalary)}
-                    </TableCell>
-
-                    {unique_allowances_types.map((type: any) => (
-                      <TableCell
-                        key={`allowance-value-${row.employee?.id || index}-${type.allowance_type_id}`}
-                        align='right'
-                        sx={{
-                          borderRight: '2px solid',
-                          borderRightColor: 'divider',
-                        }}
-                      >
-                        {formatMoney(
-                          employeeAllowance.find(
-                            (itm) =>
-                              itm.employee_contract_id ===
-                                row.employee_contract_id &&
-                              (itm.label === type.label ||
-                                itm.allowance_type_id ===
-                                  type.allowance_type_id)
-                          )?.amount ?? 0
-                        )}
-                      </TableCell>
-                    ))}
-
-                    <TableCell align='right' sx={{ fontWeight: 600 }}>
-                      {formatMoney(grossSalary)}
-                    </TableCell>
-
-                    {unique_deductions_types.map((type: any) => {
-                      if (type.deduction_type_id !== null) {
-                        return (
-                          <TableCell
-                            key={`deduction-value-${row.employee?.id || index}-${type.deduction_type_id}`}
-                            align='right'
-                            sx={{
-                              borderRight: '2px solid',
-                              borderRightColor: 'divider',
-                            }}
-                          >
-                            {formatMoney(
-                              employeeDeductions.find(
-                                (itm) =>
-                                  itm.employee_contract_id ===
-                                    row.employee_contract_id &&
-                                  (itm.label === type.label ||
-                                    itm.deduction_type_id ===
-                                      type.deduction_type_id)
-                              )?.amount ?? 0
-                            )}
-                          </TableCell>
-                        );
-                      }
-                    })}
-
-                    <TableCell align='right' sx={{ color: 'error.main' }}>
-                      {formatMoney(paye)}
-                    </TableCell>
-                    <TableCell
-                      align='right'
-                      sx={{ fontWeight: 700, color: 'success.main' }}
-                    >
-                      {formatMoney(netSalary)}
-                    </TableCell>
-
-                    {unique_contributions_types.map((type: any) => {
-                      if (type.employer_contribution_type_id !== null) {
-                        return (
-                          <TableCell
-                            key={`contribution-value-${row.employee?.id || index}-${type.employer_contribution_type_id}`}
-                            align='right'
-                            sx={{
-                              borderRight: '2px solid',
-                              borderRightColor: 'divider',
-                            }}
-                          >
-                            {formatMoney(
-                              employeecontributions.find(
-                                (itm) =>
-                                  itm.employee_contract_id ===
-                                    row.employee_contract_id &&
-                                  (itm.label === type.label ||
-                                    itm.employer_contribution_type_id ===
-                                      type.employer_contribution_type_id)
-                              )?.amount ?? 0
-                            )}
-                          </TableCell>
-                        );
-                      }
-                    })}
-
-                    <TableCell
-                      align='right'
-                      sx={{ fontWeight: 600, color: 'primary.main' }}
-                    >
-                      {formatMoney(employerCost)}
-                    </TableCell>
-                    <TableCell align='center'>
-                      <Tooltip title='Simulate Employee'>
-                        <IconButton
-                          size='small'
-                          onClick={() => onSimulate(row.employee?.id)}
-                          disabled={isSimulating}
-                          color='primary'
-                        >
-                          {isSimulating ? (
-                            <CircularProgress size={16} />
-                          ) : (
-                            <VisibilityOutlined fontSize='small' />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-              {/* Totals Row */}
-              {filteredRows.length > 1 && (
-                <TableRow sx={{ fontWeight: 500, bgcolor: 'action.hover' }}>
-                  <TableCell sx={{ fontWeight: 600, fontSize: 16 }}>
-                    Totals
-                  </TableCell>
-                  <TableCell
-                    sx={{ fontWeight: 600, fontSize: 16 }}
-                    align='right'
-                  >
-                    {formatMoney(
-                      filteredRows?.reduce(
-                        (s: number, r: any) => s + (r.basic_salary || 0),
-                        0
-                      )
-                    )}
-                  </TableCell>
-
-                  {unique_allowances_types.map((type: any) => (
-                    <TableCell
-                      key={`allowance-total-${type.allowance_type_id}`}
-                      align='right'
-                      sx={{
-                        fontWeight: 500,
-                        fontSize: 18,
-                        borderRight: '2px solid',
-                        borderRightColor: 'divider',
-                      }}
-                    >
-                      {formatMoney(
-                        calculateTotalAmtByType(
-                          type,
-                          type.allowance_type_id,
-                          'allowance'
-                        )
-                      )}
-                    </TableCell>
-                  ))}
-
-                  <TableCell
-                    sx={{ fontWeight: 600, fontSize: 16 }}
-                    align='right'
-                  >
-                    {formatMoney(
-                      filteredRows?.reduce(
-                        (s: number, r: any) =>
-                          s +
-                          (r.gross_salary ||
-                            calculateGrossSalary(
-                              r.basic_salary || 0,
-                              r.allowances || []
-                            )),
-                        0
-                      )
-                    )}
-                  </TableCell>
-
-                  {unique_deductions_types.map((type: any) => {
-                    if (type.deduction_type_id !== null) {
-                      return (
-                        <TableCell
-                          key={`deduction-total-${type.deduction_type_id}`}
-                          align='right'
-                          sx={{
-                            fontWeight: 500,
-                            fontSize: 18,
-                            borderRight: '2px solid',
-                            borderRightColor: 'divider',
-                          }}
-                        >
-                          {formatMoney(
-                            calculateTotalAmtByType(
-                              type,
-                              type.deduction_type_id,
-                              'deduction'
-                            )
-                          )}
-                        </TableCell>
-                      );
-                    }
-                  })}
-
-                  <TableCell
-                    sx={{ fontWeight: 600, fontSize: 16 }}
-                    align='right'
-                  >
-                    {formatMoney(
-                      filteredRows?.reduce(
-                        (s: number, r: any) => s + (r.paye || 0),
-                        0
-                      )
-                    )}
-                  </TableCell>
-                  <TableCell
-                    sx={{ fontWeight: 600, fontSize: 16 }}
-                    align='right'
-                  >
-                    {formatMoney(
-                      filteredRows?.reduce(
-                        (s: number, r: any) =>
-                          s +
-                          (r.net_salary ||
-                            calculateNetSalary(
-                              r.basic_salary || 0,
-                              r.allowances || [],
-                              r.deductions || [],
-                              r.paye || 0
-                            )),
-                        0
-                      )
-                    )}
-                  </TableCell>
-
-                  {unique_contributions_types.map((type: any) => (
-                    <TableCell
-                      key={`contribution-total-${type.employer_contribution_type_id}`}
-                      align='right'
-                      sx={{
-                        fontWeight: 500,
-                        fontSize: 18,
-                        borderRight: '2px solid',
-                        borderRightColor: 'divider',
-                      }}
-                    >
-                      {formatMoney(
-                        calculateTotalAmtByType(
-                          type,
-                          type.employer_contribution_type_id,
-                          'contribution'
-                        )
-                      )}
-                    </TableCell>
-                  ))}
-
-                  <TableCell
-                    sx={{ fontWeight: 600, fontSize: 16 }}
-                    align='right'
-                  >
-                    {formatMoney(
-                      filteredRows?.reduce((s: number, r: any) => {
-                        const gross =
-                          r.gross_salary ||
-                          calculateGrossSalary(
-                            r.basic_salary || 0,
-                            r.allowances || []
-                          );
-                        const contribs = calculateTotalEmployerContributions(
-                          r.employer_contributions || []
-                        );
-                        return s + gross + contribs;
-                      }, 0)
-                    )}
-                  </TableCell>
-                  <TableCell />
-                </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-    </>
-  );
-};
-
 interface PayslipsTabProps {
   payslips: any[];
   search: string;
   onSearchChange: (value: string) => void;
   onViewPayslip: (payslip: any) => void;
   runStatus: string;
-  isPaid: boolean;
-  isPartiallyPaid?: boolean;
   isPosted: boolean;
 }
 
@@ -728,8 +62,6 @@ export const PayslipsTab = ({
   onSearchChange,
   onViewPayslip,
   runStatus,
-  isPaid,
-  isPartiallyPaid,
   isPosted,
 }: PayslipsTabProps) => {
   const router = useRouter();
@@ -833,6 +165,28 @@ export const PayslipsTab = ({
                 .slice(0, 10)
                 .map((payslip: any, index: number) => {
                   const employee = payslip.employee || payslip;
+                  const netSalary = payslip.net_salary || 0;
+                  const paidAmount = payslip.paid_amount ?? 0;
+                  const balanceRemaining =
+                    payslip.balance_remaining ??
+                    Math.max(0, netSalary - paidAmount);
+                  const isRowPaid = netSalary > 0 && balanceRemaining <= 0.01;
+                  const isRowPartiallyPaid = !isRowPaid && paidAmount > 0;
+                  // "partially_paid"/"paid" describe the RUN in aggregate — an
+                  // untouched employee on a run where others have been paid is
+                  // not themselves "Partially Paid," so that label is only
+                  // trustworthy as a per-row fallback when it isn't one of
+                  // those two (i.e. nobody on the run has been paid at all yet).
+                  const runStatusRaw = (runStatus || '').toLowerCase();
+                  const rowStatusLabel = isRowPaid
+                    ? 'Paid'
+                    : isRowPartiallyPaid
+                      ? 'Partially Paid'
+                      : ['partially_paid', 'paid'].includes(runStatusRaw)
+                        ? 'Unpaid'
+                        : (runStatus || 'Approved')
+                            .replace(/_/g, ' ')
+                            .replace(/\b\w/g, (c) => c.toUpperCase());
                   return (
                     <TableRow key={index}>
                       <TableCell>
@@ -883,12 +237,12 @@ export const PayslipsTab = ({
                       </TableCell>
                       <TableCell align='center'>
                         <Chip
-                          label={runStatus || 'approved'}
+                          label={rowStatusLabel}
                           size='small'
                           color={
-                            isPaid
+                            isRowPaid
                               ? 'success'
-                              : isPartiallyPaid
+                              : isRowPartiallyPaid
                                 ? 'warning'
                                 : isPosted
                                   ? 'primary'

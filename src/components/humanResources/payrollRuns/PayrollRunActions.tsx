@@ -5,7 +5,9 @@ import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { MODULES } from '@/utilities/constants/modules';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { useJumboDialog } from '@jumbo/components/JumboDialog/hooks/useJumboDialog';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
+  AccountBalanceOutlined,
   CheckCircleOutlined,
   DeleteOutlined,
   DoneAllOutlined,
@@ -28,8 +30,11 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -64,6 +69,7 @@ interface PostFormData {
   salary_expense_ledger_id: number;
   paye_payable_ledger_id: number;
   fallback_payable_ledger_id: number;
+  transaction_date?: string;
 }
 
 interface ConfirmDialogState {
@@ -111,6 +117,8 @@ export const PayrollRunActions = ({
   const { enqueueSnackbar } = useSnackbar();
   const { organizationHasSubscribed } = useJumboAuth();
   const { showDialog, hideDialog } = useJumboDialog();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
   const orgHasSubscribedAccountsAndFinance = organizationHasSubscribed(
     MODULES.ACCOUNTS_AND_FINANCE
   );
@@ -127,6 +135,7 @@ export const PayrollRunActions = ({
     salary_expense_ledger_id: 0,
     paye_payable_ledger_id: 0,
     fallback_payable_ledger_id: 0,
+    transaction_date: dayjs().format('YYYY-MM-DD'),
   });
   const [bankTransferList, setBankTransferList] =
     useState<SalarySheetType | null>(null);
@@ -153,6 +162,15 @@ export const PayrollRunActions = ({
   });
 
   useEffect(() => {
+    // previewResponse can be served from TanStack Query's shared cache for
+    // this exact queryKey (['payrollRuns', id]) even while this query is
+    // `enabled: false` — e.g. left over from a preview done on another page.
+    // Only react to it when the user actually clicked Preview this time,
+    // otherwise the dialog pops open on mount for any run previewed recently.
+    if (!isFetchingSalarySheet) {
+      return;
+    }
+
     if (isFetching) {
       setIsLoadingSalarySheet(true);
       setOpenSalarySheetDialog(true);
@@ -165,7 +183,7 @@ export const PayrollRunActions = ({
     if (previewResponse) {
       handleOpenSalarySheet(previewResponse);
     }
-  }, [previewResponse, isFetching]);
+  }, [previewResponse, isFetching, isFetchingSalarySheet]);
 
   const handleOpenSalarySheet = (previewResponse: any) => {
     setIsLoadingSalarySheet(true);
@@ -355,6 +373,7 @@ export const PayrollRunActions = ({
       salary_expense_ledger_id: 0,
       paye_payable_ledger_id: 0,
       fallback_payable_ledger_id: 0,
+      transaction_date: dayjs().format('YYYY-MM-DD'),
     });
   };
 
@@ -412,7 +431,7 @@ export const PayrollRunActions = ({
               {loadingBankTransfer ? (
                 <CircularProgress size={18} />
               ) : (
-                <ReceiptLongOutlined fontSize='medium' />
+                <AccountBalanceOutlined fontSize='medium' />
               )}
             </IconButton>
           </Tooltip>
@@ -584,6 +603,8 @@ export const PayrollRunActions = ({
         onClose={handleCloseConfirm}
         maxWidth='sm'
         fullWidth
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         <DialogTitle>
           <Typography variant='h6' component='div' fontWeight={600}>
@@ -627,6 +648,8 @@ export const PayrollRunActions = ({
         onClose={() => setOpenPostDialog(false)}
         fullWidth
         maxWidth='xs'
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         <DialogTitle>
           <Typography variant='h6' component='div' fontWeight={600}>
@@ -672,6 +695,24 @@ export const PayrollRunActions = ({
                 }))
               }
             />
+
+            <DatePicker
+              label='Transaction Date'
+              value={
+                postForm.transaction_date
+                  ? dayjs(postForm.transaction_date)
+                  : null
+              }
+              onChange={(val) =>
+                setPostForm((state) => ({
+                  ...state,
+                  transaction_date: val?.format('YYYY-MM-DD'),
+                }))
+              }
+              slotProps={{
+                textField: { size: 'small', fullWidth: true },
+              }}
+            />
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
@@ -713,6 +754,8 @@ export const PayrollRunActions = ({
         onClose={() => setOpenCompleteDialog(false)}
         fullWidth
         maxWidth='xs'
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         <DialogTitle>
           <Typography variant='h6' component='div' fontWeight={600}>

@@ -27,7 +27,9 @@ import {
   Typography,
   useMediaQuery,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -87,6 +89,7 @@ const PayrollRunItemAction = ({
     salary_expense_ledger_id: 0,
     paye_payable_ledger_id: 0,
     fallback_payable_ledger_id: 0,
+    transaction_date: dayjs().format('YYYY-MM-DD'),
   });
 
   // State for Salary Sheet Dialog
@@ -413,6 +416,8 @@ const PayrollRunItemAction = ({
         onClose={() => setOpenChainApprovalDialog(false)}
         fullWidth
         maxWidth='sm'
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         <DialogTitle>Payroll Approval</DialogTitle>
         <DialogContent>
@@ -475,6 +480,8 @@ const PayrollRunItemAction = ({
         onClose={() => setOpenPostDialog(false)}
         fullWidth
         maxWidth='xs'
+        fullScreen={belowLargeScreen}
+        scroll={belowLargeScreen ? 'body' : 'paper'}
       >
         <DialogTitle sx={{ textAlign: 'center' }}>
           Post Payroll Transactions
@@ -514,6 +521,23 @@ const PayrollRunItemAction = ({
                   fallback_payable_ledger_id: ledger?.id || 0,
                 }))
               }
+            />
+            <DatePicker
+              label='Transaction Date'
+              value={
+                postForm.transaction_date
+                  ? dayjs(postForm.transaction_date)
+                  : null
+              }
+              onChange={(val) =>
+                setPostForm((state) => ({
+                  ...state,
+                  transaction_date: val?.format('YYYY-MM-DD') || '',
+                }))
+              }
+              slotProps={{
+                textField: { size: 'small', fullWidth: true },
+              }}
             />
           </Stack>
         </DialogContent>

@@ -1,8 +1,10 @@
 // components/humanResources/payrollRuns/PayPayablesDialog.tsx
 'use client';
 
+import { sanitizedNumber } from '@/app/helpers/input-sanitization-helpers';
 import LedgerSelect from '@/components/accounts/ledgers/forms/LedgerSelect';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
+import { useJumboTheme } from '@jumbo/components/JumboTheme/hooks';
 import {
   Alert,
   Box,
@@ -21,8 +23,11 @@ import {
   TableRow,
   TextField,
   Typography,
+  useMediaQuery,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import dayjs from 'dayjs';
 import { useSnackbar } from 'notistack';
 import { useEffect, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
@@ -56,10 +61,15 @@ const PayPayablesDialog = ({
 }) => {
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { theme } = useJumboTheme();
+  const belowLargeScreen = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [creditLedgerId, setCreditLedgerId] = useState(0);
   const [selected, setSelected] = useState<Record<string, boolean>>({});
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [transactionDate, setTransactionDate] = useState(
+    dayjs().format('YYYY-MM-DD')
+  );
 
   const rowKey = (row: PayableRow) => `${row.payable_type}:${row.type_id}`;
 
@@ -71,6 +81,11 @@ const PayPayablesDialog = ({
 
   const allRows: PayableRow[] = data?.data || [];
   const payableRows = allRows.filter((row) => row.remaining > 0);
+
+  useEffect(() => {
+    if (!open) return;
+    setTransactionDate(dayjs().format('YYYY-MM-DD'));
+  }, [open]);
 
   useEffect(() => {
     if (!open || payableRows.length === 0) return;
@@ -99,6 +114,7 @@ const PayPayablesDialog = ({
         id: payrollRunId,
         credit_ledger_id: creditLedgerId,
         settlements,
+        transaction_date: transactionDate || undefined,
       });
     },
     onSuccess: (response: any) => {
@@ -126,7 +142,14 @@ const PayPayablesDialog = ({
     );
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth='sm'>
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth='sm'
+      fullScreen={belowLargeScreen}
+      scroll={belowLargeScreen ? 'body' : 'paper'}
+    >
       <DialogTitle>
         <Typography variant='h6' component='div' fontWeight={600}>
           Pay Payables
@@ -142,6 +165,17 @@ const PayPayablesDialog = ({
           <LedgerSelect
             label='Bank or Cash Account'
             onChange={(ledger: any) => setCreditLedgerId(ledger?.id || 0)}
+          />
+
+          <DatePicker
+            label='Settlement Date'
+            value={transactionDate ? dayjs(transactionDate) : null}
+            onChange={(val) =>
+              setTransactionDate(val?.format('YYYY-MM-DD') || '')
+            }
+            slotProps={{
+              textField: { size: 'small', fullWidth: true },
+            }}
           />
 
           {isLoading ? (
@@ -198,21 +232,28 @@ const PayPayablesDialog = ({
                     <TableCell align='right'>
                       <TextField
                         size='small'
-                        type='number'
-                        value={amounts[rowKey(row)] ?? ''}
+                        value={
+                          amounts[rowKey(row)]
+                            ? Number(amounts[rowKey(row)]).toLocaleString()
+                            : ''
+                        }
                         disabled={!selected[rowKey(row)]}
                         inputProps={{
-                          min: 0,
-                          max: row.remaining,
-                          step: 0.01,
                           style: { textAlign: 'right' },
                         }}
-                        onChange={(e) =>
+                        onChange={(e) => {
+                          const val =
+                            e.target.value === ''
+                              ? ''
+                              : sanitizedNumber(e.target.value);
                           setAmounts((state) => ({
                             ...state,
-                            [rowKey(row)]: e.target.value,
-                          }))
-                        }
+                            [rowKey(row)]:
+                              val === '' || isNaN(val as number)
+                                ? ''
+                                : String(val),
+                          }));
+                        }}
                         error={Number(amounts[rowKey(row)]) > row.remaining}
                       />
                     </TableCell>

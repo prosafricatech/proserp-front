@@ -1,5 +1,8 @@
 'use client';
 
+import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
+import { MODULES } from '@/utilities/constants/modules';
+import { PERMISSIONS } from '@/utilities/constants/permissions';
 import { ReceiptLongOutlined } from '@mui/icons-material';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
@@ -18,16 +21,12 @@ import {
 } from '@mui/material';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSnackbar } from 'notistack';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import humanResourcesServices from '../humanResourcesServices';
+import PayrollPaymentsTab from './PayrollPaymentsTab';
 import { PayrollRunActions } from './PayrollRunActions';
 import { PayslipViewDialog, SimulationDialog } from './PayrollRunDialogs';
-import {
-  ApprovalsTab,
-  EmployeesTab,
-  PayslipsTab,
-  TabPanel,
-} from './PayrollRunTabs';
+import { ApprovalsTab, PayslipsTab, TabPanel } from './PayrollRunTabs';
 import { PayrollRunType } from './PayrollRunType';
 import { processPayslips, statusColor } from './payrollUtils';
 import SummaryTab from './SummaryTab';
@@ -51,12 +50,11 @@ const PayrollRunsListItem = ({
   const theme = useTheme();
   const { enqueueSnackbar } = useSnackbar();
   const queryClient = useQueryClient();
+  const { organizationHasSubscribed, checkOrganizationPermission } =
+    useJumboAuth();
   const [expanded, setExpanded] = useState(false);
   const [tabValue, setTabValue] = useState(0);
   const [employeeSearch, setEmployeeSearch] = useState('');
-  const [selectedEmployees, setSelectedEmployees] = useState<Array<any> | null>(
-    null
-  );
   const [simulationResult, setSimulationResult] = useState<any>(null);
   const [openSimulationDialog, setOpenSimulationDialog] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
@@ -79,6 +77,20 @@ const PayrollRunsListItem = ({
     status === 'partially_paid' ||
     status === 'paid';
 
+  const orgHasAccountsAndFinance = organizationHasSubscribed(
+    MODULES.ACCOUNTS_AND_FINANCE
+  );
+  // Payments/settlements only ever exist once a run has at least been posted.
+  const hasPaymentsTabs =
+    orgHasAccountsAndFinance &&
+    (isPosted || isPartiallyPaid || isPaid);
+  const canReversePayment = checkOrganizationPermission(
+    PERMISSIONS.ACCOUNTS_TRANSACTIONS_DELETE
+  );
+  const canEditPayment = checkOrganizationPermission(
+    PERMISSIONS.ACCOUNTS_TRANSACTIONS_EDIT
+  );
+
   // Invalidate queries helper
   const invalidatePayrollRunQueries = () => {
     queryClient.invalidateQueries({ queryKey: ['payrollRuns'] });
@@ -96,24 +108,15 @@ const PayrollRunsListItem = ({
     });
   };
 
-  // Fetch preview data
-  const params = {
-    id: payrollRun.id,
-    employee_ids: selectedEmployees
-      ? selectedEmployees?.map((employee) =>
-          Array.isArray(employee)
-            ? employee.map((itm: any) => itm?.id)
-            : employee?.id
-        )
-      : [],
-  };
+  // Fetch preview data (totals for Summary, rows for PayrollRunActions' salary sheet)
+  const params = { id: payrollRun.id, employee_ids: [] };
 
   const {
     data: previewData,
     isLoading: isLoadingPreview,
     isFetching: isRefetching,
   } = useQuery({
-    queryKey: ['previewPayrollRunEmployees', payrollRun.id, selectedEmployees],
+    queryKey: ['previewPayrollRunEmployees', payrollRun.id],
     queryFn: () => humanResourcesServices.previewPayrollRun(params as any),
     enabled: !!expanded,
   });
@@ -134,32 +137,44 @@ const PayrollRunsListItem = ({
     hasChain ||
     ['submitted', 'approved', 'posted', 'paid'].includes(status) ||
     (runDetails?.approvals?.length ?? 0) > 0;
-  const approvalsTabIndex = hasPayslips ? 3 : 2;
 
-  const previousHasPayslips = useRef(hasPayslips);
+  // Tab order: Summary, Approvals, Payments, Payable Settlements, Payslips
+  // (Payslips last — see PayrollRunsListItem). Each optional tab claims the
+  // next index only if it's actually visible, so removing/reordering one
+  // doesn't require touching the others.
+  let nextTabIndex = 1; // 0 is always Summary
+  const approvalsTabIndex = hasApprovalsTab ? nextTabIndex++ : -1;
+  const paymentsTabIndex = hasPaymentsTabs ? nextTabIndex++ : -1;
+  const payableSettlementsTabIndex = hasPaymentsTabs ? nextTabIndex++ : -1;
+  const payslipsTabIndex = hasPayslips ? nextTabIndex++ : -1;
+  const totalVisibleTabs = nextTabIndex;
 
+  // Fetch payment history (both employee payments and payable settlements
+  // share the same list — see PayrollPostingService::listPayments())
+  const { data: paymentsData } = useQuery({
+    queryKey: ['payrollRunPayments', payrollRun.id],
+    queryFn: () => humanResourcesServices.payrollRunPayments(payrollRun.id),
+    enabled: expanded && hasPaymentsTabs,
+  });
+
+  const allPayments = paymentsData?.data || [];
+  const employeePayments = useMemo(
+    () => allPayments.filter((p: any) => p.type === 'employee_payment'),
+    [allPayments]
+  );
+  const payableSettlementPayments = useMemo(
+    () => allPayments.filter((p: any) => p.type === 'payable_settlement'),
+    [allPayments]
+  );
+
+  // If the run's status change adds/removes a tab and leaves tabValue pointing
+  // past the end of what's now visible, fall back to Summary rather than
+  // showing a blank pane.
   useEffect(() => {
-    // Keep user on Approvals tab when the run transitions from submitted -> approved
-    // and Payslips tab is inserted before Approvals.
-    if (
-      previousHasPayslips.current === false &&
-      hasPayslips === true &&
-      hasApprovalsTab &&
-      tabValue === 2
-    ) {
-      setTabValue(3);
+    if (tabValue >= totalVisibleTabs) {
+      setTabValue(0);
     }
-
-    if (
-      previousHasPayslips.current === true &&
-      hasPayslips === false &&
-      tabValue === 3
-    ) {
-      setTabValue(2);
-    }
-
-    previousHasPayslips.current = hasPayslips;
-  }, [hasPayslips, hasApprovalsTab, tabValue]);
+  }, [totalVisibleTabs, tabValue]);
 
   const processedPayslips = useMemo(
     () => processPayslips(runDetails?.payslips || []),
@@ -395,9 +410,10 @@ const PayrollRunsListItem = ({
               <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
                 <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
                   <Tab label='Summary' />
-                  <Tab label='Employees' />
-                  {hasPayslips && <Tab label='Payslips' />}
                   {hasApprovalsTab && <Tab label='Approvals' />}
+                  {hasPaymentsTabs && <Tab label='Payments' />}
+                  {hasPaymentsTabs && <Tab label='Payable Settlements' />}
+                  {hasPayslips && <Tab label='Payslips' />}
                 </Tabs>
               </Box>
 
@@ -410,39 +426,54 @@ const PayrollRunsListItem = ({
                   paye={previewTotals?.paye}
                   total_allowances={previewTotals?.total_allowances}
                   total_deductions={previewTotals?.total_deductions}
-                />
-              </TabPanel>
-
-              <TabPanel value={tabValue} index={1}>
-                <EmployeesTab
-                  rows={previewRows}
-                  search={employeeSearch}
-                  onSearchChange={setEmployeeSearch}
-                  selectedEmployees={selectedEmployees}
-                  setSelectedEmployees={setSelectedEmployees}
                   onSimulate={handleSimulateEmployee}
                   isSimulating={isSimulating}
                 />
               </TabPanel>
 
+              {hasApprovalsTab && (
+                <TabPanel value={tabValue} index={approvalsTabIndex}>
+                  <ApprovalsTab payrollRun={runDetails} />
+                </TabPanel>
+              )}
+
+              {hasPaymentsTabs && (
+                <TabPanel value={tabValue} index={paymentsTabIndex}>
+                  <PayrollPaymentsTab
+                    payments={employeePayments}
+                    payrollRunId={payrollRun.id}
+                    emptyMessage='No employee payments have been made against this run yet.'
+                    canReverse={canReversePayment}
+                    canEdit={canEditPayment}
+                  />
+                </TabPanel>
+              )}
+
+              {hasPaymentsTabs && (
+                <TabPanel
+                  value={tabValue}
+                  index={payableSettlementsTabIndex}
+                >
+                  <PayrollPaymentsTab
+                    payments={payableSettlementPayments}
+                    payrollRunId={payrollRun.id}
+                    emptyMessage='No payable settlements have been recorded against this run yet.'
+                    canReverse={canReversePayment}
+                    canEdit={canEditPayment}
+                  />
+                </TabPanel>
+              )}
+
               {hasPayslips && (
-                <TabPanel value={tabValue} index={2}>
+                <TabPanel value={tabValue} index={payslipsTabIndex}>
                   <PayslipsTab
                     payslips={processedPayslips}
                     search={employeeSearch}
                     onSearchChange={setEmployeeSearch}
                     onViewPayslip={handleViewPayslip}
                     runStatus={payrollRun.status || 'approved'}
-                    isPaid={isPaid}
-                    isPartiallyPaid={isPartiallyPaid}
                     isPosted={isPosted}
                   />
-                </TabPanel>
-              )}
-
-              {hasApprovalsTab && (
-                <TabPanel value={tabValue} index={approvalsTabIndex}>
-                  <ApprovalsTab payrollRun={runDetails} />
                 </TabPanel>
               )}
             </>
