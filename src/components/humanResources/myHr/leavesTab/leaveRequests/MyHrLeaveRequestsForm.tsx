@@ -1,7 +1,6 @@
 'use client';
 
 import { LeaveRequestType } from '@/components/humanResources/employees/profile/leaveRequests/LeaveRequestType';
-import CostCenterSelector from '@/components/masters/costCenters/CostCenterSelector';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { yupResolver } from '@hookform/resolvers/yup';
 import { Div } from '@jumbo/shared';
@@ -35,7 +34,6 @@ interface LeaveRequestFormProps {
 interface FormData {
   id?: number;
   leave_type_id: number;
-  cost_center_id?: number | null;
   start_date: string;
   end_date: string;
   days_requested: number;
@@ -128,7 +126,6 @@ const MyHrLeaveRequestsForm = ({
   const validationSchema = yup.object({
     id: yup.number().optional(),
     leave_type_id: yup.number().required('Leave type is required'),
-    cost_center_id: yup.number().nullable().optional(),
     start_date: yup.string().required('Start date is required'),
     end_date: yup.string().required('End date is required'),
     days_requested: yup
@@ -151,7 +148,6 @@ const MyHrLeaveRequestsForm = ({
     defaultValues: {
       id: leaveRequest?.id,
       leave_type_id: leaveRequest?.leave_type_id,
-      cost_center_id: leaveRequest?.cost_center_id ?? null,
       start_date: leaveRequest?.start_date || '',
       end_date: leaveRequest?.end_date || '',
       days_requested: leaveRequest?.days_requested ?? 1,
@@ -163,7 +159,6 @@ const MyHrLeaveRequestsForm = ({
     reset({
       id: leaveRequest?.id,
       leave_type_id: leaveRequest?.leave_type_id,
-      cost_center_id: leaveRequest?.cost_center_id ?? null,
       start_date: leaveRequest?.start_date || '',
       end_date: leaveRequest?.end_date || '',
       days_requested: leaveRequest?.days_requested ?? 1,
@@ -241,38 +236,6 @@ const MyHrLeaveRequestsForm = ({
                     )}
                   />
                 )}
-              </Div>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Div sx={{ mt: 1, mb: 1 }}>
-                <Controller
-                  name='cost_center_id'
-                  control={control}
-                  render={({ field }) => (
-                    <CostCenterSelector
-                      multiple={false}
-                      label='Cost Center (optional)'
-                      defaultValue={(leaveRequest as any)?.cost_center || null}
-                      onChange={(value) => {
-                        const selected = Array.isArray(value)
-                          ? value[0]
-                          : value;
-                        field.onChange(selected?.id || null);
-                      }}
-                      frontError={
-                        getValidationMessage(validationErrors, 'cost_center_id')
-                          ? {
-                              message: getValidationMessage(
-                                validationErrors,
-                                'cost_center_id'
-                              ),
-                            }
-                          : null
-                      }
-                    />
-                  )}
-                />
               </Div>
             </Grid>
 

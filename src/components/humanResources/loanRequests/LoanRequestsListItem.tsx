@@ -276,8 +276,8 @@ const LoanRequestsListItem = ({
                         </Grid>
                         <Field label='Employee' value={employeeName} />
                         <Field
-                          label='Cost Center'
-                          value={details.cost_center?.name}
+                          label='Department'
+                          value={details.department?.name}
                         />
                         <Field
                           label='Amount Requested'
