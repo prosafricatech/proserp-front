@@ -243,7 +243,7 @@ const SalesShiftOnScreen = ({
       sx={{
         fontFamily: 'monospace',
         fontWeight: bold ? 'bold' : 'regular',
-        color: bold ? headerColor : color,
+        // color: bold ? headerColor : headerColor,
       }}
     >
       {value?.toLocaleString('en-US', {
@@ -470,7 +470,7 @@ const SalesShiftOnScreen = ({
                                 <QuantityCell value={pump.closing} />
                                 <QuantityCell value={difference} />
                                 <NumberCell value={price} />
-                                <NumberCell value={totalAmount} />
+                                <NumberCell bold value={totalAmount} />
                               </TableRow>
                             );
                           })}

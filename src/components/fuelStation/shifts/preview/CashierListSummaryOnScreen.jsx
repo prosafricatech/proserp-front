@@ -1030,7 +1030,7 @@ export default function CashierListSummaryOnScreen({
             >
               <Typography
                 sx={{
-                  color: contrastText,
+                  // color: contrastText,
                   fontWeight: 'bold',
                 }}
               >
@@ -1048,7 +1048,7 @@ export default function CashierListSummaryOnScreen({
             >
               <Typography
                 sx={{
-                  color: contrastText,
+                  // color: contrastText,
                   fontWeight: 'bold',
                 }}
               >
@@ -1139,7 +1139,7 @@ export default function CashierListSummaryOnScreen({
               >
                 <Typography
                   sx={{
-                    color: contrastText,
+                    // color: contrastText,
                     fontWeight: 'bold',
                   }}
                 >
@@ -1156,7 +1156,7 @@ export default function CashierListSummaryOnScreen({
               >
                 <Typography
                   sx={{
-                    color: contrastText,
+                    // color: contrastText,
                     fontWeight: 'bold',
                   }}
                 >
