@@ -313,7 +313,8 @@ function RequisitionsForm({
         (type) =>
           !String(type).includes('LEAVE') &&
           type !== 'IMPREST RETIREMENT' &&
-          type !== 'PAYROLL'
+          type !== 'PAYROLL' &&
+          type !== 'LOAN'
       ),
     []
   );

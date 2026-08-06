@@ -133,8 +133,13 @@ const LoanRequestsListItem = ({
     : `Employee #${loanRequest.employee_id}`;
 
   const statusColor = STATUS_COLOR[loanRequest.status] || 'default';
+  // status_label is backend-computed — "Waiting for {Role}" while a chain-driven
+  // request sits at a pending level, same convention as Requisitions.
   const statusLabel =
-    STATUS_LABEL[loanRequest.status] || loanRequest.status || 'Pending';
+    loanRequest.status_label ||
+    STATUS_LABEL[loanRequest.status] ||
+    loanRequest.status ||
+    'Pending';
 
   return (
     <Accordion
@@ -302,7 +307,9 @@ const LoanRequestsListItem = ({
                           value={
                             <Chip
                               label={
-                                STATUS_LABEL[details.status] || details.status
+                                details.status_label ||
+                                STATUS_LABEL[details.status] ||
+                                details.status
                               }
                               size='small'
                               color={STATUS_COLOR[details.status] || 'default'}
