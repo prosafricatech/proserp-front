@@ -220,7 +220,7 @@ const ReportDocument: React.FC<ReportDocumentProps> = ({
       producer='ProsERP'
       title={`${ledger?.name || ledgerName} Statement ${readableDate(transactionsData.filters.from)} to ${readableDate(transactionsData.filters.to)}`}
     >
-      <Page size='A4' style={pdfStyles.page}>
+      <Page size='A4' orientation={hasForeignCurrency ? 'landscape' : 'portrait'} style={pdfStyles.page}>
         <View style={pdfStyles.table}>
           {/* Header Section */}
           <View style={{ ...pdfStyles.tableRow, marginBottom: 20 }}>
