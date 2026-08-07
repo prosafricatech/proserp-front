@@ -175,6 +175,7 @@ const LeaveRequestForm = ({
     control,
     reset,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     resolver: yupResolver(validationSchema) as any,
@@ -208,6 +209,30 @@ const LeaveRequestForm = ({
   const saveMutation = useMemo(() => {
     return leaveRequest?.id ? updateLeaveRequest : addLeaveRequest;
   }, [leaveRequest?.id, updateLeaveRequest, addLeaveRequest]);
+
+  const watchedStartDate = watch('start_date');
+  const watchedEndDate = watch('end_date');
+  const watchedDaysRequested = watch('days_requested');
+
+  // Calendar span between the picked dates — purely informational, since a
+  // shorter days_requested is often correct (weekends/holidays excluded).
+  const dateSpanDays = useMemo(() => {
+    if (!watchedStartDate || !watchedEndDate) return null;
+    const start = dayjs(watchedStartDate).startOf('day');
+    const end = dayjs(watchedEndDate).startOf('day');
+    if (!start.isValid() || !end.isValid()) return null;
+    const diff = end.diff(start, 'day') + 1;
+    return diff > 0 ? diff : null;
+  }, [watchedStartDate, watchedEndDate]);
+
+  const daysRequestedHint =
+    dateSpanDays === null
+      ? undefined
+      : `${dateSpanDays} calendar day${dateSpanDays === 1 ? '' : 's'} between selected dates${
+          Number(watchedDaysRequested) !== dateSpanDays
+            ? ' — differs from days requested'
+            : ' — matches days requested'
+        }`;
 
   const validationErrors =
     error?.response?.data?.validation_errors ||
@@ -314,8 +339,21 @@ const LeaveRequestForm = ({
                   }
                   helperText={
                     errors.days_requested?.message ||
-                    getValidationMessage(validationErrors, 'days_requested')
+                    getValidationMessage(validationErrors, 'days_requested') ||
+                    daysRequestedHint
                   }
+                  slotProps={{
+                    formHelperText: {
+                      sx: {
+                        color:
+                          !errors?.days_requested &&
+                          dateSpanDays !== null &&
+                          Number(watchedDaysRequested) !== dateSpanDays
+                            ? 'warning.main'
+                            : undefined,
+                      },
+                    },
+                  }}
                   {...register('days_requested')}
                 />
               </Div>
