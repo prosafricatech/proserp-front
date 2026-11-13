@@ -925,11 +925,11 @@
         },
         "openingStock": {
           "title": "Correct Opening Stock",
-          "help": "Use this when the number stocked, or the weight the batch started at, was entered wrongly. It only works while the batch is in its first stage, before any harvest, produce or write-off.",
           "quantity": "Number stocked",
           "quantityHint": "{died} already lost since stocking stay recorded as deaths",
           "weight": "Starting average weight (optional)",
-          "effect": "The count alive changes by the same difference. Nothing is posted to the ledgers: stocked animals carry no cost until feed and expenses are recorded."
+          "quantityHelp": "Use this when the number stocked was entered wrongly. It only works while the batch is in its first stage, before any harvest, produce or write-off. The count alive changes by the same difference, and nothing is posted to the ledgers: stocked animals carry no cost until feed and expenses are recorded.",
+          "weightHelp": "Use this when the weight the batch started at was entered wrongly. Leave it as it is to keep the current weight."
         }
       },
       "messages": {
@@ -1111,9 +1111,9 @@
       },
       "spread": {
         "title": "Spread an amount over the batches",
-        "help": "Fills the lines below from one amount, such as boat fuel, shared over the open batches that have animals on the date of this record: all farm, or only a group and the groups inside it. Equally per cage: every unit takes the same, and a unit with several batches divides its part. By animals alive: more animals, more cost. By biomass: animals alive times their last sampled weight. By feed given: by the cost of feed given in the last days. Nothing is saved until you save the record, and you can change any line first.",
+        "help": "Fills the lines below from one amount, such as boat fuel, shared over the open batches that have animals on the date of this record: all farm, or only the groups (and the groups inside them) and units you choose. Equally per cage: every unit takes the same, and a unit with several batches divides its part. By animals alive: more animals, more cost. By biomass: animals alive times their last sampled weight. By feed given: by the cost of feed given in the last days. Nothing is saved until you save the record, and you can change any line first.",
         "amount": "Amount to spread",
-        "group": "Group (empty for the whole farm)",
+        "group": "Groups (empty for the whole farm)",
         "basis": "Spread",
         "feedDays": "Days of feed",
         "button": "Fill the lines",
@@ -1123,7 +1123,8 @@
           "animals": "By animals alive",
           "biomass": "By biomass",
           "feed": "By feed given"
-        }
+        },
+        "units": "Units"
       }
     },
     "farmFirst": {

@@ -925,11 +925,11 @@
         },
         "openingStock": {
           "title": "Sahihisha Hisa ya Kuanzia",
-          "help": "Tumia hii idadi iliyowekwa au uzito wa kuanzia ulipoingizwa vibaya. Inafanya kazi tu kundi likiwa katika hatua ya kwanza, kabla ya mavuno, mazao au kufuta hasara.",
           "quantity": "Idadi iliyowekwa",
           "quantityHint": "{died} waliokufa tangu kuwekwa wanabaki kama vifo",
           "weight": "Wastani wa uzito wa kuanzia (si lazima)",
-          "effect": "Idadi iliyo hai inabadilika kwa tofauti ileile. Hakuna kinachoandikwa kwenye leja: wanyama waliowekwa hawana gharama hadi chakula na gharama zirekodiwe."
+          "quantityHelp": "Tumia hii idadi iliyowekwa ilipoingizwa vibaya. Inafanya kazi tu kundi likiwa katika hatua ya kwanza, kabla ya mavuno, mazao au kufuta hasara. Idadi iliyo hai inabadilika kwa tofauti ileile, na hakuna kinachoandikwa kwenye leja: wanyama waliowekwa hawana gharama hadi chakula na gharama zirekodiwe.",
+          "weightHelp": "Tumia hii uzito wa kuanzia ulipoingizwa vibaya. Uuache kama ulivyo ili kubaki na uzito wa sasa."
         }
       },
       "messages": {
@@ -1113,7 +1113,7 @@
         "title": "Gawa kiasi kwenye makundi",
         "help": "Inajaza mistari iliyo chini kutoka kiasi kimoja, kama mafuta ya boti, kikigawanywa kwenye makundi yaliyo wazi yenye wanyama siku ya rekodi hii: shamba zima, au kundi la vitengo na makundi yaliyo ndani yake tu. Sawa kwa kila kizimba: kila kitengo kinachukua sawa, na kitengo chenye makundi kadhaa kinagawa sehemu yake. Kwa wanyama walio hai: wanyama wengi, gharama zaidi. Kwa uzito wa jumla: wanyama walio hai mara uzito wao wa mwisho uliopimwa. Kwa chakula: kwa gharama ya chakula kilichotolewa siku za mwisho. Hakuna kinachohifadhiwa hadi uhifadhi rekodi, na unaweza kubadilisha mstari wowote kwanza.",
         "amount": "Kiasi cha kugawa",
-        "group": "Kundi la vitengo (tupu kwa shamba zima)",
+        "group": "Vikundi (acha wazi kwa shamba lote)",
         "basis": "Mgawanyo",
         "feedDays": "Siku za chakula",
         "button": "Jaza mistari",
@@ -1123,7 +1123,8 @@
           "animals": "Kwa wanyama walio hai",
           "biomass": "Kwa uzito wa jumla",
           "feed": "Kwa chakula kilichotolewa"
-        }
+        },
+        "units": "Vitengo"
       }
     },
     "farmFirst": {

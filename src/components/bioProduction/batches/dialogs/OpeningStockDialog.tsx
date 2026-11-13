@@ -2,12 +2,13 @@
 
 import React from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Alert, Grid, TextField } from '@mui/material';
+import { Grid, Stack, TextField } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { animalText } from '../../animalText';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { batchServices } from '../../bio-production-services';
+import InfoHint from '../../InfoHint';
 import { fromGrams, toGrams, withUnit } from '../../weightUnit';
 import { DialogProps } from '../batchTypes';
 import ActionDialog, { useBatchAction } from './ActionDialog';
@@ -31,19 +32,24 @@ const OpeningStockDialog = ({ batch, open, onClose }: DialogProps) => {
   const { mutate, isPending } = useBatchAction(batch.id, batchServices.correctOpening, () => { reset(); onClose(); });
 
   return (
-    <ActionDialog open={open} title={dialog.title} help={animalText(dialog.help, batch.species_template?.count_label)} loading={isPending} onClose={onClose}
+    <ActionDialog open={open} title={dialog.title} loading={isPending} onClose={onClose}
       onSubmit={handleSubmit((data: any) => mutate({
         id: batch.id, initial_quantity: data.initial_quantity,
         average_weight_g: data.average_weight_g == null || data.average_weight_g === '' ? undefined : toGrams(Number(data.average_weight_g), unit),
       }))}>
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField type='number' size='small' fullWidth label={dialog.quantity} error={!!errors.initial_quantity} helperText={(errors.initial_quantity?.message as string) ?? dialog.quantityHint.replace('{died}', died.toLocaleString())} slotProps={{ htmlInput: { step: 1, min: 1 } }} {...register('initial_quantity')} />
+          <Stack direction='row' alignItems='flex-start' spacing={0.5}>
+            <TextField type='number' size='small' fullWidth label={dialog.quantity} error={!!errors.initial_quantity} helperText={(errors.initial_quantity?.message as string) ?? dialog.quantityHint.replace('{died}', died.toLocaleString())} slotProps={{ htmlInput: { step: 1, min: 1 } }} {...register('initial_quantity')} />
+            <InfoHint text={animalText(dialog.quantityHelp, batch.species_template?.count_label)} />
+          </Stack>
         </Grid>
         <Grid size={{ xs: 12, md: 6 }}>
-          <TextField type='number' size='small' fullWidth label={withUnit(dialog.weight, unit)} error={!!errors.average_weight_g} helperText={errors.average_weight_g?.message as string} slotProps={{ htmlInput: { step: 'any', min: 0 } }} {...register('average_weight_g')} />
+          <Stack direction='row' alignItems='flex-start' spacing={0.5}>
+            <TextField type='number' size='small' fullWidth label={withUnit(dialog.weight, unit)} error={!!errors.average_weight_g} helperText={errors.average_weight_g?.message as string} slotProps={{ htmlInput: { step: 'any', min: 0 } }} {...register('average_weight_g')} />
+            <InfoHint text={dialog.weightHelp} />
+          </Stack>
         </Grid>
-        <Grid size={12}><Alert severity='info'>{animalText(dialog.effect, batch.species_template?.count_label)}</Alert></Grid>
       </Grid>
     </ActionDialog>
   );

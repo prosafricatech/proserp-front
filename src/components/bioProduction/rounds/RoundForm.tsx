@@ -41,11 +41,12 @@ import ProductSelect from '@/components/productAndServices/products/ProductSelec
 import { useProductsSelect } from '@/components/productAndServices/products/ProductsSelectProvider';
 import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import BioSelect from '../BioSelect';
+import BioMultiSelect from '../BioMultiSelect';
 import InfoHint from '../InfoHint';
 import { useBioFarm } from '../FarmFirstPage';
 import { categoryIds } from '../useFarmCategories';
-import { roundServices } from '../bio-production-services';
-import { BioFormProps } from '../types';
+import { productionUnitServices, roundServices } from '../bio-production-services';
+import { BioFormProps, BioProductionUnit } from '../types';
 import { nowStamp } from '../dateTime';
 import { BIO_WIP_LEDGER_ID } from '../batches/batchConstants';
 import { unitGroupOptions, useUnitGroups } from '../useUnitGroups';
@@ -118,10 +119,16 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
   const freshDraft = (): Draft => ({ ...emptyDraft, quantity: mode === 'cost' ? '1' : '' });
   // A cost can be spread over the open batches of a farm or group, which fills the lines below.
   const [spreadAmount, setSpreadAmount] = useState('');
-  const [spreadGroup, setSpreadGroup] = useState<string | number>('');
+  const [spreadGroup, setSpreadGroup] = useState<(string | number)[]>([]);
+  const [spreadUnits, setSpreadUnits] = useState<(string | number)[]>([]);
   const [spreadBasis, setSpreadBasis] = useState<string | number>('equal');
   const [spreadDays, setSpreadDays] = useState('30');
   const { data: spreadGroups } = useUnitGroups(mode === 'cost' ? farmId : null);
+  const { data: spreadUnitList, isLoading: loadingSpreadUnits } = useQuery<{ data: BioProductionUnit[] }>({
+    queryKey: ['bioFarmUnits', farmId],
+    queryFn: () => productionUnitServices.getList({ farm_id: farmId, status: 'active', limit: 2000 }),
+    enabled: mode === 'cost' && !!farmId,
+  });
   const [items, setItems] = useState<RoundDraftLine[]>([]);
   const [draft, setDraft] = useState<Draft>(freshDraft);
   const [rowErrors, setRowErrors] = useState<Record<number, string>>({});
@@ -231,7 +238,7 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
 
   const { mutate: spreadCost, isPending: spreading } = useMutation({
     mutationFn: () => roundServices.spreadCost({
-      farm_id: farmId, unit_group_id: spreadGroup || null, expense_date: date, amount: Number(spreadAmount), basis: spreadBasis, feed_days: spreadBasis === 'feed' ? Number(spreadDays) || 30 : null,
+      farm_id: farmId, unit_group_ids: spreadGroup, unit_ids: spreadUnits, expense_date: date, amount: Number(spreadAmount), basis: spreadBasis, feed_days: spreadBasis === 'feed' ? Number(spreadDays) || 30 : null,
     }),
     onSuccess: (data: { rows: { batch_id: number; amount: number }[]; total: number }) => {
       // Every share is one line of one, at its own amount: the sheet is then saved like any cost record, and any line can be changed first.
@@ -558,10 +565,13 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
                     <Grid size={{ xs: 12, md: 3 }}>
                       <TextField size='small' fullWidth label={text.spread.amount} value={spreadAmount} onChange={(event) => setSpreadAmount(unformatted(event.target.value))} InputProps={formattedInput} />
                     </Grid>
-                    <Grid size={{ xs: 12, md: 3 }}>
-                      <BioSelect label={text.spread.group} options={unitGroupOptions(spreadGroups?.data)} value={spreadGroup} onChange={setSpreadGroup} />
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <BioMultiSelect label={text.spread.group} options={unitGroupOptions(spreadGroups?.data)} value={spreadGroup} onChange={setSpreadGroup} />
                     </Grid>
-                    <Grid size={{ xs: 12, md: spreadBasis === 'feed' ? 2 : 4 }}>
+                    <Grid size={{ xs: 12, md: 6 }}>
+                      <BioMultiSelect label={text.spread.units} options={(spreadUnitList?.data ?? []).map((unit) => ({ value: unit.id, label: unit.name, hint: unit.unit_group?.path ?? undefined }))} value={spreadUnits} onChange={setSpreadUnits} loading={loadingSpreadUnits} />
+                    </Grid>
+                    <Grid size={{ xs: 12, md: spreadBasis === 'feed' ? 5 : 7 }}>
                       <BioSelect label={text.spread.basis} options={(['equal', 'animals', 'biomass', 'feed'] as const).map((value) => ({ value, label: text.spread.bases[value] }))} value={spreadBasis} onChange={setSpreadBasis} />
                     </Grid>
                     {spreadBasis === 'feed' && (
