@@ -649,7 +649,8 @@
         "more": "Actions",
         "undoStage": "Undo last move",
         "merge": "Merge into another batch",
-        "undoMerge": "Undo merge"
+        "undoMerge": "Undo merge",
+        "openingStock": "Correct opening stock"
       },
       "summary": {
         "environment": "Conditions during this batch",
@@ -921,6 +922,14 @@
           "gapWarning": "The average weights differ by {gap}% ({from} and {into}), more than {limit}%. Mixing fish of such different sizes can lead to competition for feed and uneven growth.",
           "confirmGap": "I understand, merge anyway",
           "noWeight": "One of the batches has no weight yet, so no combined weight is recorded. Weigh the batch after the merge."
+        },
+        "openingStock": {
+          "title": "Correct Opening Stock",
+          "help": "Use this when the number stocked, or the weight the batch started at, was entered wrongly. It only works while the batch is in its first stage, before any harvest, produce or write-off.",
+          "quantity": "Number stocked",
+          "quantityHint": "{died} already lost since stocking stay recorded as deaths",
+          "weight": "Starting average weight (optional)",
+          "effect": "The count alive changes by the same difference. Nothing is posted to the ledgers: stocked animals carry no cost until feed and expenses are recorded."
         }
       },
       "messages": {

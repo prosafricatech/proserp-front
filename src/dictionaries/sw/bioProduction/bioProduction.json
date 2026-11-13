@@ -649,7 +649,8 @@
         "more": "Vitendo",
         "undoStage": "Tendua uhamisho wa mwisho",
         "merge": "Unganisha na kundi lingine",
-        "undoMerge": "Tengua kuunganisha"
+        "undoMerge": "Tengua kuunganisha",
+        "openingStock": "Sahihisha hisa ya kuanzia"
       },
       "summary": {
         "environment": "Hali wakati wa kundi hili",
@@ -921,6 +922,14 @@
           "gapWarning": "Wastani wa uzito unatofautiana kwa {gap}% ({from} na {into}), zaidi ya {limit}%. Kuchanganya samaki wa ukubwa tofauti hivi kunaweza kusababisha ushindani wa chakula na ukuaji usio sawa.",
           "confirmGap": "Naelewa, unganisha hata hivyo",
           "noWeight": "Moja ya makundi halina uzito bado, kwa hiyo hakuna uzito wa pamoja utakaorekodiwa. Pima kundi baada ya kuunganisha."
+        },
+        "openingStock": {
+          "title": "Sahihisha Hisa ya Kuanzia",
+          "help": "Tumia hii idadi iliyowekwa au uzito wa kuanzia ulipoingizwa vibaya. Inafanya kazi tu kundi likiwa katika hatua ya kwanza, kabla ya mavuno, mazao au kufuta hasara.",
+          "quantity": "Idadi iliyowekwa",
+          "quantityHint": "{died} waliokufa tangu kuwekwa wanabaki kama vifo",
+          "weight": "Wastani wa uzito wa kuanzia (si lazima)",
+          "effect": "Idadi iliyo hai inabadilika kwa tofauti ileile. Hakuna kinachoandikwa kwenye leja: wanyama waliowekwa hawana gharama hadi chakula na gharama zirekodiwe."
         }
       },
       "messages": {

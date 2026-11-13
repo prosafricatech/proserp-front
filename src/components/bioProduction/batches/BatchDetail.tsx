@@ -32,6 +32,7 @@ import StageDateDialog from './dialogs/StageDateDialog';
 import ExpenseDialog from './dialogs/ExpenseDialog';
 import HarvestDialog from './dialogs/HarvestDialog';
 import MergeDialog from './dialogs/MergeDialog';
+import OpeningStockDialog from './dialogs/OpeningStockDialog';
 import ProduceDialog from './dialogs/ProduceDialog';
 import EditInputRecordDialog from './dialogs/EditInputRecordDialog';
 import InputDialog from './dialogs/InputDialog';
@@ -40,7 +41,7 @@ import TransferDialog from './dialogs/TransferDialog';
 import WeightDialog from './dialogs/WeightDialog';
 import WriteOffDialog from './dialogs/WriteOffDialog';
 
-type DialogName = 'mortality' | 'weight' | 'input' | 'expense' | 'transfer' | 'advance' | 'undoStage' | 'merge' | 'writeOff' | 'harvest' | 'produce' | 'close' | 'edit';
+type DialogName = 'mortality' | 'weight' | 'input' | 'expense' | 'transfer' | 'advance' | 'undoStage' | 'merge' | 'openingStock' | 'writeOff' | 'harvest' | 'produce' | 'close' | 'edit';
 type TabName = 'summary' | 'stages' | 'inputs' | 'costs' | 'mortality' | 'weights' | 'movements' | 'outcomes' | 'produce';
 
 const BatchDetailContent = () => {
@@ -127,7 +128,7 @@ const BatchDetailContent = () => {
   // Each action sits on the tab it belongs to, as on a project's profile; a closed batch has none.
   const tabActions: Partial<Record<TabName, TabAction[]>> = open
     ? {
-        stages: access.manage ? [...((batch.stages ?? []).length > 1 ? [act('undoStage', text.actions.undoStage)] : []), act('merge', text.actions.merge), act('advance', text.actions.advance, 'contained')] : [],
+        stages: access.manage ? [...((batch.stages ?? []).length === 1 && !(batch.merges_in ?? []).length && !(batch.harvests ?? []).length && !(batch.mortality_writeoffs ?? []).length ? [act('openingStock', text.actions.openingStock)] : []), ...((batch.stages ?? []).length > 1 ? [act('undoStage', text.actions.undoStage)] : []), act('merge', text.actions.merge), act('advance', text.actions.advance, 'contained')] : [],
         inputs: access.record ? [act('input', text.actions.input, 'contained')] : [],
         costs: access.record ? [act('expense', text.actions.expense, 'contained')] : [],
         mortality: access.record ? [act('mortality', text.actions.mortality, 'contained')] : [],
@@ -292,6 +293,7 @@ const BatchDetailContent = () => {
           <TransferDialog batch={batch} open={dialog === 'transfer'} onClose={close} />
           <AdvanceDialog batch={batch} open={dialog === 'advance'} onClose={close} />
           <MergeDialog batch={batch} open={dialog === 'merge'} onClose={close} />
+          <OpeningStockDialog batch={batch} open={dialog === 'openingStock'} onClose={close} />
           <WriteOffDialog batch={batch} open={dialog === 'writeOff'} onClose={close} />
           <ProduceDialog batch={batch} open={dialog === 'produce'} onClose={close} />
           <HarvestDialog batch={batch} open={dialog === 'harvest'} onClose={close} />
