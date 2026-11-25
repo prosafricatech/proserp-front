@@ -83,7 +83,7 @@ const RoundView = ({ recordId, onClose }: { recordId: number; onClose: () => voi
         <>
           {`${num(fromGrams(Number(line.average_weight_g), line.weight_unit), 4)} ${normalizeUnit(line.weight_unit)}`}
           {line.batch_open && line.sample_id && (
-            <WeightCheckHint lazy batchId={line.batch_id} animalsLabel={line.count_label} weightUnit={line.weight_unit} weight={Number(line.average_weight_g)} date={String(line.sample_date)} sampleSize={line.sample_size} sampleId={line.sample_id} />
+            <WeightCheckHint lazy batchId={line.batch_id} animalsLabel={line.count_label} weightUnit={line.weight_unit} weight={Number(line.average_weight_g)} date={String(line.sample_date)} sampleSize={line.sample_size} sampleId={line.sample_id} warnings={line.warnings} />
           )}
         </>
       ) },

@@ -67,6 +67,7 @@ export const batchServices = {
   recordMortality: ({ id, ...payload }) => post(`${batchPath}/${id}/mortalities`, payload),
   updateMortality: ({ id, eventId, ...payload }) => put(`${batchPath}/${id}/mortalities/${eventId}`, payload),
   deleteMortality: async ({ id, eventId }) => (await axios.delete(`${batchPath}/${id}/mortalities/${eventId}`)).data,
+  weightChecks: async (id) => (await axios.get(`${batchPath}/${id}/weight-checks`)).data,
   weightCheck: async ({ id, ...params }) => (await axios.get(`${batchPath}/${id}/weight-check`, { params })).data,
   recordWeightSampling: ({ id, ...payload }) => post(`${batchPath}/${id}/weight-samplings`, payload),
   recordInput: ({ id, ...payload }) => post(`${batchPath}/${id}/inputs`, payload),

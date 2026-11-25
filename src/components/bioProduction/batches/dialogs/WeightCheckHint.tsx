@@ -34,7 +34,7 @@ const useSettled = <T,>(value: T, ms = 500) => {
  * FCR outside what a species does, and whether there is yet a second weighing to measure the real growth. The icon turns
  * to a warning when something needs a look. Nothing is saved by looking.
  */
-const WeightCheckHint = ({ batchId, animalsLabel, weightUnit, weight, date, sampleSize, sampleId, lazy }: {
+const WeightCheckHint = ({ batchId, animalsLabel, weightUnit, weight, date, sampleSize, sampleId, lazy, warnings: known }: {
   batchId: number;
   animalsLabel?: string | null;
   weightUnit?: string | null;
@@ -46,6 +46,8 @@ const WeightCheckHint = ({ batchId, animalsLabel, weightUnit, weight, date, samp
   sampleId?: number | null;
   /** Asks the server only once the icon has been opened, for a long list of them. */
   lazy?: boolean;
+  /** How many warnings the weighing is already known to carry, to mark the icon before it is opened. */
+  warnings?: number;
 }) => {
   const text = useDictionary().bioProduction.batches.dialogs.weight.check;
   const label = animalsLabel;
@@ -64,7 +66,7 @@ const WeightCheckHint = ({ batchId, animalsLabel, weightUnit, weight, date, samp
     placeholderData: (previous) => previous,
   });
   const check = grams ? data?.analysis : undefined;
-  const warnings = check?.available ? check.warnings : 0;
+  const warnings = check?.available ? check.warnings : (known ?? 0);
   const g = (value: number | null | undefined) => (value == null ? '—' : `${num(fromGrams(value, unit), 3)} ${unit === 'kg' ? 'kg' : 'g'}`);
 
   const say = (flag: Flag) => animalText(text.flags[flag.code as keyof typeof text.flags] ?? flag.code, label)

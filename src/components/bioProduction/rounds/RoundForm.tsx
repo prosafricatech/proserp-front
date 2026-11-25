@@ -402,7 +402,7 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
     ...(mode === 'weighing'
       ? [
           { label: text.labels.sampleSize, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => <b>{Number(line.sample_size).toLocaleString()}</b> },
-          { label: text.labels.averageWeight, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => (<><b>{figure(Number(line.average_weight_g))} {normalizeUnit(line.row.species.weight_unit)}</b><WeightCheckHint lazy batchId={line.row.batch_id} animalsLabel={line.row.species.count_label} weightUnit={line.row.species.weight_unit} weight={toGrams(Number(line.average_weight_g), line.row.species.weight_unit)} date={date} sampleSize={Number(line.sample_size) || null} /></>) },
+          { label: text.labels.averageWeight, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => (<><b>{figure(Number(line.average_weight_g))} {normalizeUnit(line.row.species.weight_unit)}</b><WeightCheckHint batchId={line.row.batch_id} animalsLabel={line.row.species.count_label} weightUnit={line.row.species.weight_unit} weight={toGrams(Number(line.average_weight_g), line.row.species.weight_unit)} date={date} sampleSize={Number(line.sample_size) || null} /></>) },
         ]
       : []),
   ];

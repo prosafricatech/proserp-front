@@ -53,6 +53,7 @@ export interface RoundLine {
   sample_date?: string;
   count_label?: string | null;
   batch_open?: boolean;
+  warnings?: number;
   rate?: number | string | null;
   amount?: number | string | null;
   product_quantity?: number | string | null;

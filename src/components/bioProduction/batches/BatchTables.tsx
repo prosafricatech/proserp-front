@@ -1,5 +1,7 @@
 'use client'
 
+import { batchServices } from '../bio-production-services';
+import { useQuery } from '@tanstack/react-query';
 import WeightCheckHint from './dialogs/WeightCheckHint';
 import { fromGrams, withUnit } from '../weightUnit';
 import React from 'react';
@@ -281,6 +283,13 @@ export const MortalityTable = ({ batch, rows, page, limit, total, totalQuantity,
 export const WeightsTable = ({ batch }: { batch: Batch }) => {
   const t = useDictionary().bioProduction.batches.tables;
   const unit = batch.species_template?.weight_unit;
+  // How many warnings each weighing carries, in one call, so the icons are marked before any is opened.
+  const { data: marks } = useQuery<{ warnings: Record<string, number> }>({
+    queryKey: ['bioBatchWeightChecks', batch.id, (batch.weight_samplings ?? []).length],
+    queryFn: () => batchServices.weightChecks(batch.id),
+    enabled: batch.status === 'on progress' && (batch.weight_samplings ?? []).length > 0,
+    retry: false,
+  });
 
   return (
     <SimpleTable
@@ -293,7 +302,7 @@ export const WeightsTable = ({ batch }: { batch: Batch }) => {
         // What each weighing did to the feed projection and whether it is worth a second look, for a batch still open.
         ...(batch.status === 'on progress'
           ? [{ label: '', align: 'right' as const, render: (w: NonNullable<Batch['weight_samplings']>[number]) => (
-              <WeightCheckHint lazy batchId={batch.id} animalsLabel={batch.species_template?.count_label} weightUnit={unit} weight={Number(w.average_weight_g)} date={String(w.sample_date)} sampleSize={w.sample_size} sampleId={w.id} />
+              <WeightCheckHint lazy batchId={batch.id} animalsLabel={batch.species_template?.count_label} weightUnit={unit} weight={Number(w.average_weight_g)} date={String(w.sample_date)} sampleSize={w.sample_size} sampleId={w.id} warnings={marks?.warnings?.[w.id] ?? 0} />
             ) }]
           : []),
       ]}
