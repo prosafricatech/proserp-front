@@ -1,6 +1,7 @@
 'use client'
 
 import { fromGrams, normalizeUnit } from '../weightUnit';
+import WeightCheckHint from '../batches/dialogs/WeightCheckHint';
 import React, { useState } from 'react';
 import { HighlightOff } from '@mui/icons-material';
 import { Box, Chip, DialogContent, DialogTitle, Grid, IconButton, LinearProgress, Stack, Tooltip, Typography } from '@mui/material';
@@ -78,7 +79,14 @@ const RoundView = ({ recordId, onClose }: { recordId: number; onClose: () => voi
     ],
     weighing: [
       { label: text.labels.sampleSize, xs: 6, md: 2.5, right: true, render: (line) => num(line.sample_size, 0) },
-      { label: text.labels.averageWeight, xs: 6, md: 2.5, right: true, render: (line) => `${num(fromGrams(Number(line.average_weight_g), line.weight_unit), 4)} ${normalizeUnit(line.weight_unit)}` },
+      { label: text.labels.averageWeight, xs: 6, md: 2.5, right: true, render: (line) => (
+        <>
+          {`${num(fromGrams(Number(line.average_weight_g), line.weight_unit), 4)} ${normalizeUnit(line.weight_unit)}`}
+          {line.batch_open && line.sample_id && (
+            <WeightCheckHint lazy batchId={line.batch_id} animalsLabel={line.count_label} weightUnit={line.weight_unit} weight={Number(line.average_weight_g)} date={String(line.sample_date)} sampleSize={line.sample_size} sampleId={line.sample_id} />
+          )}
+        </>
+      ) },
     ],
   };
   const measurementColumns: LineColumn<RoundLineData>[] = [

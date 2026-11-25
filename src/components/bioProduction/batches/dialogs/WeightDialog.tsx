@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { yupResolver } from '@hookform/resolvers/yup';
-import { Grid, TextField } from '@mui/material';
+import { Grid, Stack, TextField } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import * as yup from 'yup';
 import { animalText } from '../../animalText';
@@ -13,6 +13,7 @@ import { DialogProps } from '../batchTypes';
 import ActionDialog, { FormDate, useBatchAction } from './ActionDialog';
 import { nowStamp } from '../../dateTime';
 import { FormNumber } from '../../NumberField';
+import WeightCheckHint from './WeightCheckHint';
 
 const WeightDialog = ({ batch, open, onClose }: DialogProps) => {
   const text = useDictionary().bioProduction.batches;
@@ -25,10 +26,13 @@ const WeightDialog = ({ batch, open, onClose }: DialogProps) => {
     average_weight_g: yup.number().typeError(text.validation.numberInvalid).moreThan(0, text.validation.numberInvalid).required(text.validation.numberInvalid),
     remarks: yup.string().nullable(),
   });
-  const { control, register, handleSubmit, reset, formState: { errors } } = useForm({
+  const { control, register, handleSubmit, reset, watch, formState: { errors } } = useForm({
     resolver: yupResolver(schema) as any,
     defaultValues: { sample_date: nowStamp(), sample_size: undefined as number | undefined, average_weight_g: undefined as number | undefined, remarks: '' },
   });
+
+  const [typedWeight, typedDate, typedSize] = watch(['average_weight_g', 'sample_date', 'sample_size']);
+  const typed = Number(typedWeight);
 
   const { mutate, isPending } = useBatchAction(batch.id, batchServices.recordWeightSampling, () => { reset(); onClose(); });
 
@@ -43,8 +47,11 @@ const WeightDialog = ({ batch, open, onClose }: DialogProps) => {
           <FormNumber control={control} name='sample_size' integer label={animalText(dialog.sampleSize, batch.species_template?.count_label)} error={!!errors.sample_size} helperText={errors.sample_size?.message} />
         </Grid>
         <Grid size={{ xs: 6, md: 4 }}>
-          <TextField type='number' size='small' fullWidth label={withUnit(dialog.averageWeight, batch.species_template?.weight_unit)} error={!!errors.average_weight_g}
-            slotProps={{ htmlInput: { step: 'any' } }} helperText={errors.average_weight_g?.message} {...register('average_weight_g')} />
+          <Stack direction='row' alignItems='flex-start' spacing={0.5}>
+            <TextField type='number' size='small' fullWidth label={withUnit(dialog.averageWeight, batch.species_template?.weight_unit)} error={!!errors.average_weight_g}
+              slotProps={{ htmlInput: { step: 'any' } }} helperText={errors.average_weight_g?.message} {...register('average_weight_g')} />
+            <WeightCheckHint batchId={batch.id} animalsLabel={batch.species_template?.count_label} weightUnit={batch.species_template?.weight_unit} weight={typed > 0 ? toGrams(typed, batch.species_template?.weight_unit) : null} date={typedDate as string} sampleSize={typedSize ? Number(typedSize) : null} />
+          </Stack>
         </Grid>
         <Grid size={12}>
           <TextField size='small' fullWidth label={text.labels.remarks} {...register('remarks')} />

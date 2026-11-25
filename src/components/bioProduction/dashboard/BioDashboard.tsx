@@ -14,6 +14,7 @@ import { getErrorMessage } from '@/utilities/helpers/errorHandler';
 import { useDictionary } from '@/app/[lang]/contexts/DictionaryContext';
 import { dashboardServices, farmServices } from '../bio-production-services';
 import { useBioMoney } from '../useBioMoney';
+import InfoHint from '../InfoHint';
 import { stamp } from '../dateTime';
 import UnitEnvironment from '../productionUnits/UnitEnvironment';
 import RoundView from '../rounds/RoundView';
@@ -28,10 +29,13 @@ import { AlertSeverity, ConditionAlert, Dashboard } from './dashboardTypes';
 const num = (value: number, digits = 0) => value.toLocaleString(undefined, { maximumFractionDigits: digits });
 const severityColor = (severity: AlertSeverity): 'error' | 'warning' | 'success' => (severity === 'critical' ? 'error' : severity === 'watch' ? 'warning' : 'success');
 
-const KpiCard = ({ label, value, hint, progress, change }: { label: string; value: React.ReactNode; hint?: React.ReactNode; progress?: number; change?: { delta: number; goodWhenDown: boolean; text: string } }) => (
+const KpiCard = ({ label, value, hint, progress, change, info }: { info?: string; label: string; value: React.ReactNode; hint?: React.ReactNode; progress?: number; change?: { delta: number; goodWhenDown: boolean; text: string } }) => (
   <Card variant='outlined' sx={{ height: '100%' }}>
     <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
-      <Typography variant='body2' color='text.secondary'>{label}</Typography>
+      <Stack direction='row' alignItems='center' spacing={0.25}>
+        <Typography variant='body2' color='text.secondary'>{label}</Typography>
+        {info && <InfoHint text={info} />}
+      </Stack>
       <Typography variant='h4' mb={0} sx={{ fontSize: { xs: '1.15rem', sm: '1.6rem' }, overflowWrap: 'anywhere' }}>{value}</Typography>
       {progress != null && <LinearProgress variant='determinate' value={Math.min(100, progress)} sx={{ my: 0.5, height: 6, borderRadius: 3 }} />}
       {change && change.delta !== 0 && (
@@ -275,7 +279,15 @@ const DashboardContent = () => {
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard label={t.kpis.unitsInUse} value={`${summary.units_in_use} / ${summary.units_total}`} progress={summary.units_total ? (summary.units_in_use / summary.units_total) * 100 : 0} />
         </Grid>
-        {finance && <Grid size={{ xs: 12, md: 6 }}><KpiCard label={t.kpis.wip} value={money(summary.wip_balance)} /></Grid>}
+        <Grid size={{ xs: 6, md: 3 }}>
+          <KpiCard
+            label={t.kpis.biomass}
+            info={t.kpis.biomassInfo}
+            value={summary.biomass.unknown === summary.open_batches && summary.open_batches > 0 ? '—' : `${num(summary.biomass.kg)} kg`}
+            hint={t.kpis.biomassHint.replace('{weighed}', String(summary.biomass.weighed)).replace('{total}', String(summary.open_batches))}
+          />
+        </Grid>
+        {finance && <Grid size={{ xs: 6, md: 3 }}><KpiCard label={t.kpis.wip} value={money(summary.wip_balance)} /></Grid>}
       </Grid>
       <Typography variant='overline' color='text.secondary'>{t.sections.period}</Typography>
       <Grid container spacing={1.5}>

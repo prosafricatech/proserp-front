@@ -437,7 +437,10 @@
         "fcr": "Feed conversion (FCR)",
         "fcrHint": "{feed} kg of feed for {gain} kg gained, over {batches} batches",
         "fcrNone": "Not enough weighings",
-        "fcrVs": "{change} vs previous period"
+        "fcrVs": "{change} vs previous period",
+        "biomass": "Weight of open batches",
+        "biomassHint": "{weighed} of {total} weighed in the last 30 days",
+        "biomassInfo": "About how much the open batches weigh together: the animals alive in each times its last average weight. A batch not weighed in the last 30 days counts at its older weight, or at the weight its stage opened with, so it is an estimate; one with no weight at all is left out. Weigh batches regularly to keep it close."
       },
       "alerts": {
         "title": "Needs attention",
@@ -808,7 +811,39 @@
         "weight": {
           "title": "Record Weight Sample",
           "sampleSize": "{Animals} weighed",
-          "averageWeight": "Average weight"
+          "averageWeight": "Average weight",
+          "check": {
+            "title": "What this weight does to the feed projection",
+            "typeWeight": "Type the average weight to see what it does to the feed projection for the next 30 days, and anything worth a second look before you save.",
+            "checking": "Checking…",
+            "failed": "The check could not be made.",
+            "unavailable": "This batch has no feeding table or stage plan to project from, so there is nothing to compare.",
+            "without": "Without",
+            "with": "With this weight",
+            "weightNow": "Weight now",
+            "feed": "Feed, next 30 days",
+            "gain": "Weight gain",
+            "fcr": "Expected FCR",
+            "basis": "Growth taken from",
+            "growth": {
+              "actual": "The weighings",
+              "template": "The template"
+            },
+            "stageLine": "{stage}: planned to end at {target}; expected about {expected} at this point.",
+            "flags": {
+              "above_target": "{weight} is above the {stage} target of {target}. If the {animals} have outgrown this stage, move the batch to the next stage: until then the projection holds the weight and shows no gain.",
+              "off_plan": "{weight} is {deviation}% away from the {expected} the plan expects at this point of the stage. Check the sample, or the stage dates and weights.",
+              "lower_than_last": "Lower than the last weighing ({last} on {date}). Check the weighing, or whether the sample was fair.",
+              "no_gain": "With this weight the projection shows no weight gain over the next 30 days, so no FCR can be given.",
+              "fcr_out_of_range": "The projection now assumes an FCR of {fcr}, outside the {low} to {high} a species usually does. Check the weights and the feeding table.",
+              "small_sample": "Only {n} {animals} weighed. {min} or more gives a more reliable average.",
+              "growth_measured": "With the earlier weighing, the batch is projected at the speed it really grows, not the template.",
+              "weighings_too_close": "The nearest earlier weighing is only {days} days before. Weigh again on or after {from} to measure the real growth.",
+              "second_weighing": "This is the only weighing in the last {window} days, so the projection still follows the template. Weigh again from {from} (at least {min} days later) to project from the real growth.",
+              "not_growing": "The weight has not risen since the earlier weighing, so no growth rate can be worked out and the template is followed.",
+              "projection_shift": "Feed for the next 30 days changes from {before} kg to {after} kg."
+            }
+          }
         },
         "transfer": {
           "title": "Move to Another Unit",

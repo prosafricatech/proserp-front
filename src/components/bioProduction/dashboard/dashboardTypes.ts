@@ -58,6 +58,7 @@ export interface Dashboard {
   summary: {
     open_batches: number;
     animals_alive: number;
+    biomass: { kg: number; weighed: number; estimated: number; unknown: number };
     units_total: number;
     units_in_use: number;
     wip_balance: number;

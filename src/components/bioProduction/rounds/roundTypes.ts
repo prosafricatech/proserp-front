@@ -48,6 +48,11 @@ export interface RoundLine {
   sample_size?: number | null;
   average_weight_g?: number | null;
   weight_unit?: 'g' | 'kg';
+  /** For a weighing: the saved weighing, its date, what the species counts animals as and whether the batch is still open. */
+  sample_id?: number;
+  sample_date?: string;
+  count_label?: string | null;
+  batch_open?: boolean;
   rate?: number | string | null;
   amount?: number | string | null;
   product_quantity?: number | string | null;

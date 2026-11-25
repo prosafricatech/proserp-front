@@ -437,7 +437,10 @@
         "fcr": "Ubadilishaji wa chakula (FCR)",
         "fcrHint": "Kilo {feed} za chakula kwa kilo {gain} zilizoongezeka, katika makundi {batches}",
         "fcrNone": "Vipimo vya uzito havitoshi",
-        "fcrVs": "{change} ikilinganishwa na kipindi kilichopita"
+        "fcrVs": "{change} ikilinganishwa na kipindi kilichopita",
+        "biomass": "Uzito wa makundi wazi",
+        "biomassHint": "{weighed} kati ya {total} wamepimwa siku 30 zilizopita",
+        "biomassInfo": "Takriban uzito wa makundi wazi kwa pamoja: wanyama walio hai katika kila kundi mara wastani wa uzito wake wa mwisho. Kundi lisilopimwa siku 30 zilizopita linahesabiwa kwa uzito wake wa zamani, au uzito ambao hatua yake ilianza nao, kwa hiyo ni makadirio; lisilo na uzito kabisa linaachwa. Pima makundi mara kwa mara ili iwe karibu na ukweli."
       },
       "alerts": {
         "title": "Yanayohitaji uangalizi",
@@ -808,7 +811,39 @@
         "weight": {
           "title": "Rekodi Sampuli ya Uzito",
           "sampleSize": "{Animals} waliopimwa",
-          "averageWeight": "Wastani wa uzito"
+          "averageWeight": "Wastani wa uzito",
+          "check": {
+            "title": "Uzito huu unafanya nini kwenye makadirio ya chakula",
+            "typeWeight": "Andika wastani wa uzito kuona unafanya nini kwenye makadirio ya chakula ya siku 30 zijazo, na chochote kinachostahili kuangaliwa kabla ya kuhifadhi.",
+            "checking": "Inakagua…",
+            "failed": "Ukaguzi haukuweza kufanyika.",
+            "unavailable": "Kundi hili halina jedwali la kulisha wala mpango wa hatua wa kukadiria, kwa hiyo hakuna cha kulinganisha.",
+            "without": "Bila",
+            "with": "Na uzito huu",
+            "weightNow": "Uzito sasa",
+            "feed": "Chakula, siku 30 zijazo",
+            "gain": "Ongezeko la uzito",
+            "fcr": "FCR inayotarajiwa",
+            "basis": "Ukuaji unatoka",
+            "growth": {
+              "actual": "Upimaji",
+              "template": "Kiolezo"
+            },
+            "stageLine": "{stage}: imepangwa kuishia {target}; inatarajiwa takriban {expected} kwa wakati huu.",
+            "flags": {
+              "above_target": "{weight} iko juu ya lengo la {stage} la {target}. Kama {animals} wamekua kuliko hatua hii, peleka kundi hatua inayofuata: hadi hapo makadirio yanashikilia uzito na hayaonyeshi ongezeko.",
+              "off_plan": "{weight} iko mbali kwa {deviation}% na {expected} ambayo mpango unatarajia kwa wakati huu wa hatua. Angalia sampuli, au tarehe na uzito wa hatua.",
+              "lower_than_last": "Ni chini kuliko upimaji wa mwisho ({last} tarehe {date}). Angalia upimaji, au kama sampuli ilikuwa sawa.",
+              "no_gain": "Kwa uzito huu makadirio hayaonyeshi ongezeko la uzito siku 30 zijazo, kwa hiyo FCR haiwezi kutolewa.",
+              "fcr_out_of_range": "Makadirio sasa yanadhani FCR ya {fcr}, nje ya {low} hadi {high} ambayo spishi kwa kawaida hufikia. Angalia uzito na jedwali la kulisha.",
+              "small_sample": "{n} {animals} tu wamepimwa. {min} au zaidi hutoa wastani wa kuaminika zaidi.",
+              "growth_measured": "Kwa upimaji wa awali, kundi linakadiriwa kwa kasi linayokua kweli, si kiolezo.",
+              "weighings_too_close": "Upimaji wa awali ulio karibu zaidi ni siku {days} tu kabla. Pima tena tarehe {from} au baadaye kupima ukuaji halisi.",
+              "second_weighing": "Huu ndio upimaji pekee katika siku {window} zilizopita, kwa hiyo makadirio bado yanafuata kiolezo. Pima tena kuanzia {from} (angalau siku {min} baadaye) ili kukadiria kwa ukuaji halisi.",
+              "not_growing": "Uzito haujaongezeka tangu upimaji wa awali, kwa hiyo kiwango cha ukuaji hakiwezi kukokotolewa na kiolezo kinafuatwa.",
+              "projection_shift": "Chakula cha siku 30 zijazo kinabadilika kutoka kg {before} hadi kg {after}."
+            }
+          }
         },
         "transfer": {
           "title": "Hamisha hadi Kitengo Kingine",

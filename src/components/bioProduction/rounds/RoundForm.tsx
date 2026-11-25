@@ -51,6 +51,7 @@ import { nowStamp } from '../dateTime';
 import { BIO_WIP_LEDGER_ID } from '../batches/batchConstants';
 import { unitGroupOptions, useUnitGroups } from '../useUnitGroups';
 import { BatchRoundMode, RoundBatchRow, RoundDraftLine, RoundRecord } from './roundTypes';
+import WeightCheckHint from '../batches/dialogs/WeightCheckHint';
 import LineTable, { LineColumn } from './LineTable';
 import { useAvailableStock } from './useAvailableStock';
 
@@ -401,7 +402,7 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
     ...(mode === 'weighing'
       ? [
           { label: text.labels.sampleSize, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => <b>{Number(line.sample_size).toLocaleString()}</b> },
-          { label: text.labels.averageWeight, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => <b>{figure(Number(line.average_weight_g))} {normalizeUnit(line.row.species.weight_unit)}</b> },
+          { label: text.labels.averageWeight, xs: 6, md: 1.5, right: true, render: (line: RoundDraftLine) => (<><b>{figure(Number(line.average_weight_g))} {normalizeUnit(line.row.species.weight_unit)}</b><WeightCheckHint lazy batchId={line.row.batch_id} animalsLabel={line.row.species.count_label} weightUnit={line.row.species.weight_unit} weight={toGrams(Number(line.average_weight_g), line.row.species.weight_unit)} date={date} sampleSize={Number(line.sample_size) || null} /></>) },
         ]
       : []),
   ];
@@ -787,6 +788,11 @@ const RoundFormBody = ({ mode, setOpenDialog, record = null, savedProduct = null
                     slotProps={numberInput('any')}
                   />
                 </Grid>
+                {draftRow && (
+                  <Grid size={{ xs: 'auto' }} sx={{ pt: { md: 0.25 } }}>
+                    <WeightCheckHint batchId={draftRow.batch_id} animalsLabel={draftRow.species.count_label} weightUnit={draftRow.species.weight_unit} weight={Number(draft.average_weight_g) > 0 ? toGrams(Number(draft.average_weight_g), draftRow.species.weight_unit) : null} date={date} sampleSize={Number(draft.sample_size) || null} />
+                  </Grid>
+                )}
               </>
             )}
             <Grid size={{ xs: 12, md: 'auto' }} sx={{ pt: { md: 0.25 } }}>

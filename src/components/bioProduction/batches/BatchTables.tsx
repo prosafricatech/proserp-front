@@ -1,5 +1,6 @@
 'use client'
 
+import WeightCheckHint from './dialogs/WeightCheckHint';
 import { fromGrams, withUnit } from '../weightUnit';
 import React from 'react';
 import { DeleteOutlined, EditOutlined } from '@mui/icons-material';
@@ -289,6 +290,12 @@ export const WeightsTable = ({ batch }: { batch: Batch }) => {
         { label: t.sample, align: 'right', render: (w) => num(w.sample_size, 0) },
         { label: withUnit(t.avgWeight, unit), align: 'right', render: (w) => num(fromGrams(Number(w.average_weight_g), unit), 4) },
         { label: t.remarks, render: (w) => w.remarks },
+        // What each weighing did to the feed projection and whether it is worth a second look, for a batch still open.
+        ...(batch.status === 'on progress'
+          ? [{ label: '', align: 'right' as const, render: (w: NonNullable<Batch['weight_samplings']>[number]) => (
+              <WeightCheckHint lazy batchId={batch.id} animalsLabel={batch.species_template?.count_label} weightUnit={unit} weight={Number(w.average_weight_g)} date={String(w.sample_date)} sampleSize={w.sample_size} sampleId={w.id} />
+            ) }]
+          : []),
       ]}
     />
   );
