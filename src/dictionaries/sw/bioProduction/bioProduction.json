@@ -440,7 +440,8 @@
         "fcrVs": "{change} ikilinganishwa na kipindi kilichopita",
         "biomass": "Uzito wa makundi wazi",
         "biomassHint": "{weighed} kati ya {total} wamepimwa siku 30 zilizopita",
-        "biomassInfo": "Takriban uzito wa makundi wazi kwa pamoja: wanyama walio hai katika kila kundi mara wastani wa uzito wake wa mwisho. Kundi lisilopimwa siku 30 zilizopita linahesabiwa kwa uzito wake wa zamani, au uzito ambao hatua yake ilianza nao, kwa hiyo ni makadirio; lisilo na uzito kabisa linaachwa. Pima makundi mara kwa mara ili iwe karibu na ukweli."
+        "biomassInfo": "Takriban uzito wa makundi wazi kwa pamoja: wanyama walio hai katika kila kundi mara wastani wa uzito wake wa mwisho. Kundi lisilopimwa siku 30 zilizopita linahesabiwa kwa uzito wake wa zamani, au uzito ambao hatua yake ilianza nao, kwa hiyo ni makadirio; lisilo na uzito kabisa linaachwa. Pima makundi mara kwa mara ili iwe karibu na ukweli.",
+        "comparedWith": "Ikilinganishwa na {from} – {to}"
       },
       "alerts": {
         "title": "Yanayohitaji uangalizi",

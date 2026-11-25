@@ -440,7 +440,8 @@
         "fcrVs": "{change} vs previous period",
         "biomass": "Weight of open batches",
         "biomassHint": "{weighed} of {total} weighed in the last 30 days",
-        "biomassInfo": "About how much the open batches weigh together: the animals alive in each times its last average weight. A batch not weighed in the last 30 days counts at its older weight, or at the weight its stage opened with, so it is an estimate; one with no weight at all is left out. Weigh batches regularly to keep it close."
+        "biomassInfo": "About how much the open batches weigh together: the animals alive in each times its last average weight. A batch not weighed in the last 30 days counts at its older weight, or at the weight its stage opened with, so it is an estimate; one with no weight at all is left out. Weigh batches regularly to keep it close.",
+        "comparedWith": "Compared with {from} – {to}"
       },
       "alerts": {
         "title": "Needs attention",

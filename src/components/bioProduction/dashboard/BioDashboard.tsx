@@ -29,25 +29,40 @@ import { AlertSeverity, ConditionAlert, Dashboard } from './dashboardTypes';
 const num = (value: number, digits = 0) => value.toLocaleString(undefined, { maximumFractionDigits: digits });
 const severityColor = (severity: AlertSeverity): 'error' | 'warning' | 'success' => (severity === 'critical' ? 'error' : severity === 'watch' ? 'warning' : 'success');
 
-const KpiCard = ({ label, value, hint, progress, change, info }: { info?: string; label: string; value: React.ReactNode; hint?: React.ReactNode; progress?: number; change?: { delta: number; goodWhenDown: boolean; text: string } }) => (
+/** A figure shrinks as it gets longer, so a large amount (a billion and more) stays on one line on a phone. */
+const figureSize = (value: React.ReactNode) => {
+  const length = typeof value === 'string' || typeof value === 'number' ? String(value).length : 0;
+  if (length > 16) return { xs: '0.78rem', sm: '1.05rem' };
+  if (length > 12) return { xs: '0.88rem', sm: '1.2rem' };
+
+  return { xs: '1rem', sm: '1.4rem' };
+};
+
+const KpiCard = ({ label, value, hint, progress, change, info, comparison }: { comparison?: string; info?: string; label: string; value: React.ReactNode; hint?: React.ReactNode; progress?: number; change?: { delta: number; goodWhenDown: boolean; text: string } }) => {
+  const size = figureSize(value);
+
+  return (
   <Card variant='outlined' sx={{ height: '100%' }}>
     <CardContent sx={{ py: 1.5, '&:last-child': { pb: 1.5 } }}>
       <Stack direction='row' alignItems='center' spacing={0.25}>
         <Typography variant='body2' color='text.secondary'>{label}</Typography>
         {info && <InfoHint text={info} />}
       </Stack>
-      <Typography variant='h4' mb={0} sx={{ fontSize: { xs: '1.15rem', sm: '1.6rem' }, overflowWrap: 'anywhere' }}>{value}</Typography>
+      <Typography variant='h4' mb={0} sx={{ fontSize: size, lineHeight: 1.3, overflowWrap: 'break-word' }}>{value}</Typography>
       {progress != null && <LinearProgress variant='determinate' value={Math.min(100, progress)} sx={{ my: 0.5, height: 6, borderRadius: 3 }} />}
       {change && change.delta !== 0 && (
-        <Stack direction='row' alignItems='center' spacing={0.25} color={(change.delta > 0) === change.goodWhenDown ? 'error.main' : 'success.main'}>
-          {change.delta > 0 ? <ArrowUpwardOutlined sx={{ fontSize: 14 }} /> : <ArrowDownwardOutlined sx={{ fontSize: 14 }} />}
-          <Typography variant='caption'>{change.text}</Typography>
-        </Stack>
+        <Tooltip title={comparison ?? ''} disableHoverListener={!comparison} disableFocusListener={!comparison} disableTouchListener={!comparison} placement='bottom-start' arrow>
+          <Stack direction='row' alignItems='center' spacing={0.25} color={(change.delta > 0) === change.goodWhenDown ? 'error.main' : 'success.main'} sx={{ cursor: comparison ? 'help' : undefined }}>
+            {change.delta > 0 ? <ArrowUpwardOutlined sx={{ fontSize: 14 }} /> : <ArrowDownwardOutlined sx={{ fontSize: 14 }} />}
+            <Typography variant='caption'>{change.text}</Typography>
+          </Stack>
+        </Tooltip>
       )}
       {hint && <Typography variant='caption' color='text.secondary' display='block'>{hint}</Typography>}
     </CardContent>
   </Card>
-);
+  );
+};
 
 const Panel = ({ title, action, children }: { title: React.ReactNode; action?: React.ReactNode; children: React.ReactNode }) => (
   <Card variant='outlined' sx={{ height: '100%' }}>
@@ -199,6 +214,9 @@ const DashboardContent = () => {
   const everything = [...alerts.conditions, ...alerts.mortality, ...alerts.feeding, ...alerts.stages];
   const critical = everything.filter((alert) => alert.severity === 'critical').length;
   const watch = everything.filter((alert) => alert.severity === 'watch').length;
+  // The stretch of the same length just before the chosen one, which every "vs previous period" figure is measured against.
+  const previousFrom = dayjs(data.range.from).subtract(dayjs(data.range.to).diff(dayjs(data.range.from)), 'millisecond');
+  const comparison = t.kpis.comparedWith.replace('{from}', previousFrom.format('D MMM YYYY')).replace('{to}', dayjs(data.range.from).subtract(1, 'second').format('D MMM YYYY'));
   const change = (now: number, before: number, format: (value: number) => string) => ({ delta: now - before, goodWhenDown: true, text: t.kpis.vsPrevious.replace('{change}', format(Math.abs(now - before))) });
   const batchLink = (id: number) => !access.batches.read ? null : (
     <Button size='small' component={Link} href={`/${lang}/bioProduction/batches/${id}`}>{t.alerts.open}</Button>
@@ -292,15 +310,16 @@ const DashboardContent = () => {
       <Typography variant='overline' color='text.secondary'>{t.sections.period}</Typography>
       <Grid container spacing={1.5}>
         <Grid size={{ xs: 6, md: 3 }}>
-          <KpiCard label={t.kpis.mortality} value={num(summary.mortality.current)} change={change(summary.mortality.current, summary.mortality.previous, (value) => num(value))} />
+          <KpiCard label={t.kpis.mortality} comparison={comparison} value={num(summary.mortality.current)} change={change(summary.mortality.current, summary.mortality.previous, (value) => num(value))} />
         </Grid>
         {finance && (
           <Grid size={{ xs: 6, md: 3 }}>
-            <KpiCard label={t.kpis.feed} value={money(summary.feed_cost.current)} change={change(summary.feed_cost.current, summary.feed_cost.previous, (value) => money(value))} />
+            <KpiCard label={t.kpis.feed} comparison={comparison} value={money(summary.feed_cost.current)} change={change(summary.feed_cost.current, summary.feed_cost.previous, (value) => money(value))} />
           </Grid>
         )}
         <Grid size={{ xs: 6, md: 3 }}>
           <KpiCard
+            comparison={comparison}
             label={t.kpis.fcr}
             value={summary.fcr.current.value == null ? '—' : num(summary.fcr.current.value, 2)}
             change={summary.fcr.current.value != null && summary.fcr.previous != null ? change(summary.fcr.current.value, summary.fcr.previous, (value) => num(value, 2)) : undefined}
