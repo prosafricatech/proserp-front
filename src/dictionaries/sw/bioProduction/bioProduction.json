@@ -1086,7 +1086,9 @@
         "available": "Stoo iliyopo",
         "thisRecord": "Rekodi hii",
         "remaining": "Kinachobaki",
-        "stockFor": "Stoo iliyopo kwa shamba hili"
+        "stockFor": "Stoo iliyopo kwa shamba hili",
+        "applyToType": "Kwa aina",
+        "unitType": "Aina ya kitengo"
       },
       "summary": {
         "measurement": "Vipimo {count} vimechukuliwa",
@@ -1145,7 +1147,8 @@
         "noStock": "Hakuna stoo ya bidhaa hii kwa shamba hili katika stoo hii",
         "laterMovements": "Miamala ya baadaye inapunguza kinachoweza kutolewa tarehe hii",
         "over": "Rekodi hii inatumia zaidi ya kilichopo",
-        "lineHeader": "Ongeza kitengo"
+        "lineHeader": "Ongeza kitengo",
+        "unitsOfType": "{count} zenye makundi"
       },
       "sections": {
         "details": "Maelezo",

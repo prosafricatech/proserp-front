@@ -47,10 +47,12 @@ interface Line {
 interface Draft {
   unitIds: number[];
   groupIds: number[];
+  /** Kinds of unit (pond, cage, ...): every unit of the farm of that kind. */
+  types: string[];
   values: Record<number, string>;
 }
 
-const emptyDraft: Draft = { unitIds: [], groupIds: [], values: {} };
+const emptyDraft: Draft = { unitIds: [], groupIds: [], types: [], values: {} };
 const filled = (value?: string) => value !== undefined && value.trim() !== '';
 /** Digits, one decimal point and a leading minus: what a reading can contain. */
 const cleanNumber = (value: string) => {
@@ -99,7 +101,7 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
   });
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   // Readings are typed for one unit, or once for a whole group and then given to each unit in it.
-  const [target, setTarget] = useState<'unit' | 'group'>('unit');
+  const [target, setTarget] = useState<'unit' | 'group' | 'type'>('unit');
   const [rowErrors, setRowErrors] = useState<Record<number, string[]>>({});
   const [showWarning, setShowWarning] = useState(false);
   const [parameterIds, setParameterIds] = useState<number[]>(() => {
@@ -146,16 +148,20 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
     return ids;
   }, [draft.groupIds, groupList]);
   // The units the readings are for: those picked, or those in the groups picked.
+  // A whole group or kind of unit only reaches the units that hold a batch now; a unit picked by name is always taken.
+  const inUse = (unit: BioProductionUnit) => (unit.open_batches ?? []).length > 0;
   const chosenUnits = target === 'group'
-    ? (unitList?.data ?? []).filter((unit) => !!unit.unit_group_id && groupIds.has(unit.unit_group_id))
-    : draft.unitIds.map((id) => unitOf(id)).filter((unit): unit is BioProductionUnit => !!unit);
+    ? (unitList?.data ?? []).filter((unit) => !!unit.unit_group_id && groupIds.has(unit.unit_group_id) && inUse(unit))
+    : target === 'type'
+      ? (unitList?.data ?? []).filter((unit) => draft.types.includes(unit.type) && inUse(unit))
+      : draft.unitIds.map((id) => unitOf(id)).filter((unit): unit is BioProductionUnit => !!unit);
   const draftParameters = parameters.filter((parameter) => chosenUnits.some((unit) => applies(parameter, unit)));
   const draftEntered = draftParameters.filter((parameter) => taken(parameter, draft.values));
   const draftInvalid = draftEntered.some((parameter) => Number.isNaN(Number(draft.values[parameter.id])));
   // Units the readings will go to: those that take at least one parameter typed, and are not already on the list.
   const targets = chosenUnits.filter((unit) => !lines.some((line) => line.unitId === unit.id) && draftEntered.some((parameter) => applies(parameter, unit)));
   const draftComplete = draftEntered.length > 0 && !draftInvalid && targets.length > 0;
-  const draftDirty = draft.unitIds.length > 0 || draft.groupIds.length > 0 || Object.values(draft.values).some(filled);
+  const draftDirty = draft.unitIds.length > 0 || draft.groupIds.length > 0 || draft.types.length > 0 || Object.values(draft.values).some(filled);
 
   const clean = (unit: BioProductionUnit, values: Record<number, string>) =>
     Object.fromEntries(parameters.filter((parameter) => applies(parameter, unit) && taken(parameter, values)).map((parameter) => [parameter.id, values[parameter.id]]));
@@ -171,7 +177,7 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
   };
   const editLine = (index: number) => {
     setTarget('unit');
-    setDraft({ unitIds: [lines[index].unitId], groupIds: [], values: lines[index].values });
+    setDraft({ unitIds: [lines[index].unitId], groupIds: [], types: [], values: lines[index].values });
     setLines(lines.filter((_, i) => i !== index));
   };
   const removeLine = (index: number) => setLines(lines.filter((_, i) => i !== index));
@@ -244,6 +250,15 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
     [unitList, parameters, lines, text, types]
   );
 
+  // The kinds of unit the farm has, each with how many of its units could be measured.
+  const typeOptions = useMemo(
+    () => Object.keys(types)
+      .map((key) => ({ value: key, count: (unitList?.data ?? []).filter((unit) => unit.type === key && (unit.open_batches ?? []).length > 0).length }))
+      .filter((entry) => entry.count > 0)
+      .map((entry) => ({ value: entry.value, label: types[entry.value as keyof typeof types], hint: text.messages.unitsOfType.replace('{count}', String(entry.count)) })),
+    [unitList, types, text]
+  );
+
   // One column for each parameter measured; a unit shows only the readings it was given.
   const share = Math.min(2.5, Math.max(1, (12 - 2.5 - 1.5) / Math.max(1, parameters.length)));
   const columns: LineColumn<Line>[] = [
@@ -308,9 +323,10 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
             <Paper variant='outlined' sx={{ p: 1.5, bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04) }}>
               <Grid container spacing={1} alignItems='flex-start'>
                 <Grid size={12}>
-                  <ToggleButtonGroup exclusive fullWidth size='small' sx={{ maxWidth: { sm: 360 } }} value={target} onChange={(_, value) => value && (setTarget(value), setDraft(emptyDraft))}>
+                  <ToggleButtonGroup exclusive fullWidth size='small' sx={{ maxWidth: { sm: 540 } }} value={target} onChange={(_, value) => value && (setTarget(value), setDraft(emptyDraft))}>
                     <ToggleButton value='unit'>{text.labels.applyToUnit}</ToggleButton>
                     <ToggleButton value='group'>{text.labels.applyToGroup}</ToggleButton>
+                    <ToggleButton value='type'>{text.labels.applyToType}</ToggleButton>
                   </ToggleButtonGroup>
                 </Grid>
                 <Grid size={{ xs: 12, md: 4 }}>
@@ -324,8 +340,26 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
                       getOptionLabel={(option) => option.label}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       value={unitOptions.filter((option) => draft.unitIds.includes(option.value as number))}
-                      onChange={(_, value) => setDraft({ unitIds: value.map((option) => option.value as number), groupIds: [], values: {} })}
+                      onChange={(_, value) => setDraft({ unitIds: value.map((option) => option.value as number), groupIds: [], types: [], values: {} })}
                       renderInput={(params) => <TextField {...params} inputRef={unitRef} label={text.labels.productionUnit} />}
+                    />
+                  ) : target === 'type' ? (
+                    <Autocomplete
+                      multiple
+                      size='small'
+                      disableCloseOnSelect
+                      loading={loadingUnits}
+                      options={typeOptions}
+                      getOptionLabel={(option) => option.label}
+                      isOptionEqualToValue={(option, value) => option.value === value.value}
+                      value={typeOptions.filter((option) => draft.types.includes(option.value))}
+                      onChange={(_, value) => setDraft({ unitIds: [], groupIds: [], types: value.map((option) => option.value), values: {} })}
+                      renderOption={(props, option) => {
+                        const { key, ...rest } = props as React.HTMLAttributes<HTMLLIElement> & { key: string };
+
+                        return <li key={key} {...rest}><div><div>{option.label}</div><Typography variant='caption' color='text.secondary'>{option.hint}</Typography></div></li>;
+                      }}
+                      renderInput={(params) => <TextField {...params} inputRef={unitRef} label={text.labels.unitType} />}
                     />
                   ) : (
                     <Autocomplete
@@ -337,7 +371,7 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
                       getOptionLabel={(option) => option.label}
                       isOptionEqualToValue={(option, value) => option.value === value.value}
                       value={unitGroupOptions(groupList?.data ?? []).filter((option) => draft.groupIds.includes(option.value as number))}
-                      onChange={(_, value) => setDraft({ unitIds: [], groupIds: value.map((option) => option.value as number), values: {} })}
+                      onChange={(_, value) => setDraft({ unitIds: [], groupIds: value.map((option) => option.value as number), types: [], values: {} })}
                       renderInput={(params) => <TextField {...params} inputRef={unitRef} label={text.labels.unitGroup} />}
                     />
                   )}
@@ -378,7 +412,7 @@ const MeasurementFormBody = ({ setOpenDialog, record = null }: { setOpenDialog: 
                 </Grid>
               </Grid>
               {chosenUnits.length > 0 && <Typography variant='caption' color='text.secondary' display='block' mt={0.5}>{text.messages.measureOnlyWhatYouTook}</Typography>}
-              {(target === 'group' ? draft.groupIds.length > 0 : draft.unitIds.length > 1) && (
+              {(target === 'group' ? draft.groupIds.length > 0 : target === 'type' ? draft.types.length > 0 : draft.unitIds.length > 1) && (
                 <Typography variant='caption' color={targets.length || draftEntered.length === 0 ? 'text.secondary' : 'warning.main'} display='block' mt={0.5}>
                   {(chosenUnits.length === 0 ? text.messages.groupEmpty : text.messages.groupWillReceive).replace('{count}', String(targets.length)).replace('{total}', String(chosenUnits.length))}
                 </Typography>

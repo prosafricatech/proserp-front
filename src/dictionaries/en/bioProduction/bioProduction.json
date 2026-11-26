@@ -1086,7 +1086,9 @@
         "available": "Available stock",
         "thisRecord": "This record",
         "remaining": "Remaining",
-        "stockFor": "Stock held for this farm"
+        "stockFor": "Stock held for this farm",
+        "applyToType": "By type",
+        "unitType": "Kind of unit"
       },
       "summary": {
         "measurement": "{count} readings taken",
@@ -1099,8 +1101,8 @@
         "weighing": "{count} units weighed"
       },
       "messages": {
-        "groupEmpty": "Nothing in this group can take these readings (or all of its units are already on the list).",
-        "groupWillReceive": "{count} of {total} units will get these readings (groups include the groups beneath them; units already on the list are skipped).",
+        "groupEmpty": "No unit here holds a batch that can take these readings (or all of them are already on the list).",
+        "groupWillReceive": "{count} of {total} units with batches will get these readings (a group includes the groups beneath it, a kind includes every unit of that kind; units without a batch, and units already on the list, are skipped).",
         "measureOnlyWhatYouTook": "Type only what you measured; leave the other parameters empty.",
         "chooseParameters": "Choose the parameters you measured. A card appears for each unit they apply to.",
         "readingsSummary": "{readings} readings on {units} units",
@@ -1145,7 +1147,8 @@
         "noStock": "No stock of this product is held for this farm in this store",
         "laterMovements": "Later movements limit what can be issued on this date",
         "over": "This record uses more than is available",
-        "lineHeader": "Add a unit"
+        "lineHeader": "Add a unit",
+        "unitsOfType": "{count} with batches"
       },
       "sections": {
         "details": "Details",
