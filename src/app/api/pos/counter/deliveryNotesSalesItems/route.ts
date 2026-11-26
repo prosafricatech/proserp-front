@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   if (response) return response;
 
   const url = new URL(`${API_BASE}/pos/delivery-notes/invoice-items`);
-  req.nextUrl.searchParams.forEach((value, key) => url.searchParams.set(key, value));
+  req.nextUrl.searchParams.forEach((value, key) => url.searchParams.append(key, value));
 
   const res = await fetch(url.toString(), {
     headers,

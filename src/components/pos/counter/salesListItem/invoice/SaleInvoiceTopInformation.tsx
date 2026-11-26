@@ -12,7 +12,7 @@ import {
 } from '@mui/material';
 import { DateTimePicker } from '@mui/x-date-pickers';
 import dayjs from 'dayjs';
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import posServices from '../../../pos-services';
 import { useJumboAuth } from '@/app/providers/JumboAuthProvider';
 import { useQuery, useMutation } from '@tanstack/react-query';
@@ -115,7 +115,10 @@ const SaleInvoiceTopInformation: React.FC<SaleInvoiceTopInformationProps> = ({
   }, [sale_items]);
 
   // Retrieve items from selected delivery notes
+  // Only the latest selection may fill the list; a slower earlier request must not overwrite it.
+  const latestRequest = useRef(0);
   const retrieveDeliveryNotesSalesItems = useCallback(async () => {
+    const requestId = ++latestRequest.current;
     const delivery_note_ids = watch('delivery_note_ids');
     
     if (!sale?.is_instant_sale && delivery_note_ids?.length > 0) {
@@ -124,14 +127,20 @@ const SaleInvoiceTopInformation: React.FC<SaleInvoiceTopInformationProps> = ({
         const deliveryNotesSalesItems = await fetchDeliveryNotesItems({
           delivery_note_ids: delivery_note_ids,
         });
-        const fetchedItems = deliveryNotesSalesItems.flatMap((item: any) => item.items);
+        if (requestId !== latestRequest.current) return;
+        // Every delivery note keeps its own lines, even for the same product, in the order selected.
+        const order = new Map<number, number>(delivery_note_ids.map((id: number, index: number) => [id, index]));
+        const fetchedItems = [...deliveryNotesSalesItems]
+          .sort((a: any, b: any) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+          .flatMap((note: any) => (note.items ?? []).map((item: any) => ({ ...item, delivery_no: note.deliveryNo })));
         setSale_items(fetchedItems);
       } catch (error) {
         console.error('Error fetching delivery note items:', error);
       } finally {
-        setIsRetrieving(false);
+        if (requestId === latestRequest.current) setIsRetrieving(false);
       }
     } else if (!sale?.is_instant_sale) {
+      setIsRetrieving(false);
       setSale_items([]);
     }
   }, [sale?.is_instant_sale, watch, setIsRetrieving, fetchDeliveryNotesItems, setSale_items]);

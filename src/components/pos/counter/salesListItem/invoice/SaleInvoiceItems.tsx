@@ -9,6 +9,7 @@ interface SaleItem {
   };
   description: string;
   product_name?: string;
+  delivery_no?: string;
   measurement_unit?: {
     symbol: string;
   };
@@ -71,7 +72,7 @@ function SaleInvoiceItems({isRetrieving, sale_items = []}: Props) {
                                     secondary={
                                         <Tooltip title={dictionary.tooltips.description}>
                                             <Typography component="span" variant="body2" fontSize={14} lineHeight={1.25} mb={0}>
-                                                {item.description}
+                                                {[item.delivery_no, item.description].filter(Boolean).join(' · ')}
                                             </Typography>
                                         </Tooltip>
                                     }
