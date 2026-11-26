@@ -184,7 +184,7 @@ const SaleInvoiceTopInformation: React.FC<SaleInvoiceTopInformationProps> = ({
                 <DateTimePicker
                   label={dictionary.forms.counter.invoice.labels.invoiceDate}
                   minDate={dayjs(organization?.recording_start_date)}
-                  value={dayjs(transactionDate)}
+                  value={dayjs(watch('transaction_date') || transactionDate)}
                   slotProps={{
                     textField: {
                       size: 'small',
@@ -277,6 +277,7 @@ const SaleInvoiceTopInformation: React.FC<SaleInvoiceTopInformationProps> = ({
                 <DateTimePicker
                   label={dictionary.forms.counter.invoice.labels.dueDate}
                   minDate={dayjs(watch('transaction_date'))}
+                  value={watch('due_date') ? dayjs(watch('due_date')) : null}
                   slotProps={{
                     textField: {
                       size: 'small',
