@@ -15,6 +15,7 @@ import { fromGrams, withUnit } from '../weightUnit';
 import FeedProjection from '../FeedProjection';
 import FcrTrend from './FcrTrend';
 import FeedTrend from './FeedTrend';
+import MeasurementTrend from './MeasurementTrend';
 import ResponsiveTable from './ResponsiveTable';
 import { Batch, BatchSummary as Summary, FcrRow } from './batchTypes';
 
@@ -186,6 +187,7 @@ const BatchSummary = ({ batch }: { batch: Batch }) => {
               { label: t.outOfRange, align: 'right', render: (row) => (row.out_of_range > 0 ? <Box component='span' color='warning.main'>{row.out_of_range}</Box> : 0) },
             ]}
           />
+          <MeasurementTrend batchId={batch.id} parameters={data.environment} />
         </Section>
       )}
 

@@ -743,7 +743,15 @@
           "notEnough": "Bado haitoshi",
           "otherUnits": "Chakula kilichotolewa kwa {units} hakijajumuishwa kwa sababu kipimo chake hakina uwiano wa uzito katika Vipimo."
         },
-        "mergedCategory": "Imehamishwa kutoka kundi lililounganishwa"
+        "mergedCategory": "Imehamishwa kutoka kundi lililounganishwa",
+        "measurementTrend": {
+          "parameter": "Onyesha mwenendo wa",
+          "none": "Hakuna usomaji wa hiki uliochukuliwa kundi lilipokuwepo.",
+          "failed": "Mwenendo haukuweza kupakiwa.",
+          "legend": "Kila nukta ni usomaji, katika kitengo ambacho kundi lilikuwemo wakati huo: kijani ni ndani ya mipaka, rangi ya machungwa ni kufuatilia, nyekundu ni hatari. Mistari yenye vipande inaonyesha mwanzo wa kila hatua.",
+          "watch": "Kufuatilia nje ya {range}.",
+          "critical": "Hatari nje ya {range}."
+        }
       },
       "tabs": {
         "summary": "Muhtasari",

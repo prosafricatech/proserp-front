@@ -743,7 +743,15 @@
           "notEnough": "Not enough yet",
           "otherUnits": "Feed given in {units} was left out because its unit has no weight equivalence set in Measurement Units."
         },
-        "mergedCategory": "Carried over from merged batch"
+        "mergedCategory": "Carried over from merged batch",
+        "measurementTrend": {
+          "parameter": "Show the trend of",
+          "none": "No readings of this were taken while the batch was there.",
+          "failed": "The trend could not be loaded.",
+          "legend": "Each dot is a reading, in the unit the batch was in at the time: green is within limits, amber is to watch, red is critical. Dashed lines mark the start of each stage.",
+          "watch": "Watch outside {range}.",
+          "critical": "Critical outside {range}."
+        }
       },
       "tabs": {
         "summary": "Summary",
