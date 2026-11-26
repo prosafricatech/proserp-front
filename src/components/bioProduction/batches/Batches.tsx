@@ -34,7 +34,7 @@ const BatchesList = () => {
       first.set(each.name, Math.min(first.get(each.name) ?? sequence, sequence));
     }));
 
-    return [...first.entries()].sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([name]) => ({ value: name, label: name }));
+    return Array.from(first.entries()).sort((a, b) => a[1] - b[1] || a[0].localeCompare(b[0])).map(([name]) => ({ value: name, label: name }));
   }, [templates]);
 
   const renderItem = React.useCallback((batch: Batch) => <BatchListItem batch={batch} />, []);
