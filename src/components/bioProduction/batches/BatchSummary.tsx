@@ -57,6 +57,7 @@ const BatchSummary = ({ batch }: { batch: Batch }) => {
 
   const { costs, inputs, outputs } = data;
   const fcrNow = data.fcr.batch;
+  const biomassKg = fcrNow?.last_abw_g != null && data.animals.alive > 0 ? (data.animals.alive * Number(fcrNow.last_abw_g)) / 1000 : null;
   const categories = data.categories ?? [];
   const byStage = data.by_stage ?? [];
   const total = costs?.total || 0;
@@ -84,6 +85,9 @@ const BatchSummary = ({ batch }: { batch: Batch }) => {
         <Grid size={{ xs: 6, md: 3 }}><Stat label={animalText(t.alive, animals)} value={`${num(data.animals.alive, 0)} / ${num(data.animals.initial, 0)}`} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Stat label={t.died} value={num(data.animals.died, 0)} hint={data.animals.mortality_pct != null ? `${num(data.animals.mortality_pct)}%` : undefined} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Stat label={t.harvestedAnimals} value={num(data.animals.harvested, 0)} /></Grid>
+        <Grid size={{ xs: 6, md: 3 }}><Stat label={t.biomass}
+          value={biomassKg == null ? '—' : `${num(biomassKg, 1)} kg`}
+          hint={biomassKg == null ? t.biomassNone : t.biomassHint.replace('{date}', day(fcrNow?.last_weighed_at))} /></Grid>
         <Grid size={{ xs: 6, md: 3 }}><Stat label={t.fcr.value} value={fcrNow?.fcr == null ? '—' : num(fcrNow.fcr, 2)}
           hint={fcrNow == null ? undefined : fcrNow.fcr != null ? `${num(fcrNow.feed_kg, 1)} kg ÷ ${num(fcrNow.gain_kg, 1)} kg` : fcrNow.reason ? t.fcr.noWeights : t.fcr.notEnough} /></Grid>
       </Grid>
